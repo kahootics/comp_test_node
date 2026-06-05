@@ -1,6 +1,6 @@
 {
   "name": "tuxborn-companion",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "kahootics",
   "description": "",
   "main": "index.js",
@@ -8,7 +8,7 @@
     "test": "test"
   },
   "scripts": {
-    "dev": "tsx --watch src/assets/**/*.ts",
+    "dev": "tsx --watch src/assets/scripts/**/*.ts",
     "build": "tsc && node dist/main.js",
     "start": "node dist/main.js",
     "write": "tsc"
