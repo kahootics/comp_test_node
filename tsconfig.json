@@ -11,7 +11,7 @@
     /* Module System Settings: */
     "module": "NodeNext", // Configures Node.js to use ESM module system
     "rootDir": "src", // Specifies the source directory for your code
-    "outDir": "dist", // Specifies the output directory for compiled files
+    "outDir": "compiled", // Specifies the output directory for compiled files
     "sourceMap": true, // Enables source maps for easier debugging
 
     /* Module Resolution Strategy: */
@@ -39,5 +39,5 @@
     /* "lib": ["ES2022"] */
   },
   "include": ["src"], // Includes the `src` directory in the project
-  "exclude": ["node_modules", "dist"] // Excludes `node_modules` and `dist` directories from the project
+  "exclude": ["node_modules", "dist", "compiled"] // Excludes `node_modules` and `dist` directories from the project
 }

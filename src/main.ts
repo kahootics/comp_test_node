@@ -11,7 +11,7 @@ const dest = './dist/json.json';
 
 function getFileName() {}
 
-const scriptFiles = await glob('assets/**/*.js', { cwd: './dist' }); // GOOD
+const scriptFiles = await glob('assets/**/*.js', { cwd: './compiled' }); // GOOD
 
 const out: { [key: string]: string }[] = [];
 scriptFiles.forEach(script => {
