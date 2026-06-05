@@ -3,11 +3,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { glob } from 'glob';
 
-if (fs.existsSync('./dist')) {
+/* if (fs.existsSync('./dist')) {
     fs.rmSync('./dist', { recursive: true });
-}
+} */
 
-const dest = './dist/json.json';
+const dest = './compiled/json.json';
 
 function getFileName() {}
 
