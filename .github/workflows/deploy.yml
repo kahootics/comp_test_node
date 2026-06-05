@@ -46,11 +46,6 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'
-
-      - name: Upload Scripts artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
           path: './compiled'
 
       - name: Deploy to GitHub Pages
