@@ -1,0 +1,31 @@
+{
+  "name": "tuxborn-companion",
+  "version": "0.1.0",
+  "author": "kahootics",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "dev": "tsx --watch src/assets/**/*.ts",
+    "build": "tsc && node dist/main.js",
+    "start": "node dist/main.js",
+    "write": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github-kahootics:kahootics/comp_test_node.git"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "glob": "^13.0.6",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "tsx": "^4.22.4"
+  }
+}
