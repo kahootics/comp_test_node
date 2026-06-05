@@ -11,7 +11,7 @@
     /* Module System Settings: */
     "module": "NodeNext", // Configures Node.js to use ESM module system
     "rootDir": "src", // Specifies the source directory for your code
-    "outDir": "compiled", // Specifies the output directory for compiled files
+    "outDir": "dist", // Specifies the output directory for compiled files
     "sourceMap": true, // Enables source maps for easier debugging
 
     /* Module Resolution Strategy: */

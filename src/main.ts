@@ -7,11 +7,11 @@ import { glob } from 'glob';
     fs.rmSync('./dist', { recursive: true });
 } */
 
-const dest = './compiled/json.json';
+const dest = './dist/json.json';
 
 function getFileName() {}
 
-const scriptFiles = await glob('assets/**/*.js', { cwd: './compiled' }); // GOOD
+const scriptFiles = await glob('assets/**/*.js', { cwd: './dist' }); // GOOD
 
 const out: { [key: string]: string }[] = [];
 scriptFiles.forEach(script => {
