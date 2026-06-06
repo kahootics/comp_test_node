@@ -11,7 +11,7 @@ const dest = './dist/json.json';
 
 function getFileName() {}
 
-const scriptFiles = await glob('assets/**/*.js', { cwd: './dist' }); // GOOD
+const scriptFiles = await glob('sync/**/*.js', { cwd: './dist' }); // GOOD
 
 const out: { [key: string]: string }[] = [];
 scriptFiles.forEach(script => {
@@ -23,13 +23,13 @@ scriptFiles.forEach(script => {
 
 const outPath = path.resolve(dest);
 
-  		fs.mkdirSync(path.dirname(outPath), { recursive: true });
+fs.mkdirSync(path.dirname(outPath), { recursive: true });
 
     	
-  		fs.writeFileSync(
+fs.writeFileSync(
     		outPath,
 			JSON.stringify(out),
     		'utf-8'
 		)
 
-        console.log(`File written at: ${outPath} (${fs.statSync(outPath).size} bytes)`);
+console.log(`File written at: ${outPath} (${fs.statSync(outPath).size} bytes)`);

@@ -9,9 +9,11 @@
   },
   "scripts": {
     "dev": "tsx --watch src/assets/scripts/**/*.ts",
-    "build": "tsc && node dist/main.js",
+    "buil": "tsc && node dist/main.js",
     "start": "node dist/main.js",
-    "write": "tsc"
+    "write": "tsc",
+    "clean": "rm -rf live",
+    "build": "tsc && node dist/node/sharp/mutate.js"
   },
   "repository": {
     "type": "git",
@@ -26,6 +28,8 @@
     "typescript": "^6.0.3"
   },
   "dependencies": {
+    "csv-parse": "^6.2.1",
+    "sharp": "^0.34.5",
     "tsx": "^4.22.4"
   }
 }

@@ -6,8 +6,8 @@ Documenting Node setup steps for WordPress integration
 
 - [x] tsx
 - [x] glob
-- [ ] sharp
-- [ ] csv-parse
+- [x] sharp
+- [x] csv-parse
 
 ## Node Setup
 
@@ -15,23 +15,28 @@ Documenting Node setup steps for WordPress integration
 - [ ] Sync Scripts Folder Structure Creation
 
 > ```php
-> node/ ## won't be shipped; needed for JSON data creation, MUST NOT use document
+> node/ ## won't be shipped; needed for JSON data creation and local, MUST NOT use document
 > ├── types/ ## type validation for spreadsheet data
 > |   ├── ☐ mods-compendium-types.ts // needs to be imported from zod
-> |   └── ☐ enchantments-types.ts
+> |   └── ☐ enchantments-types.ts // same
 > ├── csv/ ## csv management
 > |   ├── ☒ fetch-sheet-as-csv.ts
 > |   ├── ☒ fetch-sheet-as-structured-data.ts ## dependency to csv-parse module
 > |   └── ☒ normalize-cells.ts
-> ├── fs/ ## file writing management
+> ├── writers/ ## file writing management
+> |   ├── write-csv.ts
 > |   ├── ☒ write-structured-data-as-json.ts ## dataset to json written at given directory
-> ├── path-finders/
+> |   ├── rename-to-list.ts ## renames a list of files to a list of names
+> ├── path-finders/ ## post-initial build runs to create manifest; dependency: glob
 > |   ├── ☐ extract-scripts-paths.ts ## glob => post-transpile script paths {fileName: filePath}
 > |   ├── ☐ extract-images-structured-paths.ts ## glob => assets paths { imDir: {
 > |   *         # distinguishes                                           imName: imPath
-> |                                                                  }        }
+> |   ├── hash-file.ts                                                  }        }
 > └── sharp/ ## dependency on guess what
->     ├── *
+>     ├── make-webp-srcset.ts ## base function to optimize and generate endpoint urls
+>     |                       ## 
+>     ├── crop-original.ts ## will crop the original image as specified
+>     ├── 
 >     *
 > ## Hashing somewhere
 > ```
@@ -71,7 +76,7 @@ Documenting Node setup steps for WordPress integration
 ## Static Data
 
 > ```
-> data/
+> static/
 > ├── companion-datasheets.json
 > ├── companion-static-ids.json
 > *
@@ -80,6 +85,6 @@ Documenting Node setup steps for WordPress integration
 ## Main Pipeline Entrypoint
 
 > ```php
-> main.mjs ## called at end build to write files and manifest
+> main.ts ## called at end build to write files and manifest
 > ```
 
