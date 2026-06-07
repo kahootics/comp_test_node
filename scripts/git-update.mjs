@@ -1,27 +1,30 @@
 import readline from 'node:readline/promises';
 import { execSync } from 'node:child_process';
+import execGitSync from './exec-sync-git.mjs';
 
 const LN_INPUT = '$' + ' ';
-
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-});
-
-const update = await rl.question(
-    'Pick Version Update:\n' +
-    '  1) patch (+ 0.0.1)\n' +
-    '  2) minor (+ 0.1.0)\n' +
-    '  3) major (+ 1.0.0)\n' +
-    '  0) undo\n' +
-    LN_INPUT
-);
 
 const updatesMap = {
     '1': 'patch',
     '2': 'minor',
     '3': 'major',
 };
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+});
+
+// TAKING INPUTS ============================================================
+
+const update = await rl.question(
+    'Pick Version Update:\n' +
+    '  1) patch (+ 0.0.1)\n' +
+    '  2) minor (+ 0.1.#)\n' +
+    '  3) major (+ 1.#.#)\n' +
+    '  0) undo\n' +
+    LN_INPUT
+);
 
 if (update === '0') {
     rl.close();
@@ -37,7 +40,7 @@ if (!bump) {
 }
 
 const commitMsg = await rl.question(
-    'Commit message:\n' 
+    'Write commit message:\n' 
     + LN_INPUT
 );
 
@@ -53,12 +56,7 @@ if (commitMsg === '') {
     process.exit(1);
 }
 
-
-// HELPER
-function execGitSync(command) {
-    console.log(LN_INPUT + command);
-    execSync(command, { stdio: 'inherit' });
-}
+// FINALIZE ====================================================================
 
 // Update Version
 console.log(`Version updated: ${bump}`);

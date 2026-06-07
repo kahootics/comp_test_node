@@ -1,4 +1,13 @@
 
+/* 
+ * assets/  # must be optimized and copied in dist (same routing)
+ * node/    # execution helpers (transpile for execution only)
+ * scripts/ # transpile and route (shipped with routing)
+ * static/  # copied directly as they are
+ */
+
+
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { glob } from 'glob';
@@ -6,6 +15,9 @@ import { glob } from 'glob';
 /* if (fs.existsSync('./dist')) {
     fs.rmSync('./dist', { recursive: true });
 } */
+
+
+// import SHARED from '../../static/companion-shared-ids.json' with { type: 'json' };
 
 const dest = './dist/json.json';
 

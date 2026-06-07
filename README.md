@@ -8,6 +8,7 @@ Documenting Node setup steps for WordPress integration
 - [x] glob
 - [x] sharp
 - [x] csv-parse
+- [x] zod
 
 ## Node Setup
 

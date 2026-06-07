@@ -3,8 +3,6 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { glob } from 'glob';
 
-
-
 async function imgToExt(
     filePath: string, 
     format: keyof sharp.FormatEnum, 
@@ -14,10 +12,10 @@ async function imgToExt(
     const { width, height } = metadata; */
 
     const dir = path.dirname(filePath);
-    const ext = path.extname(filePath);
+    const ext = path.extname(filePath); // .{jpg,png...}
     const name = path.basename(filePath, ext);
 
-    const outPath = path.join(dir, `${name}.webp`);
+    const outPath = path.join(dir, `${name}.${format}`);
 
     await sharp(filePath)
         /* .extract({
@@ -42,5 +40,3 @@ console.log(`Found ${images.length} images to convert`);
 images.forEach((async (imgPath) => 
         await imgToExt(imgPath, 'webp', 82)
     ))
-
-

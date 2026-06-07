@@ -1,0 +1,11 @@
+
+- [ ] Import list of names from inventory (in-game) (custom order)
+- [ ] Import in the same folder screenshots (same number and order of list)
+- [ ] JSON with info on:
+    - final extension (jpg/webp/avif)
+    - srcset resizes (?)
+    - crop data
+    - destination of output
+- [ ] array of this info in json
+- [ ] script that executes JSON sharp commands on all images in the list;
+    - node input requires to know which set of info to draw
