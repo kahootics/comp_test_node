@@ -39,5 +39,5 @@
     /* "lib": ["ES2022"] */
   },
   "include": ["src"], // Includes the `src` directory in the project
-  "exclude": ["node_modules", "dist", "compiled"] // Excludes `node_modules` and `dist` directories from the project
+  "exclude": ["node_modules", "dist", "src/git-update.mjs"] // Excludes `node_modules` and `dist` directories from the project
 }
