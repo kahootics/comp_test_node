@@ -53,14 +53,25 @@ if (commitMsg === '') {
     process.exit(1);
 }
 
-execSync(`npm version ${bump} --no-git-tag-version`, { stdio: 'inherit' });
-execSync('git add .', { stdio: 'inherit' });
 
+// HELPER
+function execGitSync(command) {
+    console.log(LN_INPUT + command);
+    execSync(command, { stdio: 'inherit' });
+}
+
+// Update Version
+console.log(`Version updated: ${bump}`);
+execSync(`npm version ${bump} --no-git-tag-version`, { stdio: 'inherit' });
+
+// Git add
+execGitSync('git add .');
+
+// Git commit
 const commitCommand = commitDesc
     ? `git commit -m "${commitMsg}" -m "${commitDesc}"`
     : `git commit -m "${commitMsg}"`;
+execGitSync(commitCommand);
 
-execSync(commitCommand, { stdio: 'inherit' });
-execSync('git push', { stdio: 'inherit' });
-
-console.log(`Version updated: ${bump}`);
+// Git push
+execGitSync('git push');
