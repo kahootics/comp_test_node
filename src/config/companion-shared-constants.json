@@ -1,0 +1,28 @@
+{
+    "prefix": "tx-cp",
+    "dataset": {
+        "modal": {
+            "wrapper": "tx-cp-modal-wrapper",
+            "backdrop": {
+                "name": "data-tx-cp-modal-backdrop",
+                "values": ["open", "closed"]
+            }
+        }
+    
+    },
+    "classes": {
+        "common": {
+            "isOpen": "tx-cp-is-open"
+        },
+        "modals": {
+            "backdrop": "tx-cp-modal-backdrop",
+            "wrapper": "tx-cp-modal-wrapper"
+        }
+    },
+    "CSSvariables": {
+        "dropdown": {
+            "scrollHeight": "tx-cp-scroll-height"
+        }
+    }
+    
+}

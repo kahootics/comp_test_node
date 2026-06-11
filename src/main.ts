@@ -1,7 +1,7 @@
 
 /* 
  * assets/  # must be optimized and copied in dist (same routing)
- * node/    # execution helpers (transpile for execution only)
+ * scripts/node/    # execution helpers (transpile for execution only)
  * scripts/ # transpile and route (shipped with routing)
  * static/  # copied directly as they are
  */

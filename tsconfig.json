@@ -8,6 +8,9 @@
     "allowJs": true,
     "checkJs": true,
 
+    /* Removes comments from compiled files */
+    "removeComments": true,
+
     /* Module System Settings: */
     "module": "NodeNext", // Configures Node.js to use ESM module system
     "rootDir": "src", // Specifies the source directory for your code

@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-export default async function writeStaticAsJson(data: unknown, dest: string, minified?: boolean) {
+export default async function writeAsJsonAt(data: unknown, dest: string, minified?: boolean) {
 
 	try {
 
