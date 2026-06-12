@@ -37,8 +37,8 @@ export class ToggleableElement<
     private readonly _ID: string;
     
     /**
-     * @param idOrEl - id attribute or the element itself
-     * @param elType - type of the element (defaults to HTMLElement)
+     * @param idOrEl - Id attribute or the element itself
+     * @param elType - Type of the element (defaults to HTMLElement)
      * @see {@link getValidatedElement} for the function used for obtaining the element
      * @see {@link ElementWithLock} for the base class that provides the lock methods
      */
@@ -52,7 +52,7 @@ export class ToggleableElement<
     }
     /** 
      * Sets `hidden` attribute of the element. 
-     * @param hide - the new value for `hidden`
+     * @param hide - The new value for `hidden`
     */
     protected set hidden(hide: boolean) {
         this.ELEMENT.hidden = hide;
@@ -104,7 +104,10 @@ interface HTMLDisableableElement extends HTMLElement {
  * 
  * The class provides basic structure for piloting a disclosing HTML element with transitions.
  * 
- * States are switched by using `close()` and `open()` public methods;
+ * *Instantiating an object of this class or derivates will also initialize the trigger
+ * to automatically toggle open/close on a `click` event.*
+ * 
+ * States can be switched manually by using `close()` and `open()` public methods;
  * an opening transition must complete to start a closing one and viceversa.
  * 
  * @remarks
@@ -127,9 +130,11 @@ export class TriggerElement<
     protected readonly controlled: H;
 
     /**
-     * @param idOrEl - id attribute or the element itself
-     * @param elType - type of the trigger element (defaults to HTMLElement)
-     * @param ctrlObj - (optional) controlled element (obtained from trigger's`aria-controls` otherwise)
+     * @param idOrEl - Id attribute or the element itself.   
+     * Requires an element with `diabled` attribute.
+     * @param elType - Type of the trigger element.   
+     * Defaults to HTMLElement.
+     * @param ctrlObj - (optional) Controlled element (obtained from trigger's`aria-controls` otherwise)
      * @see {@link ToggleableElement} for full specifications on the controlled element
     */
     constructor(
@@ -206,23 +211,23 @@ export class TriggerElement<
 
 // TOGGLEABLE + TRIGGER PAIRING FUNCTION ================================================
 /**
- * Pairs a `TriggerElement` with compatible `ToggleableElement` using the trigger's id attribute
+ * Pairs a `TriggerElement` with compatible `ToggleableElement` using the trigger's `aria-controls` attribute
  * 
- * @param triggerIdOrEl - id attribute of the trigger element or trigger element itself
- * @param triggerElType - class of the trigger element (needed for type safety)
- * @param triggerChildClass - child class of `TriggerElement` with estabilished `elType` and `ToggleableElement` derivate
- * @param ctrlChildClass - child class of `ToggleableElement` with estabilished `elType`
- * @param ctrlChildClassInstance - (optional) instance of the derived `ToggleableElement` to pair
+ * @param triggerIdOrEl - Id attribute of the trigger element or trigger element itself
+ * @param triggerElType - Class of the trigger element (needed for type safety)
+ * @param triggerChildClass - Child class of `TriggerElement` with estabilished `elType` and `ToggleableElement` derivate
+ * @param ctrlChildClass - Child class of `ToggleableElement` with estabilished `elType`
+ * @param ctrlChildClassInstance - (optional) Instance of the derived `ToggleableElement` to pair
  * @returns `TriggerElement` derived class instance with estabilished types
  * 
  * @remarks 
  * - *Expects derived classes of TriggerElement and ToggleableElement to no longer require type argument*
  * - *Optional parameter (if passed) MUST have `id` equal to `aria-controls` attribute of the trigger!*
  * 
- * @throws an error if `triggerIdOrEl` does not point to any element in the document
- * @throws an error if `triggerEl` is not an instance of `triggerElType` as requested
- * @throws an error if trigger has no `aria-controls`
- * @throws an error if optional parameter is passed but does not match trigger's `aria-controls`
+ * @throws {Error} If `triggerIdOrEl` does not point to any element in the document
+ * @throws {Error} If `triggerEl` is not an instance of `triggerElType` as requested
+ * @throws {Error} If trigger has no `aria-controls`
+ * @throws {Error} If optional parameter is passed but does not match trigger's `aria-controls`
  * 
  * @example
  * ```ts

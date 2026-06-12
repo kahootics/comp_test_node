@@ -1,10 +1,10 @@
 
 /**
  * Function that fetches a Google Spreadsheet sheet in csv format
- * @param sheetId - the speadsheet id (the string after "/d/" to the next "/" in the URI)
- * @param sheetGID - the sheet gid (the string in the parameter "gid" in the URI)
+ * @param sheetId - The spreadsheet id (the string after "/d/" to the next "/" in the URI)
+ * @param sheetGID - The sheet gid (the string in the parameter "gid" in the URI)
  * @returns a string representing the sheet in .csv format
- * @throws an error if fetching operation fails
+ * @throws {Error} If fetching operation fails
  */
 export default async function fetchSheetAsCSV(sheetId:string, sheetGID: string) {
 

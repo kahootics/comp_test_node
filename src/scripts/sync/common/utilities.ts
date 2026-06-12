@@ -48,11 +48,11 @@ export function areInstancesOf<T>(
  * Retrieves HTML element of specified type from 
  * string or validates type of element.
  * 
- * @param type - type to get the element validated for (must be HTMLElement or extension)
- * @param idOrEl - either id attribute of element or the element itself
+ * @param type - Type to get the element validated for (must be HTMLElement or extension)
+ * @param idOrEl - Either id attribute of element or the element itself
  * @returns the element with validated type
- * @throws an error If element is not of requested type
- * @throws an error If element does not exist (id references nothing)
+ * @throws {Error} If element is not of requested type
+ * @throws {Error} If element does not exist (id references nothing)
  * @remarks *Requires a DOM environment*.
  */
 export function getValidatedElement<H extends HTMLElement>(

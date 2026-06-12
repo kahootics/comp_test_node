@@ -1,4 +1,5 @@
 
+/** Converts a binary string to hexadecimal (starting from left) */
 export function binToHexFromLeft(bin: string) {
 	let result = '';
 	for (let i = 0; i < bin.length; i += 4) {
@@ -9,7 +10,7 @@ export function binToHexFromLeft(bin: string) {
 	return result;
 }
 
-
+/** Converts a hexadecimal string to binary (starting from left) */
 export function hexToBinFromLeft(hex: string): string {
    	const sanitized = hex.replace(/[^0-9A-Fa-f]/g, '');
    	if (!sanitized) return '';
@@ -21,6 +22,7 @@ export function hexToBinFromLeft(hex: string): string {
    		.join('');
 }
 
+/** Verifies if a string holds a valid hexadecimal value */
 export function isHex(str: string): boolean {
    	return /^[0-9A-Fa-f]+$/.test(str);
 }

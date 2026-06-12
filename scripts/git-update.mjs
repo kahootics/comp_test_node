@@ -58,6 +58,10 @@ if (commitMsg === '') {
 
 // FINALIZE ====================================================================
 
+// Clean dist folder
+console.log('Emptying dist folder...');
+execSync('npm run clear:dist');
+
 // Update Version
 console.log(`Version updated: ${bump}`);
 execSync(`npm version ${bump} --no-git-tag-version`, { stdio: 'inherit' });

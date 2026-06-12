@@ -1,4 +1,11 @@
 
+/**
+ * Normalizes a CSV value element into corresponding JS types
+ * @param value - Cell content to normalize
+ * @param newLineReplacer - (optional) Symbol replaced with `\n` in the output.
+ * If omitted, no replacement is performed.
+ * @returns normalized content inputted
+ */
 export default function normalizeCellValue(value: string | number | null, newLineReplacer?: string) {
 	
 	if (value === null || value === 'null' || value === "") return null;

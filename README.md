@@ -10,6 +10,30 @@ Documenting Node setup steps for WordPress integration
 - [x] csv-parse: help build structured data from csv
 - [x] zod: enforce type validation on parsed csv before turning to JSON
 
+## Workflow
+
+1. [x] port and document node-csv functions (**csv-parse**)
+1. [x] port and document independent utilities
+1. [ ] port and document enchantments filters
+1. [ ] port, polish and document mods-compendium filters
+1. [x] implement expandables structures
+1. [ ] build expandables of dropdown, modal and popover
+1. [x] implement writers copy and json functions
+1. [ ] srcset maker function with **sharp**
+1. [ ] implement popup message non-intrusive window structure
+1. [ ] standardize data collections structure on spreadsheets
+1. [ ] document types for spreadsheet with **zod**
+1. [ ] implement sitemap function with **glob**
+1. [ ] implement hashing function
+1. [ ] implement formatting, renaming and cropping of gallery images with **sharp** and **glob** using schema.json header file of gallery sections
+1. [ ] &lt;continue workflow&gt;
+
+### Finalize Node
+
+- [ ] Uninstall tsx
+- [ ] Remove temporary files
+- [ ] Test alongside Wordpress live
+
 ## Scripts
 
 ### Node Environment
@@ -22,7 +46,6 @@ Documenting Node setup steps for WordPress integration
 >     |   ├── ☒ fetch-sheet-as-structured-data.ts ## dependency to csv-parse module
 >     |   └── ☒ normalize-cells.ts
 >     ├── writers/ ## file writing management
->     |   ├── write-csv.ts
 >     |   ├── ☒ write-structured-data-as-json.ts ## dataset to json written at given directory
 >     |   ├── rename-to-list.ts ## renames a list of files to a list of names
 >     ├── path-finders/ ## post-initial build runs to create manifest; dependency: glob
@@ -42,11 +65,10 @@ Documenting Node setup steps for WordPress integration
 
 > ```php
 > scripts/ 
-> └── toShip/ ## Will be shipped; MUST NOT use node scripts
+> └── sync/ ## Will be shipped; MUST NOT use node scripts
 >     ├── DOM/
->     |   ├── modal/
->     |   |   ├── modal.ts # a main class that deals with backdrop, main toggles and focus traps
->     |   |   └── mobile-handle.ts # adds handle on mobile to close modal
+>     |   ├── modal.ts # a main class that deals with backdrop, main toggles and focus traps
+>     |   ├── mobile-handle.ts # adds handle on mobile to close modal
 >     |   ├── dropdown.ts
 >     |   ├── *
 >     |   |   └── *

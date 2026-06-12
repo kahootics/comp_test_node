@@ -1,8 +1,8 @@
-import { getValidatedElement, requestTransitionFrame } from "../utilities.js";
-import companionSharedConstants from '../../../../config/companion-shared-constants.json' with { type: 'json' };
-import { ToggleableElement } from "../expandable-pair.js";
+import { getValidatedElement, requestTransitionFrame } from "./utilities.js";
+import companionSharedConstants from '../../../config/companion-shared-constants.json' with { type: 'json' };
+import { ToggleableElement } from "./expandable-pair.js";
 
-// BACKDROP ============================================================================
+// BACKDROP =============================================================================
 /** Backdrop specific css class name. */
 const CLASS: string = companionSharedConstants.classes.modals.backdrop;
 /**
@@ -17,7 +17,7 @@ export class Backdrop extends ToggleableElement {
     /** Backdrop element (created from scratch). */
     get BACKDROP() { return this.ELEMENT; }
     /**
-     * @param modalCloserFunction - function that closes the modal; 
+     * @param modalCloserFunction - Function that closes the modal; 
      * required for closing it when backdrop is clicked
      */
     constructor(modalCloserFunction: () => void) {
@@ -32,7 +32,7 @@ export class Backdrop extends ToggleableElement {
     }
 }
 
-// MODAL ===============================================================================
+// MODAL ================================================================================
 /** CSS selectors list of focusable elements. */
 const FOCUSABLES = 'a, button, input, textarea, select, [tabindex]:not([tabindex="-1"])';
 /**
@@ -165,5 +165,5 @@ export default class Modal extends ToggleableElement<HTMLElement> {
     }   
 }
 
-// MODAL CONTROL =======================================================================
+// MODAL CONTROL ========================================================================
 
