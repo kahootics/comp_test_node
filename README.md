@@ -19,10 +19,12 @@ Documenting Node setup steps for WordPress integration
 1. [x] implement expandables structures
 1. [ ] build expandables of dropdown, modal and popover
 1. [x] implement writers copy and json functions
-1. [ ] srcset maker function with **sharp**
+1. [ ] adjust shared constants json
+1. [x] srcset maker function with **sharp**
 1. [ ] implement popup message non-intrusive window structure
 1. [ ] standardize data collections structure on spreadsheets
 1. [ ] document types for spreadsheet with **zod**
+1. [ ] export zod inferred types to safe use at runtime
 1. [ ] implement sitemap function with **glob**
 1. [ ] implement hashing function
 1. [ ] implement formatting, renaming and cropping of gallery images with **sharp** and **glob** using schema.json header file of gallery sections
@@ -30,9 +32,23 @@ Documenting Node setup steps for WordPress integration
 
 ### Finalize Node
 
-- [ ] Uninstall tsx
+- [ ] Uninstall tsx (?)
 - [ ] Remove temporary files
 - [ ] Test alongside Wordpress live
+
+## Build
+
+1. [x] tsc
+1. [x] hash scripts
+1. [x] map scripts
+1. [x] copy img
+1. [x] make srcsets
+1. [x] hash images
+1. [x] map images
+1. [ ] produce json datasets
+1. [ ] hash datasets
+1. [ ] map datasets
+1. [ ] join maps into manifest & write it
 
 ## Scripts
 

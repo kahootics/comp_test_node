@@ -1,6 +1,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { fromBtoKB } from '../../shared/utilities/hex-parsers.js';
 
 /**
  * Compares a source valid path with a destination one and returns a validated version of it
@@ -11,7 +12,7 @@ import path from 'node:path';
  * - with the same basename of `src` if it had none or `dest` pointed to a folder or started with `.`
  * - with the same extension of `src` if it had none or different one
  */
-function destPathCorrected(src: string, dest: string): string {
+export function destPathCorrected(src: string, dest: string): string {
     let correctedDest = path.normalize(dest);
 
     const destBase = path.basename(correctedDest);
@@ -50,10 +51,11 @@ export default function copyFileTo(src: string, dest: string) {
         fs.mkdirSync(path.dirname(outPath), { recursive: true });        
         fs.copyFileSync(srcPath,outPath);
     
-        console.log(`File '${path.basename(src)}' has been copied ${path.basename(src) === path.basename(destCorr) ? '' : `as '${path.basename(destCorr)}' `}to ${path.dirname(destCorr)}\\ (${fs.statSync(outPath).size} bytes)`);
+        console.log(`File '${path.basename(src)}' has been copied ${path.basename(src) === path.basename(destCorr) ? '' : `as '${path.basename(destCorr)}' `}to ${path.dirname(destCorr)}\\ [${fromBtoKB(fs.statSync(outPath).size)}]`);
         console.log(`src:  ${srcPath}\ndest: ${outPath}`);
     
     } catch(err) {
         console.error(`Copying of ${src} failed at: ${destCorr}:`, err);     
     }
 }
+

@@ -26,3 +26,8 @@ export function hexToBinFromLeft(hex: string): string {
 export function isHex(str: string): boolean {
    	return /^[0-9A-Fa-f]+$/.test(str);
 }
+
+/** Converts a byte to a string representing it in KB (max 2 decimals) */
+export function fromBtoKB(bytes: number ): string {
+	return `${(bytes/1024).toFixed(2)} KB`;
+}

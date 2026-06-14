@@ -2,6 +2,7 @@ import sharp from 'sharp';
 import path from 'node:path';
 import fs from 'node:fs';
 import { glob } from 'glob';
+import { fromBtoKB } from '../../shared/utilities/hex-parsers.js';
 
 async function imgToExt(
     filePath: string, 
@@ -11,13 +12,15 @@ async function imgToExt(
     /* const metadata = await sharp(filePath).metadata();
     const { width, height } = metadata; */
 
-    const dir = path.dirname(filePath);
-    const ext = path.extname(filePath); // .{jpg,png...}
-    const name = path.basename(filePath, ext);
+    const src = path.resolve(filePath);
 
-    const outPath = path.join(dir, `${name}.${format}`);
+    const dir = path.dirname(src);
+    const ext = path.extname(src); // .{jpg,png...}
+    const name = path.basename(src, ext);
 
-    await sharp(filePath)
+    const outPath = path.resolve(path.join(dir, `${name}.${format}`));
+
+    const res = await sharp(src)
         /* .extract({
             left: Math.floor(width/2),
             top: 0,
@@ -27,13 +30,15 @@ async function imgToExt(
         .toFormat(format, { quality: quality })
         .toFile(outPath);
 
-    fs.unlinkSync(filePath); 
+    // Delete old file
+    fs.unlinkSync(src); 
+
     //console.log(`Successfully converted ${name} to .webp;`);
-    console.log(`File format edited at ${outPath}`);
+    console.log(`File format edited at ${outPath} [${fromBtoKB(res.size)}]`);
 }
 
 
-const images = await glob('src/assets/**/*.{jpeg,jpg,png,gif}', { cwd: './' });
+const images = await glob('src/assets/**/*.{jpeg,jpg,png,gif}');
 
 console.log(`Found ${images.length} images to convert`);
 

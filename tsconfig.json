@@ -15,7 +15,7 @@
     "module": "NodeNext", // Configures Node.js to use ESM module system
     "rootDir": "src", // Specifies the source directory for your code
     "outDir": "dist", // Specifies the output directory for compiled files
-    "sourceMap": true, // Enables source maps for easier debugging
+    // "sourceMap": true, // Enables source maps for easier debugging
 
     /* Module Resolution Strategy: */
     "moduleResolution": "NodeNext", // Resolves modules using Node’s ESM strategy
@@ -32,7 +32,7 @@
     "noImplicitAny": true, // Prevents the use of `any` type unless explicitly defined
     "skipLibCheck": true, // Skips type-checking of declaration files for faster compilation
     "resolveJsonModule": true, // Allows importing JSON files as modules
-    "declaration": true, // Generates `.d.ts` files for type definitions
+    // "declaration": true, // Generates `.d.ts` files for type definitions
     "allowSyntheticDefaultImports": true, // Allows default imports for CommonJS modules
     "verbatimModuleSyntax": true, // Keeps the `import`/`export` syntax as-is without transformation
 
@@ -42,5 +42,5 @@
     /* "lib": ["ES2022"] */
   },
   "include": ["src"], // Includes the `src` directory in the project
-  "exclude": ["node_modules", "dist", "scripts/*.mjs"] // Excludes `node_modules` and `dist` directories from the project
+  "exclude": ["node_modules", "dist", "scripts/**/*.{mjs,js}"] // Excludes `node_modules` and `dist` directories from the project
 }
