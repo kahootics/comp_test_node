@@ -4,6 +4,7 @@ import path from 'node:path';
 import { destPathCorrected } from '../writers/copy-file-to.js';
 import hashFile from '../writers/hash.js';
 import writeAsJsonAt from '../writers/write-as-json-at.js';
+import { toPublicUrl } from '../../../config/companion-util.js';
 
 interface ImageFormat {
     format: keyof sharp.FormatEnum;
@@ -70,7 +71,7 @@ export async function buildSrcset(
         alt:    alt || '',
         width,
         height,
-        srcset: { [`${width}w`]: ogHashedPath },
+        srcset: { [`${width}w`]: toPublicUrl(ogHashedPath) },
     };
 
     // srcset builder
@@ -83,7 +84,7 @@ export async function buildSrcset(
         // Rename with hashing
         const varHashedPath = hash ? hashFile(varOutPath) : varOutPath;
 
-        output.srcset[`${setWidth}w`] = varHashedPath;
+        output.srcset[`${setWidth}w`] = toPublicUrl(varHashedPath);
     }
 
     return output;

@@ -13,6 +13,7 @@ import path from 'node:path';
 import { glob } from 'glob';
 import { buildSrcset } from './scripts/node/sharp/build-srcset.js';
 import writeAsJsonAt from './scripts/node/writers/write-as-json-at.js';
+import { toPublicUrl } from './config/companion-util.js';
 
 /* if (fs.existsSync('./dist')) {
     fs.rmSync('./dist', { recursive: true });
@@ -23,13 +24,13 @@ import writeAsJsonAt from './scripts/node/writers/write-as-json-at.js';
 
 const dest = './dist/export.json';
 
-const scriptFiles = await glob('dist/scripts/sync/**/*.js'); // GOOD
+const scriptFilesPaths = await glob('dist/scripts/sync/**/*.js'); // GOOD
 
 const out: { [key: string]: string }[] = [];
-scriptFiles.forEach(script => {
-    const key = path.basename(script, '.js');
+scriptFilesPaths.forEach(scriptPath => {
+    const key = path.basename(scriptPath, '.js');
     out.push({
-        [key]: script
+        [key]: toPublicUrl(scriptPath)
     });
 })
 
@@ -37,7 +38,6 @@ const outPath = path.resolve(dest);
 
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 
-    	
 fs.writeFileSync(
     		outPath,
 			JSON.stringify(out),

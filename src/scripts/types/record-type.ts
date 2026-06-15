@@ -56,13 +56,20 @@ export default {
             localFormId: this.localFormId()
         });
     },
-    formIdPrefix() { 
-        return z.hex().trim().toUpperCase().refine(
+    /**
+     * @returns zod object that parses a hexadecimal prefix of 2 or 3
+     */
+    formIdPrefix: () =>
+        z.hex().trim().toUpperCase().refine(
             fid => (fid.length === 2 && (fid !== 'FE')) || (fid.length === 3),
             { error: "invalid form ID prefix" }
-        );
-    },
-    pluginExt() {
-        return z.string().toLowerCase().length(3);
-    }
+        ),
+    /**
+     * @returns zod object that parses a file extesion
+     */
+    pluginExt: () =>
+        z.string().toLowerCase().length(3), // needs refining
+    /**
+     * 
+     */
 }

@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fromBtoKB } from '../../shared/utilities/hex-parsers.js';
+import { toPublicUrl } from '../../../config/companion-util.js';
 
 /**
  * Converts data into a JSON format and writes as a .json file at requested path
@@ -32,7 +33,7 @@ export default async function writeAsJsonAt(data: unknown, dest: string, minifie
     		);
   		}
 
-		console.log(`File written at: ${outPath} [${fromBtoKB(fs.statSync(outPath).size)}]`);
+		console.log(`File written at: ${toPublicUrl(outPath)} [${fromBtoKB(fs.statSync(outPath).size)}]`);
 
 	} catch(err) {
 

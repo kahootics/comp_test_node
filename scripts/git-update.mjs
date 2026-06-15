@@ -1,9 +1,14 @@
+// @ts-check
+
 import readline from 'node:readline/promises';
 import { execSync } from 'node:child_process';
 import execGitSync from './exec-sync-git.mjs';
 
 const LN_INPUT = '$' + ' ';
 
+/**
+ * @type {Record<string,string>}
+ */
 const updatesMap = {
     '1': 'patch',
     '2': 'minor',
