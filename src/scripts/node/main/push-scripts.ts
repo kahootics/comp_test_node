@@ -41,7 +41,7 @@ export async function pushScripts() {
 
 }
 
-const isBuild = process.env.BUILD == 'true';
+const isBuild = process.env.BUILD === 'true';
 
 // scripts/node/bundler.ts
 import * as esbuild from 'esbuild';
@@ -69,7 +69,7 @@ export async function bundleScripts(
             write: false, // Returns buffer array
             format: 'esm',
             minify: true,
-            sourcemap: true,
+            sourcemap: !isBuild,
             platform: 'browser',
         });
         const arrBuf = result.outputFiles[0]?.contents
