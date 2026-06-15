@@ -1,4 +1,4 @@
-import { getValidatedElement, requestTransitionFrame } from "./utilities.js";
+import { getValidatedElement, requestTransitionFrame } from "../common/utilities.js";
 import companionSharedConstants from '../../../config/companion-shared-constants.json' with { type: 'json' };
 import { ToggleableElement } from "./expandable-pair.js";
 

@@ -4,7 +4,7 @@ import path from 'node:path';
 import { destPathCorrected } from '../writers/copy-file-to.js';
 import hashFile from '../writers/hash.js';
 import writeAsJsonAt from '../writers/write-as-json-at.js';
-import { logWritten, toPublicUrl } from '../path-finders/companion-util.js';
+import { Log, toPublicUrl } from '../../../config/companion-util.js';
 
 interface ImageFormat {
     format: keyof sharp.FormatEnum;
@@ -67,14 +67,15 @@ export async function buildSrcset(
     // init result
     const output: SrcsetOutput = {
         name,
-        src:    ogHashedPath,
+        src:    toPublicUrl(ogHashedPath),
         alt:    alt || '',
         width,
         height,
         srcset: { [`${width}w`]: toPublicUrl(ogHashedPath) },
     };
 
-    logWritten(ogHashedPath);
+    Log.file(ogHashedPath);
+    
     // srcset builder
     for (const setWidth of widths) {
         // skip widths greater of original's (no upscale)

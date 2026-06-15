@@ -1,6 +1,6 @@
 {
   "name": "tuxborn-companion",
-  "version": "0.3.4",
+  "version": "0.4.0",
   "author": "kahootics",
   "description": "",
   "main": "dist/main.js",
@@ -24,6 +24,7 @@
   "type": "module",
   "devDependencies": {
     "@types/node": "^25.9.1",
+    "esbuild": "^0.28.1",
     "glob": "^13.0.6",
     "typescript": "^6.0.3"
   },

@@ -1,0 +1,225 @@
+
+import { enchantingSkill, ArmoMag, WeapMag, WeapCharges, ArmoPrice, WeapPrice } from "./enchantments.js";
+
+// All the variable magnitudes displayed
+let base, zero, hundred, growth: string | null;
+const armoMags: Set<ArmoMag> = new Set();
+const weapMags: Set<WeapMag> = new Set();
+const armoValues: Set<ArmoPrice> = new Set();
+const weapValues: Set<WeapPrice> = new Set();
+const weapCharges: Set<WeapCharges> = new Set();
+document.querySelectorAll<HTMLElement>('.armo-magnitude').forEach(mag=> {
+    base = mag.getAttribute('data-mag-base');
+    zero = mag.getAttribute('data-mag-zero');
+    //hundred = mag.getAttribute('data-mag-hundred');
+    growth = mag.getAttribute('data-mag-growth');
+    if(!(base && zero && growth)) {
+        throw new Error(`Could not find magnitude relative data of enchantment ${mag.id}`)
+    } armoMags.add(new ArmoMag(mag,base,Number(zero),Number(growth)))
+})
+document.querySelectorAll<HTMLElement>('.weap-magnitude').forEach(mag=> {
+    base = mag.getAttribute('data-mag-base');
+    zero = mag.getAttribute('data-mag-zero');
+    hundred = mag.getAttribute('data-mag-hundred');
+    growth = mag.getAttribute('data-mag-growth');
+    if(!(base && zero && growth)) throw new Error(`Could not find magnitude relative data of enchantment ${mag.id}`)
+    weapMags.add(new WeapMag(mag,base,Number(zero),Number(hundred),Number(growth)))
+})
+document.querySelectorAll<HTMLElement>('.armo-enchantment-value').forEach(val=> {
+    zero = val.getAttribute('data-value-zero');
+    if(!zero) throw new Error(`Could not find value at 0 skill of enchantment ${val.id}`);
+    armoValues.add(new ArmoPrice(val,Number(zero)));
+})
+document.querySelectorAll<HTMLElement>('.weap-enchantment-value').forEach(val=> {
+    hundred = val.getAttribute('data-charges-hundred');
+    if(!hundred) throw new Error(`Could not find charges at 100 skill of enchantment ${val.id}`);
+    weapValues.add(new WeapPrice(val,Number(hundred)));
+})
+document.querySelectorAll<HTMLElement>('.weap-enchantment-charges').forEach(val=> {
+    hundred = val.getAttribute('data-charges-hundred');
+    if(!hundred) throw new Error(`Could not find charges at 100 skill of enchantment ${val.id}`);
+    weapCharges.add(new WeapCharges(val,Number(hundred)));
+})
+const chargesSections = {
+    list: document.querySelectorAll<HTMLElement>('.ench-charges-section'),
+    set hidden(attribute: boolean) {
+        requestAnimationFrame(() => 
+        this.list.forEach((sec => sec.hidden = attribute)))
+    }
+}
+
+// The filters inputs
+const enchLev = document.getElementById('enchanting-level');
+const enchRange = document.getElementById('enchanting-range');
+const select = createFalseSelect('enchantsd', ['base', 'skill'],'Enchantment');
+
+if(!(enchRange instanceof HTMLInputElement && enchLev)) throw new Error('Missing Enchanting skill input')
+
+enchRange.style.setProperty('--range-pct', ((Number(enchRange.value) - 15) / 85 * 100) + '%');
+
+select.inputs.forEach(input => input.addEventListener('change', () => {
+
+    switch(select.value) {
+        case('base'): {
+            ArmoMag.resetSet(armoMags);
+            WeapMag.resetSet(weapMags);
+            chargesSections.hidden = true;
+        } break;
+        case('skill'): {
+            ArmoMag.updateSet(armoMags);
+            WeapMag.updateSet(weapMags);
+            WeapCharges.updateSet(weapCharges);
+            chargesSections.hidden = false;
+        } break;
+    }
+    
+}))
+
+
+enchRange.addEventListener('input', () => {
+    const value = enchRange.value;
+    enchLev.innerText = value;
+    enchantingSkill.level = Number(value);
+    const pct = (Number(value) - 15) / 85 * 100;
+    enchRange.style.setProperty('--range-pct', pct + '%');
+    
+    if(select.value === 'skill') {
+        ArmoMag.updateSet(armoMags);
+        WeapMag.updateSet(weapMags);
+        WeapCharges.updateSet(weapCharges);
+    }
+    ArmoPrice.updateSet(armoValues);
+    WeapPrice.updateSet(weapValues);
+})
+
+/* =================================================================== */
+
+const sort = createFalseSelect('enchantsort', ['default', 'name', 'mod', 'value', 'tier'],'Enchantment');
+const form = document.getElementById('enchantments-filters');
+const search = document.getElementById('search-input');
+
+if(!(search instanceof HTMLInputElement && form instanceof HTMLFormElement)) throw new Error("Couldn't find search field");
+
+form.addEventListener('submit', e => {e.preventDefault()});
+
+const enchantments = document.querySelectorAll<HTMLElement>('[data-ench-eff-list]');
+
+const enchs: any[] = [];
+
+enchantments.forEach(enchant => {
+    enchs.push({
+        ench: enchant,
+        default: Number(enchant.getAttribute('data-default')),
+        tier: Number(enchant.getAttribute('data-tier')),
+        name: enchant.getAttribute('data-name'),
+        mod: enchant.getAttribute('data-mod'),
+        restrictions: enchant.getAttribute('data-restrictions'),
+        value: Number(enchant.getAttribute('data-value')),
+        searchStr: enchant.getAttribute('data-ench-eff-list')?.toLocaleLowerCase(),
+        _searchFlag: true,
+        _restrFlag: true,
+        set searchFlag(flag: boolean) {
+            this._searchFlag = flag;
+            enchant.hidden = !(this._searchFlag && this._restrFlag);
+        },
+        set restrFlag(flag: boolean) {
+            this._restrFlag = flag;
+            enchant.hidden = !(this._searchFlag && this._restrFlag);
+        }
+    })
+})
+
+let timer_search: number;
+
+search.addEventListener('input', () => {
+    clearTimeout(timer_search);
+
+    timer_search = window.setTimeout(() => {
+
+        const input = search.value.toLocaleLowerCase().trim();
+        enchs.forEach(enchant => {
+            enchant.searchFlag =
+            enchant.searchStr.includes(input);
+        })
+    }, 500);
+})
+
+let timer_sort: number;
+
+
+sort.inputs.forEach(input => input.addEventListener('input',() => {
+    clearTimeout(timer_sort);
+    timer_sort = window.setTimeout(() => {
+
+        const sortKey = sort.value;
+        const frag = document.createDocumentFragment();
+
+        switch(typeof enchs[0][sortKey]) {
+            case('string'): enchs.sort((a,b) => 
+                a[sortKey].localeCompare(b[sortKey], undefined, { sensitivity: 'base' })
+            ); break;
+            case('number'): {
+                if(sortKey === 'value') {
+                    enchs.sort((a,b) => 
+                        b[sortKey] - a[sortKey]
+                    ); 
+                } else enchs.sort((a,b) => 
+                    a[sortKey] - b[sortKey]
+                ); 
+            }break;
+        }
+
+        
+        enchs.forEach(ench => {
+            frag.appendChild(ench.ench)
+        })
+
+        document.getElementById('mods-compendium')?.appendChild(frag);
+    },300)
+}))
+
+/* ============================================ */
+
+const restriction = createFalseSelect('enchantrestrict', [
+    'none','Apparel','Weapon','Head','Neck','Body','Hands','Finger','Feet','Shield'],'Enchantment');
+let timer_rest: number;
+
+
+restriction.inputs.forEach(input => input.addEventListener('input',() => {
+    clearTimeout(timer_rest);
+    timer_rest = window.setTimeout(() => {
+        const rest = restriction.value;
+
+        switch(rest) {
+            case('none'): {
+                enchs.forEach(enchant => enchant.restrFlag = true);
+            }; break;
+            case('Weapon'): {
+                enchs.forEach(enchant => enchant.restrFlag = enchant.restrictions.includes(rest));
+            }; break;
+            default: {
+               
+                enchs.forEach(enchant => { 
+                    const temp = enchant.restrictions;
+                    enchant.restrFlag = temp.includes(rest) || temp === 'Apparel'
+                });
+                
+
+            }
+        } 
+        
+    }, 300);
+}))
+
+/* ====================================================== */
+
+const toggle = document.getElementById('filters');
+
+toggle?.addEventListener('click',()=> {
+    const isEx = toggle.getAttribute('aria-expanded') === 'true';
+    form.hidden = isEx;
+    toggle.setAttribute('aria-expanded',`${!isEx}`);
+})
+
+/* ============================================================ */
+

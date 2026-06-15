@@ -1,7 +1,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { logWritten, toPublicUrl } from '../path-finders/companion-util.js';
+import { Log } from '../../../config/companion-util.js';
 
 /**
  * Converts data into a JSON format and writes as a .json file at requested path
@@ -13,7 +13,6 @@ import { logWritten, toPublicUrl } from '../path-finders/companion-util.js';
 export default async function writeAsJsonAt(data: unknown, dest: string, minified?: boolean) {
 
 	try {
-
   		const outPath = path.resolve(dest);
 
   		fs.mkdirSync(path.dirname(outPath), { recursive: true });
@@ -32,11 +31,9 @@ export default async function writeAsJsonAt(data: unknown, dest: string, minifie
     		);
   		}
 
-		logWritten(outPath);
+		Log.file(outPath);
 	} catch(err) {
-
 		console.error(`File writing failed at: ${dest}:`, err);
-		
 	}
 }
 

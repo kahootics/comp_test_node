@@ -1,6 +1,6 @@
 
 import companionSharedConstants from '../../../config/companion-shared-constants.json' with { type: 'json' };
-import { ElementWithLock, getValidatedElement, requestTransitionFrame } from './utilities.js';
+import { ElementWithLock, getValidatedElement, requestTransitionFrame } from '../common/utilities.js';
 
 // TOGGLEABLE ELEMENT ===================================================================
 /** CSS class utility to mark an open toggleable. */

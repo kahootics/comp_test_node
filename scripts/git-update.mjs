@@ -63,6 +63,8 @@ if (commitMsg === '') {
 
 // FINALIZE ====================================================================
 
+// Images first processing
+
 // Clean dist folder
 console.log('Emptying dist folder...');
 execSync('npm run clear:dist');
