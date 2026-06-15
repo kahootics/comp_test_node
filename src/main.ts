@@ -13,7 +13,7 @@ import path from 'node:path';
 import { glob } from 'glob';
 import { buildSrcset } from './scripts/node/sharp/build-srcset.js';
 import writeAsJsonAt from './scripts/node/writers/write-as-json-at.js';
-import { toPublicUrl } from './config/companion-util.js';
+import { logWritten, toPublicUrl } from './scripts/node/path-finders/companion-util.js';
 
 /* if (fs.existsSync('./dist')) {
     fs.rmSync('./dist', { recursive: true });
@@ -44,7 +44,7 @@ fs.writeFileSync(
     		'utf-8'
 		)
 
-console.log(`File written at: ${outPath} (${fs.statSync(outPath).size} bytes)`);
+logWritten(outPath);
 
 
 const json = await buildSrcset('src/assets/sprites/content-icons-sprite.webp','dist/assets/sprites/',[720,1080], false, true);
