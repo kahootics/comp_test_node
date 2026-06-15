@@ -1,5 +1,5 @@
 
-import {z} from 'zod';
+import {readonly, z} from 'zod';
 
 // export type LocalFormID = z.infer<typeof zodLocalFormID>;
 // import type { LocalFormID } from '?/types/record-types.js';
@@ -32,8 +32,37 @@ export const zodCompVersionID = z.string().trim().length(4).regex(hexRegex).toUp
  * - last 6 form ID characters for .esp/.esm records
  * - 'FE' + last 3 form ID charcters in case of .esl file records
  */
-export const zodLocalFormID = z.string().trim().regex(hexRegex).toUpperCase().refine(
+export const zodLocalFormID = z.hex().trim().toUpperCase().refine(
     id => (id.length === 5 && id.startsWith('FE')) || (id. length === 6),
     { error: "not valid local form ID" }
 );
 
+const zodRecordRawBase = z.object({
+    pluginId: zodCompPluginID,
+    compVersionId: zodCompVersionID,
+    localFormId: zodLocalFormID
+});
+
+export default {
+    compPluginId() { return zodCompPluginID; },
+    compVersionId() { return zodCompVersionID; },
+    localFormId() { return zodLocalFormID; },
+    tier() { return zodTier; },
+    recordType() { return zodRecordType; },
+    recordBase() { 
+        return z.object({
+            compPluginId: this.compPluginId(),
+            compVersionId: this.compVersionId(),
+            localFormId: this.localFormId()
+        });
+    },
+    formIdPrefix() { 
+        return z.hex().trim().toUpperCase().refine(
+            fid => (fid.length === 2 && (fid !== 'FE')) || (fid.length === 3),
+            { error: "invalid form ID prefix" }
+        );
+    },
+    pluginExt() {
+        return z.string().toLowerCase().length(3);
+    }
+}

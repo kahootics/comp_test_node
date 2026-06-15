@@ -11,6 +11,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { glob } from 'glob';
+import { buildSrcset } from './scripts/node/sharp/build-srcset.js';
+import writeAsJsonAt from './scripts/node/writers/write-as-json-at.js';
 
 /* if (fs.existsSync('./dist')) {
     fs.rmSync('./dist', { recursive: true });
@@ -19,11 +21,9 @@ import { glob } from 'glob';
 
 // import SHARED from '../../static/companion-shared-ids.json' with { type: 'json' };
 
-const dest = './dist/json.json';
+const dest = './dist/export.json';
 
-function getFileName() {}
-
-const scriptFiles = await glob('sync/**/*.js', { cwd: './dist' }); // GOOD
+const scriptFiles = await glob('dist/scripts/sync/**/*.js'); // GOOD
 
 const out: { [key: string]: string }[] = [];
 scriptFiles.forEach(script => {
@@ -45,3 +45,8 @@ fs.writeFileSync(
 		)
 
 console.log(`File written at: ${outPath} (${fs.statSync(outPath).size} bytes)`);
+
+
+const json = await buildSrcset('src/assets/sprites/content-icons-sprite.webp','dist/assets/sprites/',[720,1080], false, true);
+
+writeAsJsonAt(json,'dist/assets/sprites/jennyk.json');

@@ -1,13 +1,12 @@
 
 import {z} from 'zod';
+import c from './record-type.js';
 
 export const RecordType = z.string().regex(/^(ARMO|WEAP)/g);
-const Tier = z.string().regex(/^(A|B|C|D|E|F|S)/g);
 
-// ENCHANTMENTS ===========================
+// ENCHANTMENTS ========================================================================
 
-export const enchantArmorTest = z.object({
-    id: z.string(),
+export const ENCH_Raw = c.recordBase().extend(z.object({  
     name: z.string(),
     effects: z.array(z.string()),
     disenchant: z.array(z.string()).nullable(),
@@ -17,18 +16,18 @@ export const enchantArmorTest = z.object({
     obtain: z.string().nullable(), // temporary
     notes: z.string().nullable(),
     bugs: z.string().nullable(),
-    tier: z.string().nullable(), // temporary
+    tier: c.tier(),
     recordType: RecordType,
     priceAtZero: z.number().min(0),
     chargesAtHundred: z.number().min(-1)
-});
+}));
 
 export function parseEnchantsArmorTest(raw: {}[]) {
-    return raw.map((record) => enchantArmorTest.parse(record));
+    return raw.map((record) => ENCH_Raw.parse(record));
 }
 
-export function parseEnchantArmorTest(record: {}) {
-    return enchantArmorTest.parse(record);
+export function parseENCH_Raw(record: {}) {
+    return ENCH_Raw.parse(record);
 }
 
 // MAG EFFECTS ===========================
@@ -40,7 +39,7 @@ export const magnitude = z.object({
     growth: z.number().min(-1).max(100),
 })
 
-export const magEffTest = z.object({
+export const MGEF_Raw = z.object({
     id: z.string(),
     name: z.object({
         og: z.string(),
@@ -57,13 +56,13 @@ export const magEffTest = z.object({
     resist: z.string().nullable()
 })
 
-export const magEffCompleteTest = magEffTest.merge(z.object({id: z.string()}));
+export const magEffCompleteTest = MGEF_Raw.extend(z.object({id: z.string()}));
 
 export function parseMagEffsTest(raw: {}[]) {
-    return raw.map((record) => parseMagEffTest(record));
+    return raw.map((record) => parseMGEF_Raw(record));
 }
 
-export function parseMagEffTest(record: {}) {
+export function parseMGEF_Raw(record: {}) {
     const result = magEffCompleteTest.parse(record);
     if(typeof result.mag.atZero === typeof result.mag.base) 
     {
@@ -72,12 +71,12 @@ export function parseMagEffTest(record: {}) {
 }
 
 export function magEffMappify(unmapped: z.infer<typeof magEffCompleteTest>[])
-: Map<String, z.infer<typeof magEffTest>>  {
+: Map<String, z.infer<typeof MGEF_Raw>>  {
     const result = new Map();
     unmapped.forEach(magEff => {
         if(result.has(magEff.id)) 
             throw new Error(`ID: ${magEff.id} | ${magEff.name} has the same ID as ${result.get(magEff.id)}`)
-        result.set(magEff.id,magEffTest.parse(magEff));
+        result.set(magEff.id,MGEF_Raw.parse(magEff));
     });
     return result;
 }

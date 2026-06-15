@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { toNormalized } from "../shared/utilities/string-parsers.js";
+import { buildSrcset } from "../node/sharp/build-srcset.js";
 
 const hasId = z.object({
     id: z.string()
@@ -54,14 +55,14 @@ const SchemaOptionalsMod = z.object({
     }),
     image: z.object({
         int: z.string().nullable(),
-        ext: z.string()
+        ext: z.url()
     }),
     overview: z.string(),
     link: z.object({
-        nexus: z.string(),
-        wiki: z.string().nullable(),
+        nexus: z.url(),
+        wiki: z.url().nullable(),
         misc: z.object({
-            url: z.string().nullable(),
+            url: z.url().nullable(),
             name: z.string().nullable()
         }),
     }),
