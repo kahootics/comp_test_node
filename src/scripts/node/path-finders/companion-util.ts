@@ -1,9 +1,8 @@
 
 import { fromBtoKB } from '../../shared/utilities/hex-parsers.js';
-import ts from '../../../../tsconfig.json' with { type: 'json' };
 import fs from 'node:fs';
 
-const OUT = ts.compilerOptions.outDir;
+const OUT = 'dist/';
 
 /**
  * 
