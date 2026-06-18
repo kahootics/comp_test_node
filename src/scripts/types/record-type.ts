@@ -1,5 +1,5 @@
 
-import {readonly, z} from 'zod';
+import {object, readonly, z} from 'zod';
 
 // export type LocalFormID = z.infer<typeof zodLocalFormID>;
 // import type { LocalFormID } from '?/types/record-types.js';
@@ -43,7 +43,7 @@ const zodRecordRawBase = z.object({
     localFormId: zodLocalFormID
 });
 
-export default {
+export default Object.freeze({
     compPluginId() { return zodCompPluginID; },
     compVersionId() { return zodCompVersionID; },
     localFormId() { return zodLocalFormID; },
@@ -72,4 +72,4 @@ export default {
     /**
      * 
      */
-}
+})

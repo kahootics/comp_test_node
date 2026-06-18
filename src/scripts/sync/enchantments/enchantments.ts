@@ -55,7 +55,11 @@ interface EnchDisplayedParameterConstructor<C extends EnchDisplayedParameter> {
     calcSkillMult(skill: number): number
 }
 
-abstract class EnchDisplayedParameter {
+interface EnchDisplayedParameterMethods {
+    calc: (skillMult: number) => number,
+}
+
+abstract class EnchDisplayedParameter implements EnchDisplayedParameterMethods {
 
     private _element: HTMLElement;
 
@@ -74,7 +78,7 @@ abstract class EnchDisplayedParameter {
 
     // Overwrite the following two:
     static calcSkillMult(skill: number): number { return 0/0}; // placeholder
-    protected abstract calc(skillMult: number): number; 
+    abstract calc(skillMult: number): number; 
 
     // function to rewrite the content of the element to new value
     update(skillMult: number) {
@@ -92,7 +96,7 @@ abstract class EnchDisplayedParameter {
     }
 }
 
-class EnchParametersSet<T extends EnchDisplayedParameter> {
+export class EnchParametersSet<T extends EnchDisplayedParameter> {
     private readonly parameters: Set<T>;
     private readonly tpe: EnchDisplayedParameterConstructor<T>;
     constructor(type: EnchDisplayedParameterConstructor<T>, set: Set<T>) {

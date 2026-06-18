@@ -4,31 +4,34 @@ Documenting Node setup steps for WordPress integration
 
 ## Dependencies
 
-- [x] tsx: runs TS live
-- [x] glob: file management utility
-- [x] sharp: images optimization and editing
-- [x] csv-parse: help build structured data from csv
-- [x] zod: enforce type validation on parsed csv before turning to JSON
+ dependency | purpose
+ --- | ---
+ **tsx** | runs TS live
+ **glob** | file management utility
+ **sharp** | images optimization and editing
+ **csv-parse** | help build structured data from csv
+ **zod** | enforce type validation on parsed csv before turning to JSON
+ **esbuild** | bundle & minify scripts
 
 ## Workflow
 
-1. [x] port and document node-csv functions (**csv-parse**)
-1. [x] port and document independent utilities
-1. [ ] port and document enchantments filters
-1. [ ] port, polish and document mods-compendium filters
-1. [x] implement expandables structures
-1. [ ] build expandables of dropdown, modal and popover
-1. [x] implement writers copy and json functions
-1. [ ] adjust shared constants json
-1. [x] srcset maker function with **sharp**
-1. [ ] implement popup message non-intrusive window structure
-1. [ ] standardize data collections structure on spreadsheets
-1. [ ] document types for spreadsheet with **zod**
-1. [ ] export zod inferred types to safe use at runtime
-1. [ ] implement sitemap function with **glob**
-1. [ ] implement hashing function
-1. [ ] implement formatting, renaming and cropping of gallery images with **sharp** and **glob** using schema.json header file of gallery sections
-1. [ ] &lt;continue workflow&gt;
+- [x] port and document node-csv functions (**csv-parse**)
+- [x] port and document independent utilities
+- [ ] port and document enchantments filters
+- [ ] port, polish and document mods-compendium filters
+- [x] implement expandables structures
+- [ ] build expandables of dropdown, modal and popover
+- [x] implement writers copy and json functions
+- [ ] adjust shared constants json
+- [x] srcset maker function with **sharp**
+- [ ] implement popup message non-intrusive window structure
+- [ ] standardize data collections structure on spreadsheets
+- [ ] document types for spreadsheet with **zod**
+- [ ] export zod inferred types to safe use at runtime
+- [ ] implement sitemap function with **glob**
+- [x] implement hashing function
+- [x] implement formatting, renaming and cropping of gallery images with **sharp** and **glob** using rules.json header file of gallery sections
+- [ ] &lt;continue workflow&gt;
 
 ### Finalize Node
 
@@ -38,17 +41,17 @@ Documenting Node setup steps for WordPress integration
 
 ## Build
 
-1. [x] tsc
-1. [x] hash scripts
-1. [x] map scripts
-1. [x] copy img
-1. [x] make srcsets
-1. [x] hash images
-1. [x] map images
-1. [ ] produce json datasets
-1. [ ] hash datasets
-1. [ ] map datasets
-1. [ ] join maps into manifest & write it
+- [x] tsc
+- [x] hash scripts
+- [x] map scripts
+- [x] copy img
+- [x] make srcsets
+- [x] hash images
+- [x] map images
+- [ ] produce json datasets
+- [ ] hash datasets
+- [ ] map datasets
+- [ ] join maps into manifest & write it
 
 ## Scripts
 
@@ -78,6 +81,8 @@ Documenting Node setup steps for WordPress integration
 > ```
 
 ### Sync Area
+
+Scripts entrypoints are named main.js and inherit the name of the folder when bundled
 
 > ```php
 > scripts/ 

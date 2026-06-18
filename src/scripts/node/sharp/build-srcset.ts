@@ -6,12 +6,16 @@ import hashFile from '../writers/hash.js';
 import writeAsJsonAt from '../writers/write-as-json-at.js';
 import { Log, toPublicUrl } from '../../../config/companion-util.js';
 
+/**
+ * @param format - Format of destination
+ * @param quality - Quality of conversion
+ */
 interface ImageFormat {
     format: keyof sharp.FormatEnum;
     quality: number;
 }
 
-interface SrcsetOutput {
+export interface SrcsetOutput {
     name: string;
     src: string;
     alt: string;
@@ -28,9 +32,7 @@ interface SrcsetOutput {
  * @param alt - Alt text, or `false` for decorative images
  * @param hash - (optional) Whether to hash output filenames
  * Defaults to false.
- * @param newFormat - Optional format conversion:
- * @param newFormat.format - Format of destination
- * @param newFormat.quality - Quality of conversion
+ * @param [newFormat] - Optional format conversion: see {@link ImageFormat}
  * @returns srcset output object
  */
 export async function buildSrcset(
@@ -45,7 +47,7 @@ export async function buildSrcset(
     // Metadata red (later use)
     const metadata = await sharp(filePath).metadata();
     const { width, height } = metadata;
-    if (!width || !height) throw new Error(`Cannot read metadata from: ${filePath}`);
+    if(!width || !height) throw new Error(`Cannot read metadata from: ${filePath}`);
 
     const corrDest = destPathCorrected(filePath, dest);
     const outDir   = path.dirname(corrDest);

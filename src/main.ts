@@ -8,18 +8,21 @@
 
 
 
-import fs from 'node:fs';
-import path from 'node:path';
-import { glob } from 'glob';
-import { buildSrcset } from './scripts/node/sharp/build-srcset.js';
 import writeAsJsonAt from './scripts/node/writers/write-as-json-at.js';
-import { Log, toPublicUrl } from './config/companion-util.js';
-import { pushScripts } from './scripts/node/main/push-scripts.js';
+import buildScripts from './scripts/node/main/build-scripts.js';
+import json from './scripts/node/main/build-assets.js';
+import { Log } from './config/companion-util.js';
+import { buildDatasets } from './scripts/node/main/build-datasets.js';
 
 
-await pushScripts();
+export const isDev = process.env.BUILD !== 'true';
 
+Log.hdr('building script bundles');
+const scripts = await buildScripts();
 
-const json = await buildSrcset('src/assets/sprites/content-icons-sprite.webp','dist/assets/sprites/',[720,1080], false, true);
+const js = await json();
 
-writeAsJsonAt(json,'dist/assets/sprites/jennyk.json');
+writeAsJsonAt(js,'dist/assets/sprites/jennyk.json');
+
+Log.hdr('building data documents');
+await buildDatasets();

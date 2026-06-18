@@ -1,12 +1,14 @@
 
-import {z} from 'zod';
+import {record, z} from 'zod';
 import c from './record-type.js';
+import { ArmoPrice, WeapPrice } from '../sync/enchantments/enchantments.js';
 
 export const RecordType = z.string().regex(/^(ARMO|WEAP)/g);
 
 // ENCHANTMENTS ========================================================================
 
-export const ENCH_Raw = c.recordBase().extend(z.object({  
+export const ENCH_Raw = z.object({  
+    id: z.string(), // temporary
     name: z.string(),
     effects: z.array(z.string()),
     disenchant: z.array(z.string()).nullable(),
@@ -20,7 +22,12 @@ export const ENCH_Raw = c.recordBase().extend(z.object({
     recordType: RecordType,
     priceAtZero: z.number().min(0),
     chargesAtHundred: z.number().min(-1)
-}));
+}).transform(record => {
+    const priceAtHundred = record.recordType === 'ARMO'
+        ? ArmoPrice.calcValue(100, record.priceAtZero)
+        : WeapPrice.calcValue(100, record.chargesAtHundred);
+        return {...record, priceAtHundred};
+    });
 
 export function parseEnchantsArmorTest(raw: {}[]) {
     return raw.map((record) => ENCH_Raw.parse(record));
@@ -56,7 +63,7 @@ export const MGEF_Raw = z.object({
     resist: z.string().nullable()
 })
 
-export const magEffCompleteTest = MGEF_Raw.extend(z.object({id: z.string()}));
+export const magEffCompleteTest = MGEF_Raw.extend({id: z.string()});
 
 export function parseMagEffsTest(raw: {}[]) {
     return raw.map((record) => parseMGEF_Raw(record));
