@@ -5,39 +5,16 @@ import { glob } from 'glob';
 import path from "node:path";
 import { Log } from "../../../config/companion-util.js";
 import sharp from "sharp";
-import img from "../../types/image-formats.js";
+import img from "./assets-types.js";
 import { createHashFromFile } from "../writers/hash.js";
 
 
-const AssetsRule = z.object({
-    local: z.object({
-        format: img.format(),
-        options: img.formatOptions().optional(),
-        crop: img.crop().optional(),
-        rename: img.rename().optional(),
-    }),
-    export: z.object({
-        format: img.format().optional(),
-        options: img.formatOptions().optional(),
-        crop: img.crop().optional(),
-        rename: img.rename().optional(),
-        buildSrcset: img.srcset().optional() // ? await
-    })
-    
-});
 
-export type AssetsRule = z.infer<typeof AssetsRule>;
-
-interface AssetsPathsWithRule {
-    rule: AssetsRule,
-    assets: AssetNamePath[]
-}
-
-export interface AssetNamePath {
-    name: string, 
-    path: string
-}
-
+/**
+ * Async function that creates a map of asset directories and relative rules
+ * @returns a promise containing a collection of rules + empty asset lists (name + path) indexed by their directory
+ * @requires glob
+ */
 export async function getAssetsRules(): Promise<Map<string, AssetsPathsWithRule>> {
 
     const allAssetsRulesPaths = await glob('src/assets/**/rules.json');
@@ -54,7 +31,11 @@ export async function getAssetsRules(): Promise<Map<string, AssetsPathsWithRule>
     );
 }
 
-
+/**
+ * Async function that creates a map of asset directories and relative rules paired with the assets contained in that directory
+ * @returns a promise containing a collection of rules + asset lists (name + path) indexed by their directory
+ * @requires glob
+ */
 export async function getAssetsWithRules(): Promise<Map<string, AssetsPathsWithRule>> {
     const allAssetsPathsRaw = await glob('src/assets/**/*.{jpg,jpeg,png,webp,avif}');
 
@@ -81,6 +62,19 @@ export async function getAssetsWithRules(): Promise<Map<string, AssetsPathsWithR
     return allAssetsRules;
 }
 
+
+// VALIDATION ==============================================================================
+
+function validatAssetsDir(directory: string, aPWR: AssetsPathsWithRule): boolean {
+    return aPWR.assets.every(asset => 
+        path.resolve(path.dirname(asset.path)) 
+        === path.resolve(directory)
+    ); 
+}
+
+// INIT ===================================
+
+// ENFORCE ==================================
 async function enforceAssetsCropRule(
     name: string,
     sharpAsset: sharp.Sharp, 
@@ -140,26 +134,21 @@ function getAssetFinalName(
     
 }
 
-function validatAssetsDir(directory: string, aPWR: AssetsPathsWithRule) {
-    aPWR.assets.forEach(asset => {
-        if(path.resolve(path.dirname(asset.path)) !== path.resolve(directory)) return false;
-    }); 
-    return true;
-}
+
 
 function sortAssets(assets: AssetNamePath[], sorting: z.infer<typeof img.sortType>) {
     assets.sort(img.sortby[sorting])
 }
+
+
+
 const assetsWithRules = await getAssetsWithRules();
 
 export const enforceAssetsDir = Object.freeze({
 
     async LocalRule(directory: string): Promise<void> {
 
-        const pathsAndRule = assetsWithRules.get(directory);
-        if(!pathsAndRule) throw new Error('At directory "' + 
-            directory + '" there are no rules to apply on assets.');
-        
+        const pathsAndRule = getPathsAndRule(directory);
         const rule = pathsAndRule.rule.local;
 
         if(!validatAssetsDir(directory, pathsAndRule))
@@ -175,6 +164,8 @@ export const enforceAssetsDir = Object.freeze({
             
         }
         
+
+
         for(const asset of pathsAndRule.assets) {
 
             const src  = path.resolve(asset.path);
@@ -188,7 +179,7 @@ export const enforceAssetsDir = Object.freeze({
                 // change format
                 sharpAsset = enforceSharpFormat(sharpAsset, rule.format, rule.options);
             // If format is correct and no other rule needs to be applied, then exit
-            } else if(!(rule.crop || rule.rename)) return;
+            } else if(!(rule.crop || rule.rename)) continue;
 
             if(rule.crop) 
                 sharpAsset = await enforceAssetsCropRule(
@@ -212,3 +203,40 @@ export const enforceAssetsDir = Object.freeze({
 
     async ExportRule() {}
 });
+
+
+// HELPERS ===================================================================================
+
+function getPathsAndRule(directory: string): AssetsPathsWithRule {
+    const pathsAndRule = assetsWithRules.get(directory);
+    // Check rules are referring to images group
+    if(!pathsAndRule) throw new Error('At directory "' + 
+        directory + '" there are no rules to apply on assets.');
+    return pathsAndRule;
+}
+
+
+/* 
+function localRuleAssetsPreprocess(
+    directory: string, 
+    assets: AssetNamePath[], 
+    rule: CropAssetsRule
+): void {
+    if(rule.crop) {
+        // Read register
+        
+        
+
+
+
+    }
+    if(rule.rename) {
+        if(rule.rename.finalNames 
+                && rule.rename.finalNames.length !== assets.length)
+                throw new Error('Mismatching sizes for names list and assets at dir: '
+                    + directory
+                );
+            sortAssets(assets, rule.rename.sort)
+            
+        }
+} */

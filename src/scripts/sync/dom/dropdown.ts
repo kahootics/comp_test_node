@@ -1,5 +1,5 @@
 
-import pairTriggerAndToggleable, { ToggleableElement, TriggerElement } from "./expandable-pair.js";
+import pairTriggerAndToggleable, { ToggleableElement, TriggerElement } from "./expandables/expandable-pair.js";
 import companionSharedConstants from '../../../config/companion-shared-constants.json' with { type: 'json' };
 
 // DROPDOWN =============================================================================

@@ -3,7 +3,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { destPathCorrected } from '../writers/copy-file-to.js';
 import hashFile from '../writers/hash.js';
-import writeAsJsonAt from '../writers/write-as-json-at.js';
 import { Log, toPublicUrl } from '../../../config/companion-util.js';
 
 /**
@@ -31,8 +30,8 @@ export interface SrcsetOutput {
  * @param widths - Array of widths to generate
  * @param alt - Alt text, or `false` for decorative images
  * @param hash - (optional) Whether to hash output filenames
- * Defaults to false.
- * @param [newFormat] - Optional format conversion: see {@link ImageFormat}
+ * Defaults to `false`.
+ * @param [newFormat] - (optional) Format conversion: see {@link ImageFormat}
  * @returns srcset output object
  */
 export async function buildSrcset(
@@ -44,7 +43,7 @@ export async function buildSrcset(
     newFormat?: ImageFormat
 ): Promise<SrcsetOutput> {
 
-    // Metadata red (later use)
+    // Metadata read (later use)
     const metadata = await sharp(filePath).metadata();
     const { width, height } = metadata;
     if(!width || !height) throw new Error(`Cannot read metadata from: ${filePath}`);

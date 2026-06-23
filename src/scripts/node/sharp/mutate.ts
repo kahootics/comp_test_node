@@ -2,7 +2,7 @@ import sharp from 'sharp';
 import path from 'node:path';
 import fs from 'node:fs';
 import { glob } from 'glob';
-import { fromBtoKB } from '../../shared/utilities/hex-parsers.js';
+import { toUnitBytes } from '../../../config/companion-util.js';
 
 async function imgToExt(
     filePath: string, 
@@ -34,7 +34,7 @@ async function imgToExt(
     fs.unlinkSync(src); 
 
     //console.log(`Successfully converted ${name} to .webp;`);
-    console.log(`File format edited at ${outPath} [${fromBtoKB(res.size)}]`);
+    console.log(`File format edited at ${outPath} [${toUnitBytes(res.size)}]`);
 }
 
 

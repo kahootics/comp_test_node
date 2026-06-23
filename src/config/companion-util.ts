@@ -1,11 +1,26 @@
 
 import path from 'node:path';
-import { fromBtoKB } from '../scripts/shared/utilities/hex-parsers.js';
 import fs from 'node:fs';
-import type { Values } from 'zod/v3';
 
 export const OUT_NAME = 'dist';
 export const OUT = OUT_NAME + path.sep;
+
+const UNITS = ['B', 'KB', 'MB', 'GB', 'TB'];
+const UNITS_LIMIT = UNITS.length - 1;
+const KB = 1024;
+
+
+export function toUnitBytes(bytes: number, decimals: number = 2): string {
+    if(bytes === 0) return '0 B';
+    if(bytes < 0) throw new Error('A file size cannot be a negative value!');
+
+    let i = Math.floor(Math.log(bytes) / Math.log(KB));
+    if(i > UNITS_LIMIT) i = UNITS_LIMIT;
+    
+    const value = bytes / Math.pow(KB, i);
+
+    return `${value.toFixed(decimals)} ${UNITS[i]}`;
+}
 
 /**
  * 
@@ -49,24 +64,20 @@ function style(
     chain: boolean = false
 ) {
     const ansi = `\x1b[${STYLE[style]};${INTENSITY[intensity]}${COLOR[color]}m`;
-    return {
-        txt(text: string) {
-            return ansi + text + (chain ? '' : '\x1b[0m');
-        }
-    }
+    return (text: string) => ansi + text + (chain ? '' : '\x1b[0m');        
 }
 
-export const Log = {
+export const Log = Object.freeze({
     file(outPath: string, size?: number) {
-        console.log(`${style('green').txt('▶')} ${toPublicUrl(outPath)} [${fromBtoKB(size ?? fs.statSync(outPath).size)}]`);
+        console.log(`${style('green')('▶')} ${toPublicUrl(outPath)} [${toUnitBytes(size ?? fs.statSync(outPath).size)}]`);
     },
     msg(message: string) {
-        console.info(`${style('yellow').txt('●')} ${message}`);
+        console.info(`${style('yellow')('●')} ${message}`);
     },
     hdr(header: string) {
-        console.info(`${style('green','background','regular').txt( `⏹ ${style('white','text','bold',true).txt(header)} ⏹ `)}`);
+        console.info(`${style('green','background','regular')( `⏹ ${style('white','text','bold',true)(header)} ⏹ `)}`);
     },
     wrn(warning: string) {
         console.warn(warning);
     }
-}
+});

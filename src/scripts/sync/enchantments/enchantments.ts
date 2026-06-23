@@ -50,16 +50,12 @@ const MIN_PRICE = SOUL_CHARGE.GRAND*fEnchantmentPointsMult;
 
 /* Base Class ==================================================================== */
 
-interface EnchDisplayedParameterConstructor<C extends EnchDisplayedParameter> {
+/* interface EnchDisplayedParameterConstructor<C extends EnchDisplayedParameter> {
     new (...args: unknown[]): C;
     calcSkillMult(skill: number): number
 }
-
-interface EnchDisplayedParameterMethods {
-    calc: (skillMult: number) => number,
-}
-
-abstract class EnchDisplayedParameter implements EnchDisplayedParameterMethods {
+ */
+abstract class EnchDisplayedParameter {
 
     private _element: HTMLElement;
 
@@ -77,10 +73,10 @@ abstract class EnchDisplayedParameter implements EnchDisplayedParameterMethods {
      * using the specified method at the begining of updateSet() cycles */
 
     // Overwrite the following two:
-    static calcSkillMult(skill: number): number { return 0/0}; // placeholder
+    static calcSkillMult(skill: number): number { throw new Error('You are supposed to implement this method') }; // placeholder
     abstract calc(skillMult: number): number; 
 
-    // function to rewrite the content of the element to new value
+    /** function to rewrite the content of the element to new value */
     update(skillMult: number) {
         return this.elementText = String(this.calc(skillMult));
     }
@@ -96,8 +92,8 @@ abstract class EnchDisplayedParameter implements EnchDisplayedParameterMethods {
     }
 }
 
-export class EnchParametersSet<T extends EnchDisplayedParameter> {
-    private readonly parameters: Set<T>;
+/* class EnchParametersSet<T extends EnchDisplayedParameter> {
+    protected readonly parameters: Set<T>;
     private readonly tpe: EnchDisplayedParameterConstructor<T>;
     constructor(type: EnchDisplayedParameterConstructor<T>, set: Set<T>) {
         this.parameters = set;
@@ -109,7 +105,28 @@ export class EnchParametersSet<T extends EnchDisplayedParameter> {
     }
 }
 
+class EnchMagnitudesSet<T extends EnchMagnitude> extends EnchParametersSet<T> {
+    constructor(type: EnchDisplayedParameterConstructor<T>, set: Set<T>) {
+        super(type, set);
+    } 
+    reset() {
+        this.parameters.forEach(mag => mag.reset());
+    }
+}
 
+function makeEnchParametersSet<
+    T extends EnchDisplayedParameter,
+    C extends EnchMagnitude
+>(
+    type: EnchDisplayedParameterConstructor<T|C>, 
+    set: Set<T|C>
+) {
+    if(Inflate)
+    if(type instanceof EnchMagnitude) return new EnchMagnitudesSet(type,set);
+    return new EnchParametersSet(type,set);
+}
+
+ */
 /* MAGNITUDES =================================================================== */
 
 abstract class EnchMagnitude extends EnchDisplayedParameter {
@@ -392,4 +409,5 @@ export class WeapPrice extends WeapBaseEnch {
     }
 
 }
+
 

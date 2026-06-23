@@ -2,6 +2,10 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
+/** 
+ * @param algorithm - Hashing algorithm (defaults to `md5`)
+ * @param length - Length of the hash (defaults to 8) 
+ */
 interface HashOptions {
     algorithm: string,
     length: number
@@ -10,9 +14,8 @@ interface HashOptions {
 /**
  * Hashes a buffer directly.
  * @param buffer - Buffer to hash
- * @param options - Hashing options:
- * @param options.algorithm - Hashing algorithm (defaults to `md5`)
- * @param options.length - Length of the hash (defaults to 8)
+ * @param [options] - Hashing options: 
+ * @see {@link HashOptions} interface for the list of available options
  * @returns hash string
  */
 export function createHashFromBuffer(
@@ -34,6 +37,7 @@ export function createHashFromBuffer(
  * @param filePath - Path to the file
  * @param options - Hashing options
  * @returns hash string
+ * @remarks the hash depends entirely on the buffer obtained from the file
  */
 export function createHashFromFile(
     filePath: string, 
@@ -44,10 +48,12 @@ export function createHashFromFile(
 }
 
 /**
- * Hashes the content of a file and renames it.
+ * Hashes the content of a file and adds it to its name before the extension.
  * @param filePath - Path to the file
- * @param options - Hashing options
+ * @param options - Hashing options:
+ * see {@link HashOptions} interface for the list of available options
  * @returns new file path with hashing
+ * @see {@link createHashFromFile} for the function that creates the hash
  */
 export default function hashFile(
     filePath: string, 

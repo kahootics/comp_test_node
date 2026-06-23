@@ -68,11 +68,11 @@ export async function bundleScripts(
 
         const buffer = Buffer.from(arrBuf);
         const hash   = createHashFromBuffer(buffer);
-        const name = useDirnameAsKey 
+        const name   = useDirnameAsKey 
             ? getDirname(entry)
             : path.basename(entry, '.js');
         const filename = `${name}.${hash}.js`;
-        const keyName = `${name}.js`;
+        const keyName  = `${name}.js`;
         const outPath  = path.resolve(path.join(outDir, filename));
 
         // check for duplicates

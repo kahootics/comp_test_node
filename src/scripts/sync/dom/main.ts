@@ -1,5 +1,5 @@
 
-import pairTriggerAndToggleable from './expandable-pair.js'
+import pairTriggerAndToggleable from './expandables/expandable-pair.js'
 import pairDropdown, { Dropdown } from "./dropdown.js";
 
 

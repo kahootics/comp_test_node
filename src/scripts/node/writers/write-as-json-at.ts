@@ -24,10 +24,9 @@ interface WJOptions {
  * Converts data into a JSON format and writes as a .json file at requested path
  * @param data - JSON compatible data to stringify and write in a .json file
  * @param dest - Destination path for the output file
- * @param [options] - (optional) output options; 
+ * @param [options] - (optional) output options: 
  * see {@link WJOptions} for full list of options.
- * 
- * Defaults to `true` 
+ * @returns the final path at which the file was written
  */
 export default async function writeAsJsonAt(
 	data: unknown, 

@@ -1,6 +1,6 @@
 
-import companionSharedConstants from '../../../config/companion-shared-constants.json' with { type: 'json' };
-import { ElementWithLock, getValidatedElement, requestTransitionFrame } from '../common/utilities.js';
+import companionSharedConstants from '../../../../config/companion-shared-constants.json' with { type: 'json' };
+import { ElementWithLock, getValidatedElement, requestTransitionFrame } from '../../common/utilities.js';
 
 // TOGGLEABLE ELEMENT ===================================================================
 /** CSS class utility to mark an open toggleable. */
@@ -34,7 +34,7 @@ export class ToggleableElement<
 > extends ElementWithLock {
     /** Animated element. */
     protected readonly ELEMENT: H;
-    private readonly _ID: string;
+    private readonly ID: string;
     
     /**
      * @param idOrEl - Id attribute or the element itself
@@ -48,7 +48,7 @@ export class ToggleableElement<
     ) {
         super();
         this.ELEMENT = getValidatedElement(elType, idOrEl);
-        this._ID = this.ELEMENT.id;
+        this.ID = this.ELEMENT.id;
     }
     /** 
      * Sets `hidden` attribute of the element. 
@@ -62,38 +62,53 @@ export class ToggleableElement<
      * - hides the element if it doesn't have `OPEN` constant class
      * - releases transition lock
      */
-    protected onTransitionEnd = (): void => {
+    private onTransitionEnd(...callbacks: (() => void)[]): void {
         this.hidden = !this.ELEMENT.classList.contains(OPEN);
+        callbacks.forEach(
+            callback => {
+                try { callback(); } 
+                catch(e) { console.error(e); }
+            }
+        );
         this.unlock();
     }
     /** 
+     * @param callbacks - Allows scheduling any amount of callback functions
+     * that will be called at end of transition
+     * 
      * - Element exits `hidden` state
      * - Adds `OPEN` constant class
      * - Applies lock to the transition playing on the element
      */
-    open() {
+    public open(...callbacks: (() => void)[]) {
         if(this.isLocked) return;
         this.lock();
         this.hidden = false;
         requestTransitionFrame(() => this.ELEMENT.classList.add(OPEN));        
-        this.ELEMENT.addEventListener('transitionend', this.onTransitionEnd, { once: true });
+        this.ELEMENT.addEventListener('transitionend', 
+            () => this.onTransitionEnd(...callbacks), { once: true });
     }
     /** 
+     * @param callbacks - Allows scheduling any amount of callback functions
+     * that will be called at end of transition
+     * 
      * - Removes `OPEN` constant class
      * - Element enters `hidden` state at end of transition
      * - Applies lock to the transition playing on the element
      */
-    close() {
+    public close(...callbacks: (() => void)[]) {
         if(this.isLocked) return;
         this.lock();
         this.ELEMENT.classList.remove(OPEN);
-        this.ELEMENT.addEventListener('transitionend', this.onTransitionEnd, { once: true });
+        this.ELEMENT.addEventListener('transitionend', 
+            () => this.onTransitionEnd(...callbacks), { once: true });
     }   
     /** @returns element's id attribute. */
-    get id() { return this._ID; }
+    get id(): string { return this.ID; }
+    get style(): CSSStyleDeclaration { return this.ELEMENT.style; }
 }
 
-/**Any HTMLElement that supports the `disabled` attribute */
+/** Any HTMLElement that implements the `disabled` attribute */
 interface HTMLDisableableElement extends HTMLElement {
     disabled: boolean
 }

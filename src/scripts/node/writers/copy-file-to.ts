@@ -1,7 +1,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fromBtoKB } from '../../shared/utilities/hex-parsers.js';
+import { toUnitBytes } from '../../../config/companion-util.js';
 
 /**
  * Compares a source valid path with a destination one and returns a validated version of it
@@ -51,7 +51,7 @@ export default function copyFileTo(src: string, dest: string) {
         fs.mkdirSync(path.dirname(outPath), { recursive: true });        
         fs.copyFileSync(srcPath,outPath);
     
-        console.log(`File '${path.basename(src)}' has been copied ${path.basename(src) === path.basename(destCorr) ? '' : `as '${path.basename(destCorr)}' `}to ${path.dirname(destCorr)}\\ [${fromBtoKB(fs.statSync(outPath).size)}]`);
+        console.log(`File '${path.basename(src)}' has been copied ${path.basename(src) === path.basename(destCorr) ? '' : `as '${path.basename(destCorr)}' `}to ${path.dirname(destCorr)}\\ [${toUnitBytes(fs.statSync(outPath).size)}]`);
         console.log(`src:  ${srcPath}\ndest: ${outPath}`);
     
     } catch(err) {

@@ -1,7 +1,45 @@
 
 import z from 'zod';
-import type { AssetNamePath } from '../node/sharp/apply-assets-rules.js';
-import { getFileBirthTime } from '../../config/companion-util.js';
+import type { AssetNamePath } from './apply-assets-rules.js';
+import { getFileBirthTime } from '../../../config/companion-util.js';
+
+
+const LocalAssetsRule = z.object({
+        format: img.format(),
+        options: img.formatOptions().optional(),
+        crop: img.crop().optional(),
+        rename: img.rename().optional(),
+    });
+const CropRegister = z.array(
+        z.object({
+            rule: img.crop(),
+            hashes: z.array(z.hash('md5'))
+        })
+    );
+const ExportAssetsRule = z.object({
+        format: img.format().optional(),
+        options: img.formatOptions().optional(),
+        buildSrcset: img.srcset().optional() // ? await
+    });
+
+const AssetsRule = z.object({
+    local: LocalAssetsRule,
+    export: ExportAssetsRule    
+});
+
+export type AssetsRule = z.infer<typeof AssetsRule>;
+type LocalAssetsRule   = z.infer<typeof LocalAssetsRule>
+
+export interface AssetNamePath {
+    name: string, 
+    path: string
+}
+
+interface AssetsPathsWithRule {
+    rule: AssetsRule,
+    assets: AssetNamePath[]
+}
+
 
 function reorderScreenshotName(filename: string): string {
     const regex = /^Screenshot (\d{2})_(\d{2})_(\d{4}) (\d{2})_(\d{2})_(\d{2})/;
@@ -27,6 +65,9 @@ function sString(a: string, b: string) {
 function sDate(a: Date, b: Date) {
     return a > b ? 1 : a < b ? -1 : 0
 }
+/**
+ * ttt
+ */
 const sortby = {
     name(a: AssetNamePath, b: AssetNamePath) {
         return sString(a.name,b.name);
@@ -47,6 +88,8 @@ const sortKeys = Object.keys(sortby) as [keyof typeof sortby, ...(keyof typeof s
 const SortType = z.enum(sortKeys);
 
 export default Object.freeze({
+    
+
     format() { return this.formatType; },
     formatType: z.enum(['avif','jpeg','png','webp']),
 
