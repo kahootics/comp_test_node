@@ -75,7 +75,7 @@ export const Log = Object.freeze({
         console.info(`${style('yellow')('●')} ${message}`);
     },
     hdr(header: string) {
-        console.info(`${style('green','background','regular')( `⏹ ${style('white','text','bold',true)(header)} ⏹ `)}`);
+        console.info(`${style('green','background','regular')( `⏹ ${style('black','text','bold',true)(header)} ⏹ `)}`);
     },
     wrn(warning: string) {
         console.warn(warning);
