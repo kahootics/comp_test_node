@@ -1,6 +1,6 @@
 
 import pairTriggerAndToggleable, { ToggleableElement, TriggerElement } from "./expandables/expandable-pair.js";
-import companionSharedConstants from '../../../config/companion-shared-constants.json' with { type: 'json' };
+import companionSharedConstants from '../../../config/companion-synced-constants.json' with { type: 'json' };
 
 // DROPDOWN =============================================================================
 /** ScrollHeight css variable recipient. */

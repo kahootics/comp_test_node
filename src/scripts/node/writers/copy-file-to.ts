@@ -1,7 +1,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { toUnitBytes } from '../../../config/companion-util.js';
+import { toUnitBytes } from '../../../tools/companion-util.js';
 
 /**
  * Compares a source valid path with a destination one and returns a validated version of it

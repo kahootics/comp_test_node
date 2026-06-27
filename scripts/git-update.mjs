@@ -2,7 +2,7 @@
 
 import readline from 'node:readline/promises';
 import { execSync } from 'node:child_process';
-import execGitSync from './exec-sync-git.mjs';
+import execGitSync from './exec-cmd-sync.mjs';
 
 const LN_INPUT = '$' + ' ';
 

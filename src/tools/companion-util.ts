@@ -1,14 +1,14 @@
 
 import path from 'node:path';
 import fs from 'node:fs';
+import { OUT } from '../config/global-const.mjs';
 
-export const OUT_NAME = 'dist';
-export const OUT = OUT_NAME + path.sep;
+export { OUT_NAME } from '../config/global-const.mjs';
+export { OUT } from '../config/global-const.mjs';
 
 const UNITS = ['B', 'KB', 'MB', 'GB', 'TB'];
 const UNITS_LIMIT = UNITS.length - 1;
 const KB = 1024;
-
 
 export function toUnitBytes(bytes: number, decimals: number = 2): string {
     if(bytes === 0) return '0 B';
@@ -79,5 +79,8 @@ export const Log = Object.freeze({
     },
     wrn(warning: string) {
         console.warn(warning);
+    },
+    err(e: Error, message: string) {
+        console.error(`${ e.name}`);
     }
 });

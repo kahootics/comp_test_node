@@ -1,0 +1,28 @@
+
+- separate getValidatedElement from expandable pair
+- internalize getPair in ToggleableElement
+
+- handle to mixin (?)
+- close button to mixin (?)
+
+- standalone card element => expandable card
+- mixin the two classes for exp card (?)
+
+- fix dropdown incorrect structure
+
+- implement popover
+- implement popover with expandable card
+- implement temporized popover
+- implement tmprzd ppvr factory: method `post` to open message (time based on msg length)
+
+- components (general):
+    - section (with editable title and innerText)
+    - img (available with srcset and biggening popover)
+    - img factory (separate srcset from src only)
+    - icon
+    - Title
+    - card
+    - handle
+    - close btn
+    - forward & back btn
+

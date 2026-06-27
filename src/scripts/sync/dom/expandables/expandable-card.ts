@@ -1,4 +1,3 @@
-import { setTimeout } from "node:timers/promises";
 import { ToggleableElement } from "./expandable-pair.js";
 
 const CLOSER_CLASS = '';
@@ -6,9 +5,9 @@ const HEADER_CLASS = '';
 const TITLE_CLASS = '';
 const BODY_CLASS = '';
 
-let cards: number = 0;
-
 abstract class ExpandableCard extends ToggleableElement {
+
+    private static cardsNO: number = 0;
 
     /** Header of card. */
     private readonly HEADER: HTMLElement;
@@ -28,7 +27,8 @@ abstract class ExpandableCard extends ToggleableElement {
     private initTitle() {
         this.TITLE.setAttribute('tabindex','-1');
         this.TITLE.classList.add(TITLE_CLASS);
-        this.TITLE.id = TITLE_CLASS + cards; cards++;
+        this.TITLE.id = TITLE_CLASS + ExpandableCard.cardsNO; 
+        ExpandableCard.cardsNO++; // different id for every title
         this.ELEMENT.setAttribute('aria-labelledby',this.TITLE.id);
     }
 

@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { glob } from 'glob';
-import { Log, toPublicUrl, OUT_NAME, OUT, getDirname } from '../../../config/companion-util.js';
+import { Log, toPublicUrl, OUT_NAME, OUT, getDirname } from '../../../tools/companion-util.js';
 import { createHashFromBuffer } from '../writers/hash.js';
 import * as esbuild from 'esbuild';
 import { isDev } from '../../../main.js';

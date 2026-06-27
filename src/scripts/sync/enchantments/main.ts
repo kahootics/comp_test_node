@@ -1,4 +1,4 @@
-import { enchantingSkill, ArmoMag, WeapMag, WeapCharges, ArmoPrice, WeapPrice } from "./enchantments.js";
+import { enchantingSkill, ArmoMag, WeapMag, WeapCharges, ArmoPrice, WeapPrice } from "./model.js";
 
 // All the variable magnitudes displayed
 let base, zero, hundred, growth: string | null;

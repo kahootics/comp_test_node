@@ -1,6 +1,6 @@
 
-import companionSharedConstants from '../../../../config/companion-shared-constants.json' with { type: 'json' };
-import { ElementWithLock, getValidatedElement, requestTransitionFrame } from '../../common/utilities.js';
+import companionSharedConstants from '../../../../config/companion-synced-constants.json' with { type: 'json' };
+import { ElementWithLock, getValidatedElement, requestTransitionFrame } from '../../shared/utilities.js';
 
 // TOGGLEABLE ELEMENT ===================================================================
 /** CSS class utility to mark an open toggleable. */
@@ -57,13 +57,16 @@ export class ToggleableElement<
     protected set hidden(hide: boolean) {
         this.ELEMENT.hidden = hide;
     }
+    public isOpen(): boolean {
+        return this.ELEMENT.classList.contains(OPEN);
+    }
     /**
      * Handles *end of transition* cleanup:
      * - hides the element if it doesn't have `OPEN` constant class
      * - releases transition lock
      */
     private onTransitionEnd(...callbacks: (() => void)[]): void {
-        this.hidden = !this.ELEMENT.classList.contains(OPEN);
+        this.hidden = !this.isOpen();
         callbacks.forEach(
             callback => {
                 try { callback(); } 

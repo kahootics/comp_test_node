@@ -41,17 +41,12 @@ Documenting Node setup steps for WordPress integration
 
 ## Build
 
-- [x] tsc
-- [x] hash scripts
-- [x] map scripts
-- [x] copy img
-- [x] make srcsets
-- [x] hash images
-- [x] map images
-- [ ] produce json datasets
-- [ ] hash datasets
-- [ ] map datasets
-- [ ] join maps into manifest & write it
+1. [ ] run all tests
+2. [ ] Optimize assets & hash & move to dist/
+3. [ ] Build datesets json & integrate assets
+4. [ ] Extract route map & hash it & test it
+5. [x] Bundle scripts & hash
+6. [ ] Build export.json
 
 ## Scripts
 

@@ -3,9 +3,9 @@ import z from "zod";
 import fs from 'node:fs'
 import { glob } from 'glob';
 import path from "node:path";
-import { Log } from "../../../config/companion-util.js";
+import { Log } from "../../../tools/companion-util.js";
 import sharp from "sharp";
-import img from "./assets-types.js";
+import { AssetsRule, img, type AssetNamePath, type AssetsPathsWithRule } from "./assets-types.js";
 import { createHashFromFile } from "../writers/hash.js";
 
 

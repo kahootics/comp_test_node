@@ -1,7 +1,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { Log } from '../../../config/companion-util.js';
+import { Log } from '../../../tools/companion-util.js';
 import hashFile from './hash.js';
 
 /**

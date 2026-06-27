@@ -1,73 +1,7 @@
 
 import z from 'zod';
-import type { AssetNamePath } from './apply-assets-rules.js';
-import { getFileBirthTime } from '../../../config/companion-util.js';
+import { getFileBirthTime } from '../../../tools/companion-util.js';
 
-
-const LocalAssetsRule = z.object({
-        format: img.format(),
-        options: img.formatOptions().optional(),
-        crop: img.crop().optional(),
-        rename: img.rename().optional(),
-    });
-const CropRegister = z.array(
-        z.object({
-            rule: img.crop(),
-            hashes: z.array(z.hash('md5'))
-        })
-    );
-const ExportAssetsRule = z.object({
-        format: img.format().optional(),
-        options: img.formatOptions().optional(),
-        buildSrcset: img.srcset().optional() // ? await
-    });
-
-const AssetsRule = z.object({
-    local: LocalAssetsRule,
-    export: ExportAssetsRule    
-});
-
-export type AssetsRule = z.infer<typeof AssetsRule>;
-type LocalAssetsRule   = z.infer<typeof LocalAssetsRule>
-
-export interface AssetNamePath {
-    name: string, 
-    path: string
-}
-
-interface AssetsPathsWithRule {
-    rule: AssetsRule,
-    assets: AssetNamePath[]
-}
-
-
-function reorderScreenshotName(filename: string): string {
-    const regex = /^Screenshot (\d{2})_(\d{2})_(\d{4}) (\d{2})_(\d{2})_(\d{2})/;
-    const regexFinal = /^Screenshot (\d{4})_(\d{2})_(\d{2}) (\d{2})_(\d{2})_(\d{2})/;
-    const match = filename.match(regex);
-    if (!match) {
-        if(!filename.match(regexFinal))
-            throw new Error(`${filename} cannot be sorted by screenshot name due to wrong formatting`);
-        // return if already correctly formatted
-        return filename;
-    };
-    
-    const [, dd, mm, yyyy, hh, min, ss] = match;
-    return filename.replace(
-        regex,
-        `Screenshot ${yyyy}_${mm}_${dd} ${hh}_${min}_${ss}`
-    );    
-}
-
-function sString(a: string, b: string) {
-    return a.localeCompare(b, undefined, { sensitivity: 'base' });
-}
-function sDate(a: Date, b: Date) {
-    return a > b ? 1 : a < b ? -1 : 0
-}
-/**
- * ttt
- */
 const sortby = {
     name(a: AssetNamePath, b: AssetNamePath) {
         return sString(a.name,b.name);
@@ -87,7 +21,8 @@ const sortby = {
 const sortKeys = Object.keys(sortby) as [keyof typeof sortby, ...(keyof typeof sortby)[]]
 const SortType = z.enum(sortKeys);
 
-export default Object.freeze({
+
+export const img = Object.freeze({
     
 
     format() { return this.formatType; },
@@ -133,4 +68,68 @@ export default Object.freeze({
         les: z.null()
     })
 });
+
+
+
+export const LocalAssetsRule = z.object({
+        format: img.format(),
+        options: img.formatOptions().optional(),
+        crop: img.crop().optional(),
+        rename: img.rename().optional(),
+    });
+export const CropRegister = z.array(
+        z.object({
+            rule: img.crop(),
+            hashes: z.array(z.hash('md5'))
+        })
+    );
+export const ExportAssetsRule = z.object({
+        format: img.format().optional(),
+        options: img.formatOptions().optional(),
+        buildSrcset: img.srcset().optional() // ? await
+    });
+
+export const AssetsRule = z.object({
+    local: LocalAssetsRule,
+    export: ExportAssetsRule    
+});
+
+export type AssetsRule = z.infer<typeof AssetsRule>;
+type LocalAssetsRule   = z.infer<typeof LocalAssetsRule>
+
+export interface AssetNamePath {
+    name: string, 
+    path: string
+}
+
+export interface AssetsPathsWithRule {
+    rule: AssetsRule,
+    assets: AssetNamePath[]
+}
+
+
+function reorderScreenshotName(filename: string): string {
+    const regex = /^Screenshot (\d{2})_(\d{2})_(\d{4}) (\d{2})_(\d{2})_(\d{2})/;
+    const regexFinal = /^Screenshot (\d{4})_(\d{2})_(\d{2}) (\d{2})_(\d{2})_(\d{2})/;
+    const match = filename.match(regex);
+    if (!match) {
+        if(!filename.match(regexFinal))
+            throw new Error(`${filename} cannot be sorted by screenshot name due to wrong formatting`);
+        // return if already correctly formatted
+        return filename;
+    };
+    
+    const [, dd, mm, yyyy, hh, min, ss] = match;
+    return filename.replace(
+        regex,
+        `Screenshot ${yyyy}_${mm}_${dd} ${hh}_${min}_${ss}`
+    );    
+}
+
+function sString(a: string, b: string) {
+    return a.localeCompare(b, undefined, { sensitivity: 'base' });
+}
+function sDate(a: Date, b: Date) {
+    return a > b ? 1 : a < b ? -1 : 0
+}
 

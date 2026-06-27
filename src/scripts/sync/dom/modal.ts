@@ -1,5 +1,5 @@
-import { getValidatedElement, requestTransitionFrame } from "../common/utilities.js";
-import companionSharedConstants from '../../../config/companion-shared-constants.json' with { type: 'json' };
+import { getValidatedElement, requestTransitionFrame } from "../shared/utilities.js";
+import companionSharedConstants from '../../../config/companion-synced-constants.json' with { type: 'json' };
 import { ToggleableElement } from "./expandables/expandable-pair.js";
 
 // BACKDROP =============================================================================
@@ -41,11 +41,15 @@ const FOCUSABLES = ':not(:disabled, [hidden]):where(a, button, input, textarea, 
  * @returns an object containing the first and last HTMLElement that is focusable within the element
  */
 function getFocusableExtremities(element: HTMLElement) {
-    const focusables = element.querySelectorAll<HTMLElement>(FOCUSABLES);
+    const focusables: HTMLElement[] = Array.from(element.querySelectorAll<HTMLElement>(FOCUSABLES));
     const first = focusables[0];
-    const last = focusables[focusables.length - 1]; 
+    const last = focusables[focusables.length - 1];
     if(!(first && last)) 
         throw new Error('Element has no available focusable element');
+    if(document.activeElement instanceof HTMLElement 
+        && !focusables.includes(document.activeElement)) {
+            first.focus();
+        }
     return { first, last };
 }
 /**

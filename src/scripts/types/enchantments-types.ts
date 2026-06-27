@@ -1,7 +1,7 @@
 
 import {record, z} from 'zod';
 import c from './record-type.js';
-import { ArmoPrice, WeapPrice } from '../sync/enchantments/enchantments.js';
+import { ArmoPrice, WeapPrice } from '../sync/enchantments/model.js';
 
 export const RecordType = z.string().regex(/^(ARMO|WEAP)/g);
 

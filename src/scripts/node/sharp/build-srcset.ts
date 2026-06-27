@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { destPathCorrected } from '../writers/copy-file-to.js';
 import hashFile from '../writers/hash.js';
-import { Log, toPublicUrl } from '../../../config/companion-util.js';
+import { Log, toPublicUrl } from '../../../tools/companion-util.js';
 
 /**
  * @param format - Format of destination

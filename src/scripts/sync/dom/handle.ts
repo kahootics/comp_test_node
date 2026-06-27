@@ -1,4 +1,4 @@
-import { getValidatedElement } from "../common/utilities.js";
+import { getValidatedElement } from "../shared/utilities.js";
 import Modal from "./modal.js";
 
 interface HandleTarget {

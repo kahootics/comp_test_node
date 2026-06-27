@@ -27,6 +27,11 @@ export function toNormalized(string: string) {
         .trim();
 }
 
+export function escapeRegExp(s: string) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+
 /**
  * Extracts a portion of string between two provided substrings
  * @param str - The entire string to extract from
@@ -39,8 +44,6 @@ export function extractBetween(
    	start: string,
    	end: string
 ): string | null {
-
-   	const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 	const regex = new RegExp(`${escapeRegExp(start)}([^\\s]+?)${escapeRegExp(end)}`);
    	const match = str.match(regex);

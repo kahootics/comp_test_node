@@ -69,9 +69,9 @@ export function getValidatedElement<H extends HTMLElement>(
 }
 
 /**
- * Template element with lock methods to prevent multiple actions for the same object
+ * Template class with lock methods to prevent multiple actions for the same object
  */
-export class ElementWithLock {
+export abstract class ElementWithLock {
     /** Whether an action is in play. */
     private _lock: boolean = false;
     /** 

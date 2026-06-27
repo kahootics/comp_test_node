@@ -1,14 +1,15 @@
 {
   "name": "tuxborn-companion",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "author": "kahootics",
   "description": "",
   "main": "dist/main.js",
   "scripts": {
     "git:update": "node scripts/git-update.mjs",
-    "clear:dist": "rm -rf dist",
-    "dev": "tsc --watch -p tsconfig.dev.json",
-    "build": "tsc && node dist/main.js",
+    "clear:dist": "node scripts/clear-dist.mjs",
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "node scripts/test.mjs",
     "start": "node dist/main.js",
     "write": "tsc",
     "mute": "tsx src/scripts/node/sharp/mutate.ts",
@@ -24,14 +25,13 @@
   "type": "module",
   "devDependencies": {
     "@types/node": "^25.9.1",
+    "csv-parse": "^6.2.1",
     "esbuild": "^0.28.1",
     "glob": "^13.0.6",
-    "typescript": "^6.0.3"
-  },
-  "dependencies": {
-    "csv-parse": "^6.2.1",
     "sharp": "^0.34.5",
     "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9",
     "zod": "^4.4.3"
   }
 }

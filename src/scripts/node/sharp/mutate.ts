@@ -2,7 +2,7 @@ import sharp from 'sharp';
 import path from 'node:path';
 import fs from 'node:fs';
 import { glob } from 'glob';
-import { toUnitBytes } from '../../../config/companion-util.js';
+import { toUnitBytes } from '../../../tools/companion-util.js';
 
 async function imgToExt(
     filePath: string, 
