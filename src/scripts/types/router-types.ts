@@ -1,23 +1,34 @@
-import type { HashRouterEvent, HashRouterRequestEvent } from "../sync/dom/router.js";
+import type { HashRouterEvent, HashRouterRequestEvent } from "../sync/ui/hash-router.js";
 
 export const hashRouterEvent: hashroutechange = "hashroutechange";
 export type hashroutechange = "hashroutechange";
 export const hashRouterRequestEvent: hashroutechangerequest = "hashroutechange:request";
 export type hashroutechangerequest = "hashroutechange:request";
 
-export interface HashRouterRequest {
-    newRoute: string,
-    newTitle: string,
-}
+// Branded safety nets
+declare const RouteSymbol: unique symbol;
+export type route = string & { [RouteSymbol]: void };
+declare const TitleSymbol: unique symbol;
+export type title = string & { [TitleSymbol]: void };
+declare const HashSymbol: unique symbol;
+export type hash = string & { [HashSymbol]: void };
 
-export interface HashRouterData {
-    route: string,
-    title: string
-}
 
 export interface HashRouterOptions {
     slashAfterHash?: boolean,
     hashPrefix?: string,
+}
+
+export interface HashRouterEventInit extends HashChangeEventInit {
+    reset?: boolean,
+    route?: route,
+    title?: title,
+}
+
+export interface HashRouterRequestEventInit extends EventInit {
+    newRoute?: route,
+    reset?: boolean,
+    terminate?: boolean
 }
 
 declare global {

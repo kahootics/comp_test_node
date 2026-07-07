@@ -2,10 +2,10 @@
 
 import { CsvError, parse,  } from 'csv-parse/sync';
 import normalizeCellValue from './normalize-cell-value.js';
-import fetchSheetAsCSV from './fetch-sheet-as-csv.js';
 import normalizeCellArray from './normalize-cell-array.js';
+import { ValidationError } from '../../../errors/common-errors.js';
 
-interface OptionalStringSymbols {
+export interface OptionalStringSymbols {
     newLineReplacer?: string, 
     arraySeparator?: string,
     arrayIndicator?: string,
@@ -23,9 +23,9 @@ function validateSymbolStrings(...strings: string[]) {
             invalid.add(str);
     })   
     if(invalid.size === 1) 
-        throw new Error(`${[...invalid][0]} does not represent a valid string symbol`);
+        throw new ValidationError(`${[...invalid][0]} does not represent a valid string symbol`);
     if(invalid.size > 1)
-        throw new Error(`${[...invalid].join(', ').replace(/, ([^,]+)$/g, ' and ')} do not represent valid string symbols`);
+        throw new ValidationError(`${[...invalid].join(', ').replace(/, ([^,]+)$/g, ' and ')} do not represent valid string symbols`);
 }
 /**
  * Parses a CSV string into a JavaScript array of objects.
@@ -49,7 +49,7 @@ function validateSymbolStrings(...strings: string[]) {
  * 
  * Valid symbols must be **shorter than 4 characters** and contain **only non-alphanumeric characters**.
  * 
- * @throws {Error} If any provided symbol fails validation
+ * @throws {ValidationError} If any provided symbol fails validation
  * @throws {CsvError} if provided csv is not parseable according to expected format
  * 
  * @example
@@ -158,25 +158,3 @@ export async function csvIntoDataset(
     
 }
 
-/**
- * @param sheetId - Id of online public spreadsheet
- * @param sheetGID - GId of the sheet
- * @param csvOptions - (optional) Parsing configuration
- * @param csvOptions.newLineReplacer - Symbol replaced with `\n` in the output.
- * If omitted, no replacement is performed.
- * @param csvOptions.arraySeparator - Symbol used to split a cell into an array.
- * Defaults to `"|"`.
- * @param csvOptions.arrayIndicator - Symbol that marks a header as an array.
- * Defaults to `"[]"`.
- * @param csvOptions.objectNotation - Symbol used to build nested objects from flat keys.
- * Defaults to `"_"`.
- * @returns an array of objects obtained from the fetched CSV
- */
-export default async function fetchSheetDataset(
-    sheetId: string, 
-    sheetGID: string | number,
-    csvOptions?: OptionalStringSymbols
-) {
-    const csv = await fetchSheetAsCSV(sheetId, `${sheetGID}`);
-    return csvIntoDataset(csv,csvOptions);
-}

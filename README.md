@@ -33,13 +33,7 @@ Documenting Node setup steps for WordPress integration
 - [x] implement formatting, renaming and cropping of gallery images with **sharp** and **glob** using rules.json header file of gallery sections
 - [ ] &lt;continue workflow&gt;
 
-### Finalize Node
-
-- [ ] Uninstall tsx (?)
-- [ ] Remove temporary files
-- [ ] Test alongside Wordpress live
-
-## Build
+## Build-Steps
 
 1. [ ] run all tests
 2. [ ] Optimize assets & hash & move to dist/
@@ -48,7 +42,16 @@ Documenting Node setup steps for WordPress integration
 5. [x] Bundle scripts & hash
 6. [ ] Build export.json
 
-## Scripts
+## Schemas
+
+### Record IDs
+
+as follows:
+
+(?<pluginId>[A-F0-9]{4})\-(?<companionId>[A-F0-9]{3})\-(?<localFormId>[A-F0-9]{6}\|XFE[A-F0-9]{3})
+
+
+<!-- ## Scripts
 
 ### Node Environment
 
@@ -145,3 +148,4 @@ Scripts entrypoints are named main.js and inherit the name of the folder when bu
 > live-dev.ts ## called at run dev to write live files in temporary folder to be used in WP dev mode
 > ```
 
+ -->

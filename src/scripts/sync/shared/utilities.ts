@@ -45,33 +45,9 @@ export function areInstancesOf<T>(
 }
 
 /**
- * Retrieves HTML element of specified type from 
- * string or validates type of element.
- * 
- * @param type - Type to get the element validated for (must be HTMLElement or extension)
- * @param idOrEl - Either id attribute of element or the element itself
- * @returns the element with validated type
- * @throws {Error} If element is not of requested type
- * @throws {Error} If element does not exist (id references nothing)
- * @remarks *Requires a DOM environment*.
- */
-export function getValidatedElement<H extends HTMLElement>(
-    type: new (...args: unknown[]) => H,
-    idOrEl: string | H
-): H {
-    if (typeof idOrEl === 'string') {
-        const el = document.getElementById(idOrEl);
-        if (!el) throw new Error(`Element with id "${idOrEl}" not found.`);
-        if (!(el instanceof type)) throw new Error(`Element "${idOrEl}" is not ${type.name}.`);
-        return el;
-    }
-    return idOrEl;
-}
-
-/**
  * Template class with lock methods to prevent multiple actions for the same object
  */
-export abstract class ElementWithLock {
+export abstract class ElementWithLock extends HTMLElement {
     /** Whether an action is in play. */
     private _lock: boolean = false;
     /** 
@@ -83,6 +59,29 @@ export abstract class ElementWithLock {
      * @remarks only available to descendants */
     protected unlock(): void { this._lock = false; }
     /** @returns lock state */
-    get isLocked(): boolean { return this._lock; }
+    public get isLocked(): boolean { return this._lock; }
 }
+
+declare const LockableSymbol: unique symbol;
+export interface Lockable extends HTMLElement {
+    [LockableSymbol]: never;
+    isLocked: boolean;
+}
+export const Lockify = <TBase extends new (...args: any[]) => HTMLElement>(Base: TBase) =>
+    class extends Base implements Lockable {
+        declare [LockableSymbol]: never;
+        /** Whether an action is in play. */
+        private _lock: boolean = false;
+        /** 
+         * Activates lock. 
+         * @remarks only available to descendants */
+        protected lock(): void { this._lock = true; }
+        /** 
+         * Deactivates lock. 
+         * @remarks only available to descendants */
+        protected unlock(): void { this._lock = false; }
+        /** @returns lock state */
+        public get isLocked(): boolean { return this._lock; }
+    }
+
 

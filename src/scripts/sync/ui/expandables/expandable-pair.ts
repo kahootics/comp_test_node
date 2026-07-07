@@ -1,6 +1,7 @@
 
 import companionSharedConstants from '../../../../config/companion-synced-constants.json' with { type: 'json' };
-import { ElementWithLock, getValidatedElement, requestTransitionFrame } from '../../shared/utilities.js';
+import { getValidatedElement } from '../../shared/get-validated-element.js';
+import { ElementWithLock, requestTransitionFrame } from '../../shared/utilities.js';
 
 // TOGGLEABLE ELEMENT ===================================================================
 /** CSS class utility to mark an open toggleable. */
@@ -54,7 +55,7 @@ export class ToggleableElement<
      * Sets `hidden` attribute of the element. 
      * @param hide - The new value for `hidden`
     */
-    protected set hidden(hide: boolean) {
+    override set hidden(hide: boolean) {
         this.ELEMENT.hidden = hide;
     }
     public isOpen(): boolean {
@@ -107,8 +108,8 @@ export class ToggleableElement<
             () => this.onTransitionEnd(...callbacks), { once: true });
     }   
     /** @returns element's id attribute. */
-    get id(): string { return this.ID; }
-    get style(): CSSStyleDeclaration { return this.ELEMENT.style; }
+    override get id(): string { return this.ID; }
+    override get style(): CSSStyleDeclaration { return this.ELEMENT.style; }
 }
 
 /** Any HTMLElement that implements the `disabled` attribute */

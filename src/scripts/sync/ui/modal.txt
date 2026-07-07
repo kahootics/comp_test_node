@@ -1,6 +1,8 @@
-import { getValidatedElement, requestTransitionFrame } from "../shared/utilities.js";
+import { requestTransitionFrame } from "../shared/utilities.js";
 import companionSharedConstants from '../../../config/companion-synced-constants.json' with { type: 'json' };
 import { ToggleableElement } from "./expandables/expandable-pair.js";
+import { getValidatedElement } from "../shared/getValidatedElement.js";
+import ExpandableElement from "./expandables/_expandable-element.js";
 
 // BACKDROP =============================================================================
 /** Backdrop specific css class name. */
@@ -58,7 +60,7 @@ function getFocusableExtremities(element: HTMLElement) {
  * - *Requires a DOM environment*.
  * - The Focus Trap dinamically adapts to changes in the modal's subtree
  */
-export default class Modal extends ToggleableElement<HTMLElement> {
+export default class Modal extends ExpandableElement<HTMLElement> {
     /** Modal element. */
     protected get modal() { return this.ELEMENT; }
     /** Backdrop of the modal. */
@@ -75,8 +77,8 @@ export default class Modal extends ToggleableElement<HTMLElement> {
     private readonly observer: MutationObserver;
     
     
-    constructor(modal: string | HTMLElement, modalCloser: string | HTMLButtonElement) {
-        super(modal, HTMLElement);
+    constructor(modal: HTMLElement, modalCloser: string | HTMLButtonElement) {
+        super(modal);
         // Modal element
         if(!(this.modal.getAttribute('role') === 'dialog'
             && this.modal.getAttribute('aria-modal') === 'true')

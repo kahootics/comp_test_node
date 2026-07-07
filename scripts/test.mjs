@@ -1,4 +1,3 @@
 import execCmdSync from "./exec-cmd-sync.mjs";
 
-
-execCmdSync("vitest run");
+execCmdSync("vitest --config vitest.config.ts");

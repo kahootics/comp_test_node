@@ -1,4 +1,4 @@
-import fetchSheetDataset from "../csv/fetch-sheet-dataset.js";
+import fetchSheetDataset from '../csv/fetch-sheet-as-dataset.js';
 
 import datasheets from '../../../config/companion-datasheets.json' with { type: 'json' };
 import { parseEnchantsArmorTest, parseMagEffsTest } from "../../types/enchantments-types.js";

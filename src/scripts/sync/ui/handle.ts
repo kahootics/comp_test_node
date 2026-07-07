@@ -1,5 +1,4 @@
-import { getValidatedElement } from "../shared/utilities.js";
-import Modal from "./modal.js";
+import { IllegalArgumentError } from "../../../errors/common-errors.js";
 
 interface HandleTarget {
     style: CSSStyleDeclaration,
@@ -9,10 +8,9 @@ interface HandleTarget {
 }
 
 abstract class Handle<
-    H extends HTMLElement = HTMLElement,
     T extends HandleTarget = HandleTarget
 > {
-    protected readonly handle: H;
+    protected readonly handle: HTMLElement;
     protected readonly target: T;
 
     private readonly onPointerDown = (e: PointerEvent) => this.handleTouchStart(e);
@@ -24,13 +22,12 @@ abstract class Handle<
     }
 
     constructor(
-        handle: string | H,
-        handleType: new (...args: unknown[]) => H,
         target: T
     ) {
-        this.handle = getValidatedElement(handleType, handle);
+        this.handle = document.createElement('div');
         this.target  = target;
         this.handle.setAttribute('aria-controls', target.id);
+        this.handle.setAttribute('aria-hidden', 'true');
     }
 
     public enable() {
@@ -63,10 +60,10 @@ interface VerticalFadeHandleOptions extends HasNumberProperties  {
     minOpacity: number
 }
 
-function isUnitary(val: number) {
+function isUnitary(val: number): boolean {
     return val <= 1 && val >= 0;
 }
-function hasUnitaryProperties(target: HasNumberProperties):boolean {
+function hasUnitaryProperties(target: HasNumberProperties): boolean {
     return Object.values(target).every(isUnitary);
 }
 
@@ -79,13 +76,12 @@ class VerticalFadeHandle extends Handle {
     private readonly MIN_OPACITY: number;
 
     constructor(
-        handle: string | HTMLElement, 
         target: HandleTarget,
         options?: VerticalFadeHandleOptions
     ) {
-        super(handle, HTMLElement, target);
+        super(target);
         if(options && !hasUnitaryProperties(options))
-            throw new Error(
+            throw new IllegalArgumentError(
                 "Vertical handle's options must be not smaller than 0 and not greater than 1"
         );
         this.CLOSE_THRESHOLD_Y_PERCENTAGE = options?.closeThresholdYPercentage ?? 0.25;
@@ -143,15 +139,15 @@ class VerticalFadeHandle extends Handle {
     }
 }
 
-class DraggableModal extends Modal {
+/* class DraggableModal extends Modal {
     private readonly modalHandle: VerticalFadeHandle;
     constructor(
-        modal: string | HTMLElement, 
+        modal: HTMLElement, 
         modalCloser: string | HTMLButtonElement,
         modalHandle: string | HTMLElement
     ) {
         super(modal, modalCloser);
-        this.modalHandle = new VerticalFadeHandle(modalHandle, this);
+        this.modalHandle = new VerticalFadeHandle(this);
     }
     override open(...callbacks: (() => void)[]): void {
         super.open(() => this.modalHandle.enable(), ...callbacks);
@@ -160,4 +156,4 @@ class DraggableModal extends Modal {
         super.close(...callbacks);
         this.modalHandle.disable();
     }
-}
+} */

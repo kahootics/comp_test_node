@@ -1,6 +1,6 @@
 
 import {z} from 'zod';
-import c from './record-type.js';
+import c from './record-types.js';
 
 const PLUGIN = z.object({
     compPluginId: c.compPluginId(),
