@@ -1,5 +1,6 @@
 import { glob } from 'glob';
-import { getDirname, Log } from "../../../tools/companion-util.js";
+import { getDirname } from "../../../tools/companion-util.js";
+import { Log } from '../../../tools/console.js';
 import { buildSrcset, type SrcsetOutput } from "../sharp/build-srcset.js";
 import path from 'path';
 

@@ -11,7 +11,7 @@
 import writeAsJsonAt from './scripts/node/writers/write-as-json-at.js';
 import buildScripts from './scripts/node/main/build-scripts.js';
 import json from './scripts/node/main/build-assets.js';
-import { Log } from './tools/companion-util.js';
+import { Log } from './tools/console.js';
 import { buildDatasets } from './scripts/node/main/build-datasets.js';
 
 

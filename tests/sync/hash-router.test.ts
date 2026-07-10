@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, beforeEach, afterEach, vi, test } from "vitest";
-import { HashRouter, HashRouterEvent, HashRouterRequestEvent } from '../../src/scripts/sync/ui/hash-router.js';
+import { HashRouter, HashRouterEvent, HashRouterRequestEvent } from '../../src/scripts/sync/ui/routing/hash-router.js';
 import { hashRouterRequestEvent, route, hashRouterEvent, title } from "../../src/scripts/types/router-types.js";
 import { resetSingleton } from "../utils.js";
 
@@ -72,21 +72,21 @@ describe("HashRouter: singleton & lifecycle", () => {
         const router = buildRouter();
         expect(HashRouter.instance).toBe(router);
     });
-// @ts-ignore
+    // @ts-ignore
     test("instance getter throws RouterInitializationError when not yet built", () => {
-// @ts-ignore
+        // @ts-ignore
         expect(() => HashRouter.instance).toThrowWithName("RouterInitializationError");
     });
 
     test("build() throws RouterInitializationError when called a second time", () => {
         buildRouter();
-// @ts-ignore
+        // @ts-ignore
         expect(() => buildRouter()).toThrowWithName("RouterInitializationError");
     });
 
     test("build() throws IllegalArgumentError when the prefix contains a hash character", () => {
         const routesMap = new Map([["cos", 'Cos'], ["   ", "at"]]);
-// @ts-ignore
+        // @ts-ignore
         expect(() => HashRouter.build('T', routesMap, { hashPrefix: "perf#-" })).toThrowWithName("IllegalArgumentError");
     });
 
@@ -111,26 +111,26 @@ describe("getValidatedRoutesMap(routesMap) & build()", () => {
     test("throws ValidationError when a key contains an invalid character", () => {
         resetSingleton(HashRouter as any, "self");
         const routesMap = new Map([["cos", 'Cos'], ["&atmora", "at"]]);
-// @ts-ignore
+        // @ts-ignore
         expect(() => HashRouter.build("T", routesMap)).toThrowWithName("ValidationError");
     });
 
     test("throws ValidationError when a key is blank", () => {
         resetSingleton(HashRouter as any, "self");
         const routesMap = new Map([["cos", 'Cos'], ["   ", "at"]]);
-// @ts-ignore
+        // @ts-ignore
         expect(() => HashRouter.build("T", routesMap)).toThrowWithName("ValidationError");
     });
 
     test("throws ValidationError when a title is blank", () => {
         resetSingleton(HashRouter as any, "self");
         const routesMap = new Map([["cos", 'Cos'], ["mos", ""]]);
-// @ts-ignore
+        // @ts-ignore
         expect(() => HashRouter.build("T", routesMap)).toThrowWithName("ValidationError");
 
         resetSingleton(HashRouter as any, "self");
         const routesMap1 = new Map([["cos", 'Cos'], ["mos", "          "]]);
-// @ts-ignore
+        // @ts-ignore
         expect(() => HashRouter.build("T", routesMap1)).toThrowWithName("ValidationError");
     });
 
@@ -143,21 +143,21 @@ describe("getValidatedRoutesMap(routesMap) & build()", () => {
 
     test("running build() throws ValidationError when the route map has invalid keys", () => {
         resetSingleton(HashRouter as any, "self");
-// @ts-ignore
+        // @ts-ignore
         expect(() => HashRouter.build("T", new Map([["@home", "Home"]]))).toThrowWithName("ValidationError");
 
         resetSingleton(HashRouter as any, "self");
-// @ts-ignore
+        // @ts-ignore
         expect(() => HashRouter.build("T", new Map([["[]{}", "Symbols"]]))).toThrowWithName("ValidationError");
     });
 
     test("running build() throws ValidationError when the route map has empty titles", () => {
         resetSingleton(HashRouter as any, "self");
-// @ts-ignore
+        // @ts-ignore
         expect(() => HashRouter.build("T", new Map([["home", ""]]))).toThrowWithName("ValidationError");
 
         resetSingleton(HashRouter as any, "self");
-// @ts-ignore
+        // @ts-ignore
         expect(() => HashRouter.build("T", new Map([["home", "   "]]))).toThrowWithName("ValidationError");
     });
 
@@ -246,7 +246,7 @@ describe("getTitle()", () => {
 
     test("throws IllegalArgumentError for an unknown route", () => {
         const router = buildRouter();
-// @ts-ignore
+        // @ts-ignore
         expect(() => router.getTitle("nonexistent" as route)).toThrowWithName("IllegalArgumentError");
     });
 });
@@ -392,7 +392,7 @@ describe("route-change request events", () => {
 
     test("event constructor throws ValidationError for an unknown route request", () => {
         buildRouter();
-// @ts-ignore
+        // @ts-ignore
         expect(() => requestRoute("nonexistent")).toThrowWithName("ValidationError");
     });
 

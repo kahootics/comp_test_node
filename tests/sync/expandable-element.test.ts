@@ -390,7 +390,7 @@ describe('show()', () => {
         fireTransitionEnd(el);
 
         const cb = vi.fn();
-
+        // @ts-ignore
         expect(() => el.show(cb)).toThrowWithName('InvalidStateError');
         expect(cb).not.toHaveBeenCalled();
     });
@@ -399,7 +399,7 @@ describe('show()', () => {
         el.open = true;
         expect(el.isLocked).toBe(true);
 
-// @ts-ignore
+        // @ts-ignore
         expect(() => el.show()).toThrowWithName('InvalidStateError');
     });
 
@@ -408,7 +408,7 @@ describe('show()', () => {
         expect(el.isLocked).toBe(true);
 
         const cb = vi.fn();
-// @ts-ignore
+        // @ts-ignore
         expect(() => el.show(cb)).toThrowWithName('InvalidStateError');
 
         fireTransitionEnd(el);
@@ -454,7 +454,7 @@ describe('close()', () => {
         fireTransitionEnd(el); // stato stabile: chiuso, non locked
 
         const cb = vi.fn();
-// @ts-ignore
+        // @ts-ignore
         expect(() => el.close(cb)).toThrowWithName('InvalidStateError');
         expect(cb).not.toHaveBeenCalled();
     });
@@ -463,7 +463,7 @@ describe('close()', () => {
         el.close(); // avvia la chiusura -> isLocked true
         expect(el.isLocked).toBe(true);
 
-// @ts-ignore
+        // @ts-ignore
         expect(() => el.close()).toThrowWithName('InvalidStateError');
     });
 
@@ -472,7 +472,7 @@ describe('close()', () => {
         expect(el.isLocked).toBe(true);
 
         const cb = vi.fn();
-// @ts-ignore
+        // @ts-ignore
         expect(() => el.close(cb)).toThrowWithName('InvalidStateError');
 
         fireTransitionEnd(el);

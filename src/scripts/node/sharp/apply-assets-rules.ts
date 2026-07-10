@@ -2,7 +2,7 @@
 import fs from 'node:fs'
 import { glob } from 'glob';
 import path from "node:path";
-import { Log } from "../../../tools/companion-util.js";
+import { Log } from '../../../tools/console.js';
 import sharp from "sharp";
 import { assets } from "./assets-types.js";
 import { createHashFromFile } from "../writers/hash.js";
