@@ -1,6 +1,6 @@
 import { expect, type MatcherResult } from 'vitest';
 import type { MatcherState } from '@vitest/expect';
-import { IllegalArgumentError } from '../src/errors/common-errors';
+import { IllegalArgumentError } from '../src/errors/common-errors.js';
 
 declare module 'vitest' {
     interface Assertion<T = any> extends CustomMatchers<T> {}
@@ -9,10 +9,10 @@ declare module 'vitest' {
 
 interface CustomMatchers<R = unknown> {
     toThrowWithName(expected: string): R;
+	toThrowInstanceof(expected: new (...args: any[]) => Error): R;
 }
 
-expect.extend({ toThrowWithName });
-
+expect.extend({ toThrowWithName, toThrowInstanceof });
 
 /**
  * 

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, beforeEach, afterEach, vi, test } from "vitest";
-import { LockableElement } from "../../src/scripts/sync/ui/expandables/expandible-element.js";
+import { ExtendibleElement } from "../../src/scripts/sync/ui/components/extendible-element.js";
 //import { Lockify } from "../../src/scripts/sync/shared/utilities.js";
 
 // HELPERS ==============================================================================
@@ -12,33 +12,32 @@ function getExpandableElement(): HTMLElement | null {
 
 // SETUP & TEARDOWN =====================================================================
 
-class MockElementWithLock extends LockableElement {};
+class MockElementWithLock extends ExtendibleElement { };
 
 vi.mock('../../src/scripts/sync/shared/utilities.js', () => {
-    
-  return {
-    requestTransitionFrame: (cb: () => void) => cb(),
-  };
+    return {
+        requestTransitionFrame: (cb: () => void) => cb(),
+    };
 });
 
 // Import DOPO i mock (vi.mock viene comunque hoistato da vitest)
 //const { default: ExpandableElement, OPEN } = await import('../../src/scripts/sync/dom/expandables/expandable-element.js');
-const { Expandable, OPEN } = await import('../../src/scripts/sync/ui/expandables/expandable-element.mixin.js');
-
-const ExpandableElement = Expandable(MockElementWithLock);
-customElements.define('expandable-element',ExpandableElement);
+const { Expandable } = await import('../../src/scripts/sync/ui/mixins/add_behaviour/expandable.mixin.js');
+const OPEN = 'is-visible';
+const ExpandableElement = Expandable(MockElementWithLock, OPEN);
+customElements.define('expandable-element', ExpandableElement);
 
 function createElement(): InstanceType<typeof ExpandableElement> {
-  return document.createElement('expandable-element') as InstanceType<typeof ExpandableElement>;
+    return document.createElement('expandable-element') as InstanceType<typeof ExpandableElement>;
 }
 
 function fireTransitionEnd(el: Element) {
-  el.dispatchEvent(new Event('transitionend'));
+    el.dispatchEvent(new Event('transitionend'));
 }
 
-  afterEach(() => {
+afterEach(() => {
     document.body.innerHTML = '';
-  });
+});
 
 
 
@@ -73,9 +72,9 @@ describe('customElement.define and attributes', () => {
 });
 
 describe("custom element tag", () => {
-    
+
     test("is defined and hydrated as an instance of ExpandableElement", () => {
-        document.body.innerHTML = 
+        document.body.innerHTML =
             `<expandable-element id="test-me">
             </expandable-element>`
         const el = getExpandableElement();
@@ -83,7 +82,7 @@ describe("custom element tag", () => {
     });
 
     test("automatically starts as 'hidden' if it has no 'open' attribute", () => {
-        document.body.innerHTML = 
+        document.body.innerHTML =
             `<expandable-element id="test-me">
             </expandable-element>`
         const el = getExpandableElement() as any;
@@ -92,7 +91,7 @@ describe("custom element tag", () => {
     });
 
     test("automatically removes 'hidden' if it has 'open' attribute", () => {
-        document.body.innerHTML = 
+        document.body.innerHTML =
             `<expandable-element id="test-me" open hidden>
             </expandable-element>`
         const el = getExpandableElement() as any;
@@ -101,7 +100,7 @@ describe("custom element tag", () => {
     });
 
     test("can be inspected with query selector", () => {
-        document.body.innerHTML = 
+        document.body.innerHTML =
             `<expandable-element id="test-me">
             <div>I am internal</div>
             </expandable-element>`
@@ -126,7 +125,7 @@ describe("custom element tag", () => {
 
     test("can be created with new operator", () => {
         const el = new ExpandableElement();
-        
+
         expect(el.open).toBe(false);
         expect(el.hidden).toBe(false);
 
@@ -231,7 +230,7 @@ describe('editing open reflects on hidden', () => {
         const el = createElement();
         el.open = true;
         fireTransitionEnd(el);
-    
+
         el.open = false;
         expect(el.hidden).toBe(false);
 
@@ -358,18 +357,18 @@ describe('during closure (attributeChangedCallback on "open" -> null)', () => {
 
 describe('show()', () => {
     let el: InstanceType<typeof ExpandableElement>;
- 
+
     beforeEach(() => {
         el = createElement();
         document.body.appendChild(el);
     });
- 
+
     test('sets open=true and adds OPEN', () => {
         el.show();
         expect(el.open).toBe(true);
         expect(el.classList).toContain(OPEN);
     });
- 
+
     test('calls scheduled callbacks functions at the end of transition', () => {
         const cb = vi.fn();
         el.show(cb);
@@ -377,60 +376,63 @@ describe('show()', () => {
         fireTransitionEnd(el);
         expect(cb).toHaveBeenCalledOnce();
     });
- 
+
     test('silently fails if called twice without arguments', () => {
         el.open = true;
         fireTransitionEnd(el);
- 
+
         expect(() => el.show()).not.toThrow();
-        expect(el.open).toBe(true); 
+        expect(el.open).toBe(true);
     });
- 
+
     test('throws InvalidStateError if called while already open with arguments', () => {
         el.open = true;
-        fireTransitionEnd(el); 
- 
+        fireTransitionEnd(el);
+
         const cb = vi.fn();
+
         expect(() => el.show(cb)).toThrowWithName('InvalidStateError');
-        expect(cb).not.toHaveBeenCalled(); 
+        expect(cb).not.toHaveBeenCalled();
     });
- 
+
     test('throws InvalidStateError while a transition is playing', () => {
         el.open = true;
         expect(el.isLocked).toBe(true);
- 
+
+// @ts-ignore
         expect(() => el.show()).toThrowWithName('InvalidStateError');
     });
- 
+
     test('throws InvalidStateError if called with arguments while a transition is playing; all arguments are flushed', () => {
         el.open = true;
         expect(el.isLocked).toBe(true);
- 
+
         const cb = vi.fn();
+// @ts-ignore
         expect(() => el.show(cb)).toThrowWithName('InvalidStateError');
- 
-        fireTransitionEnd(el); 
+
+        fireTransitionEnd(el);
         expect(cb).not.toHaveBeenCalled();
     });
 });
- 
+
 describe('close()', () => {
     let el: InstanceType<typeof ExpandableElement>;
- 
+
     beforeEach(() => {
         el = createElement();
         el.setAttribute('open', '');
         document.body.appendChild(el);
         el.classList.add(OPEN);
-        fireTransitionEnd(el); 
+        fireTransitionEnd(el);
     });
- 
+
     test('sets open=false and removes class OPEN', () => {
         el.close();
         expect(el.open).toBe(false);
         expect(el.classList.contains(OPEN)).toBe(false);
     });
- 
+
     test('esegue le callback pianificate a fine transizione', () => {
         const cb = vi.fn();
         el.close(cb);
@@ -438,38 +440,41 @@ describe('close()', () => {
         fireTransitionEnd(el);
         expect(cb).toHaveBeenCalledOnce();
     });
- 
+
     test('fallisce silenziosamente se già chiuso e chiamato senza argomenti', () => {
         el.close();
         fireTransitionEnd(el); // stato stabile: chiuso, non locked
- 
+
         expect(() => el.close()).not.toThrow();
         expect(el.open).toBe(false); // nessun cambio di stato
     });
- 
+
     test('lancia InvalidStateError se già chiuso e chiamato con callback', () => {
         el.close();
         fireTransitionEnd(el); // stato stabile: chiuso, non locked
- 
+
         const cb = vi.fn();
+// @ts-ignore
         expect(() => el.close(cb)).toThrowWithName('InvalidStateError');
         expect(cb).not.toHaveBeenCalled();
     });
- 
+
     test('lancia InvalidStateError se chiamato durante una transizione in corso', () => {
         el.close(); // avvia la chiusura -> isLocked true
         expect(el.isLocked).toBe(true);
- 
+
+// @ts-ignore
         expect(() => el.close()).toThrowWithName('InvalidStateError');
     });
- 
+
     test('lancia InvalidStateError se chiamato con callback durante una transizione', () => {
         el.close();
         expect(el.isLocked).toBe(true);
- 
+
         const cb = vi.fn();
+// @ts-ignore
         expect(() => el.close(cb)).toThrowWithName('InvalidStateError');
- 
+
         fireTransitionEnd(el);
         expect(cb).not.toHaveBeenCalled();
     });
@@ -481,7 +486,7 @@ describe('error handling in scheduled callbacks', () => {
         const el = createElement();
         document.body.appendChild(el);
 
-        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
         const throwing = vi.fn(() => {
             throw new Error('boom');
         });
@@ -524,65 +529,65 @@ describe("safeCall()", () => {
     test('returns true when silently failing', () => {
         el.open = true;
         fireTransitionEnd(el);
- 
-        expect(el.safeCall('show')).toBe(true);
-        expect(el.open).toBe(true); 
 
-        fireTransitionEnd(el); 
+        expect(el.safeCall('show')).toBe(true);
+        expect(el.open).toBe(true);
+
+        fireTransitionEnd(el);
         el.open = false;
         fireTransitionEnd(el);
 
         expect(el.safeCall('close')).toBe(true);
         expect(el.open).toBe(false);
     });
- 
+
     test('returns false if called while already open with arguments', () => {
         el.open = true;
-        fireTransitionEnd(el); 
- 
-        const cb = vi.fn();
-        expect(el.safeCall('show',cb)).toBe(false);
-        expect(cb).not.toHaveBeenCalled(); 
+        fireTransitionEnd(el);
 
-        fireTransitionEnd(el); 
+        const cb = vi.fn();
+        expect(el.safeCall('show', cb)).toBe(false);
+        expect(cb).not.toHaveBeenCalled();
+
+        fireTransitionEnd(el);
         el.open = false;
-        fireTransitionEnd(el); 
- 
-        expect(el.safeCall('close',cb)).toBe(false);
-        expect(cb).not.toHaveBeenCalled(); 
+        fireTransitionEnd(el);
+
+        expect(el.safeCall('close', cb)).toBe(false);
+        expect(cb).not.toHaveBeenCalled();
     });
- 
+
     test('returns false while a transition is playing', () => {
         el.open = true;
         expect(el.isLocked).toBe(true);
- 
+
         expect(el.safeCall('show')).toBe(false);
 
         fireTransitionEnd(el);
 
         el.open = false;
         expect(el.isLocked).toBe(true);
- 
+
         expect(el.safeCall('close')).toBe(false);
     });
- 
+
     test('returns false if called with arguments while a transition is playing; all arguments are flushed', () => {
         el.open = true;
         expect(el.isLocked).toBe(true);
- 
+
         const cb = vi.fn();
-        expect(el.safeCall('show',cb)).toBe(false);
- 
-        fireTransitionEnd(el); 
+        expect(el.safeCall('show', cb)).toBe(false);
+
+        fireTransitionEnd(el);
         expect(cb).not.toHaveBeenCalled();
 
-        fireTransitionEnd(el); 
+        fireTransitionEnd(el);
         el.open = false;
         expect(el.isLocked).toBe(true);
- 
-        expect(el.safeCall('close',cb)).toBe(false);
- 
-        fireTransitionEnd(el); 
+
+        expect(el.safeCall('close', cb)).toBe(false);
+
+        fireTransitionEnd(el);
         expect(cb).not.toHaveBeenCalled();
     });
 });

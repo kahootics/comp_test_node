@@ -11,3 +11,6 @@ export interface HasOpen {
 export interface Closeable {
     close(): void;
 }
+
+declare const PathSymbol: unique symbol;
+export type pathString = string & { [PathSymbol]: void };

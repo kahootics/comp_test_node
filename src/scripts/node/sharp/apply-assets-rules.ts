@@ -1,49 +1,54 @@
 
-import z from "zod";
 import fs from 'node:fs'
 import { glob } from 'glob';
 import path from "node:path";
 import { Log } from "../../../tools/companion-util.js";
 import sharp from "sharp";
-import { AssetsRule, img, type AssetNamePath, type AssetsPathsWithRule } from "./assets-types.js";
+import { assets } from "./assets-types.js";
 import { createHashFromFile } from "../writers/hash.js";
-
 
 
 /**
  * Async function that creates a map of asset directories and relative rules
+ * @param pattern - glob pattern to all the rules files
  * @returns a promise containing a collection of rules + empty asset lists (name + path) indexed by their directory
  * @requires glob
  */
-export async function getAssetsRules(): Promise<Map<string, AssetsPathsWithRule>> {
+async function getAssetsRules(
+    pattern: string
+): Promise<Map<assets.directory, assets.PathsWithRule>> {
 
-    const allAssetsRulesPaths = await glob('src/assets/**/rules.json');
+    const allAssetsRulesPaths = await glob(pattern);
 
     return new Map(
         allAssetsRulesPaths.map(rulePath => {
-            const directory = path.dirname(rulePath);
+            const directory = path.dirname(rulePath) as assets.directory;
             const ruleStr   = fs.readFileSync(rulePath, 'utf-8');
             const ruleRaw   = JSON.parse(ruleStr);
-            const rule      = AssetsRule.parse(ruleRaw);
+            const rule      = assets.rule().parse(ruleRaw);
 
-            return [ directory, { rule, assets: [] } ]
+            return [ directory, { rule, assets: [] } ];
         })
     );
 }
 
 /**
  * Async function that creates a map of asset directories and relative rules paired with the assets contained in that directory
+ * @param rulesGlob - glob pattern to all the rules files
+ * @param assetsGlob - glob pattern to all assets
  * @returns a promise containing a collection of rules + asset lists (name + path) indexed by their directory
  * @requires glob
  */
-export async function getAssetsWithRules(): Promise<Map<string, AssetsPathsWithRule>> {
-    const allAssetsPathsRaw = await glob('src/assets/**/*.{jpg,jpeg,png,webp,avif}');
+export async function getAssetsWithRules(
+    rulesGlob: string, assetsGlob: string
+): Promise<Map<assets.directory, assets.PathsWithRule>> {
 
-    const allAssetsRules = await getAssetsRules();
+    const allAssetsPathsRaw = await glob(assetsGlob);
+    const allAssetsRules = await getAssetsRules(rulesGlob);
 
     allAssetsPathsRaw.forEach(assetPath => {
 
-        const assetDir  = path.dirname(assetPath);
+        const assetDir  = path.dirname(assetPath) as assets.directory;
         const assetExt  = path.extname(assetPath); // .{jpg,png...}
         const assetName = path.basename(assetPath, assetExt);
         const assetRuleObj = allAssetsRules.get(assetDir);
@@ -65,7 +70,7 @@ export async function getAssetsWithRules(): Promise<Map<string, AssetsPathsWithR
 
 // VALIDATION ==============================================================================
 
-function validatAssetsDir(directory: string, aPWR: AssetsPathsWithRule): boolean {
+function validatAssetsDir(directory: string, aPWR: assets.PathsWithRule): boolean {
     return aPWR.assets.every(asset => 
         path.resolve(path.dirname(asset.path)) 
         === path.resolve(directory)
@@ -78,7 +83,7 @@ function validatAssetsDir(directory: string, aPWR: AssetsPathsWithRule): boolean
 async function enforceAssetsCropRule(
     name: string,
     sharpAsset: sharp.Sharp, 
-    rule: z.infer<typeof img.cropType>
+    rule: assets.cropType
 ) {
     // If not included in croppable list, exit
     if(!name.match(rule.include)) return sharpAsset;
@@ -100,16 +105,16 @@ async function enforceAssetsCropRule(
 
 function enforceSharpFormat(
     sharp: sharp.Sharp, 
-    format: z.infer<typeof img.formatType>, 
-    options?: z.infer<typeof img.formatOptionsType>
+    format: assets.formatType, 
+    options?: assets.formatOptionsType
 ): sharp.Sharp {
     return sharp.toFormat(format, options);
 }
 
 function getAssetFinalName(
     name: string,
-    sortedAssetsInRule: AssetNamePath[],
-    rule: z.infer<typeof img.renameType>,
+    sortedAssetsInRule: assets.NamePath[],
+    rule: assets.renameType,
     filePath: string
 ) {
     // include check
@@ -136,17 +141,26 @@ function getAssetFinalName(
 
 
 
-function sortAssets(assets: AssetNamePath[], sorting: z.infer<typeof img.sortType>) {
-    assets.sort(img.sortby[sorting])
+/* function sortAssets(assetsToSort: assets.NamePath[], sorting: assets.sortType>) {
+    assetsToSort.sort(assets.sortby[sorting])
+}
+ */
+
+
+const assetsWithRules = await getAssetsWithRules('src/assets/**/rules.json', 'src/assets/**/*.{jpg,jpeg,png,webp,avif}');
+
+function getPathsAndRule(directory: assets.directory): assets.PathsWithRule {
+    const pathsAndRule = assetsWithRules.get(directory);
+    // Check rules are referring to images group
+    if(!pathsAndRule) throw new Error('At directory "' + 
+        directory + '" there are no rules to apply on assets.');
+    return pathsAndRule;
 }
 
 
-
-const assetsWithRules = await getAssetsWithRules();
-
 export const enforceAssetsDir = Object.freeze({
 
-    async LocalRule(directory: string): Promise<void> {
+    async LocalRule(directory: assets.directory): Promise<void> {
 
         const pathsAndRule = getPathsAndRule(directory);
         const rule = pathsAndRule.rule.local;
@@ -160,7 +174,7 @@ export const enforceAssetsDir = Object.freeze({
                 throw new Error('Mismatching sizes for names list and assets at dir: '
                     + directory
                 );
-            sortAssets(pathsAndRule.assets, rule.rename.sort)
+            //sortAssets(pathsAndRule.assets, rule.rename.sort)
             
         }
         
@@ -207,13 +221,7 @@ export const enforceAssetsDir = Object.freeze({
 
 // HELPERS ===================================================================================
 
-function getPathsAndRule(directory: string): AssetsPathsWithRule {
-    const pathsAndRule = assetsWithRules.get(directory);
-    // Check rules are referring to images group
-    if(!pathsAndRule) throw new Error('At directory "' + 
-        directory + '" there are no rules to apply on assets.');
-    return pathsAndRule;
-}
+
 
 
 /* 

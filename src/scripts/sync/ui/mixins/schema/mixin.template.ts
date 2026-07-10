@@ -1,30 +1,32 @@
-import { ValidationError } from "../../../../errors/common-errors.js";
+import { ValidationError } from "../../../../../errors/common-errors.js";
 
-// !! Globally change MixinName and MixinClass before implementing !!
+// !! Globally change MixinName, MixinClass and BaseClass before implementing !!
 
-// OBFUSCATED PROPERTIES
-export const PrivateProp = Symbol('PrivateProp');
-
-// EXTENDED CONSTRUCTOR
-type GConstructor<T extends {}> = new (...args: any[]) => T; 
+// EXTENDED CONSTRUCTOR ================================================================
+type Constructor<T extends {}> = new (...args: any[]) => T; 
 type BaseClass = any; // edit //
-type BaseConstructor = GConstructor<BaseClass>
 
-// MIXIN PUBLIC INTERFACE
+// OBFUSCATED PROPERTIES ===============================================================
+export const ObfuscatedProp = Symbol('ObfuscatedProp'); // eg //
+
+// MIXIN PUBLIC INTERFACE ==============================================================
 interface MixinName extends BaseClass {
     //# insert public properties 
     //# insert obfuscated properties 
-    [PrivateProp](): void; // EG
+    [ObfuscatedProp](): void; // EG
 }
 
-// MIXIN FUNCTION
+// HELPERS =============================================================================
+/* ... */
+
+// MIXIN FUNCTION ======================================================================
 export function MixinName<
-    TBase extends BaseConstructor
+    TBase extends Constructor<BaseClass>
 > ( Base: TBase ) {
     return class MixinClass extends Base implements MixinName {
         //# Implement interface and class privates 
         //# Implement obfuscated props 
-        public [PrivateProp]() {} // EG
+        public [ObfuscatedProp]() {} // EG
 
         //# Branding in constructor
         constructor(...args: any[]) {
@@ -36,7 +38,7 @@ export function MixinName<
 }
 
 
-// EXPORTED NAMESPACE
+// EXPORTED NAMESPACE ==================================================================
 export namespace MixinName {
     /**
      * Validates an element as a `MixinName`
@@ -55,7 +57,7 @@ export namespace MixinName {
     }
 }
 
-// PRIVATE INTERNAL IDENTIFICATION
+// PRIVATE INTERNAL IDENTIFICATION =====================================================
 /** Holds all branded instances of `MixinName`. */
 const branded = new WeakSet();
 /** Brands an element as an instance of `MixinName`. */

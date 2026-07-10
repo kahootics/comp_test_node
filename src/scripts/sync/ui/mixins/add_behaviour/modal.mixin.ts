@@ -1,39 +1,21 @@
+import { ValidationError } from "../../../../../errors/common-errors.js";
+import { Backdrop } from "../../components/backdrop.js";
+import { expandableCloseTransition, expandableOpenTransition } from "./expandable.mixin.js";
+import type { Popover } from "./popover.mixin.js";
 
-import { Expandable, expandableCloseTransition, expandableOpenTransition } from "./expandable-element.mixin.js";
-import { ToggleableElement } from "./expandable-pair.js";
-import { LockableElement } from "./expandible-element.js";
+// EXTENDED CONSTRUCTOR ================================================================
+type Constructor<T extends {}> = new (...args: any[]) => T;
 
-// BACKDROP =============================================================================
-/** Backdrop specific css class name. */
-const CLASS: string = "companionSharedConstants.classes.modals.backdrop;"
-/**
- * Backdrop component for modals.
- * @remarks
- * - *Requires a DOM environment* — not compatible with Node.js.
- * - Must be instantiated after DOM is ready (`DOMContentLoaded`).
- * @example
- * const backdrop = new Backdrop(closeMyModalFunc);
- */
-export class Backdrop extends ToggleableElement {
-    /** Backdrop element (created from scratch). */
-    get BACKDROP() { return this.ELEMENT; }
-    /**
-     * @param modalCloserFunction - Function that closes the modal; 
-     * required for closing it when backdrop is clicked
-     */
-    constructor(modalCloserFunction: () => void) {
-        super(document.createElement('div'), HTMLElement);
-        this.BACKDROP.className = CLASS;
-        document.body.appendChild(this.BACKDROP);
-        this.BACKDROP.addEventListener('click', modalCloserFunction);
-    }
-    /** Removes backdrop from document. */
-    destroy() {
-        this.BACKDROP.remove();
-    }
+// OBFUSCATED PROPERTIES ===============================================================
+
+// MIXIN PUBLIC INTERFACE ==============================================================
+interface Modal extends Popover {
+    /** last focused element in the document before opening the modal */
+    lastFocus: HTMLElement;
 }
 
-// MODAL ================================================================================
+// HELPERS =============================================================================
+
 /** CSS selectors list of focusable elements. */
 const FOCUSABLES = ':not(:disabled, [hidden]):where(a, button, input, textarea, select, [tabindex]:not([tabindex="-1"]))';
 /**
@@ -54,31 +36,13 @@ function getFocusableExtremities(element: HTMLElement) {
     return { first, last };
 }
 
-interface Modal extends Expandable {
-    /**     
-     * - opens the modal and backdrop
-     * - traps the focus in the modal
-     * - gives focus to the modal's focusable
-     * - locks the document's scrolling
-     * @inheritdoc
-     */
-    show(...callbacks: (() => void)[]): void;
-    /** 
-     * - closes the modal and backdrop
-     * - returns the focus to the document
-     * - gives focus to the document's last focused
-     * - unlocks the document's scrolling
-     * @inheritdoc
-     */
-    close(...callbacks: (() => void)[]): void;
-    
-    connectedCallback(): void;
-    /** last focused element in the document before opening the modal */
-    lastFocus: HTMLElement;
-}
 
+// MIXIN FUNCTION ======================================================================
 /**
  * Custom Modal Element.
+ * 
+ * Adds a focus trap to the element while it is open
+ * 
  * @remarks 
  * - *Requires a DOM environment*.
  * - The Focus Trap dinamically adapts to changes in the modal's subtree
@@ -86,9 +50,9 @@ interface Modal extends Expandable {
  * {@link Modal}
  */
 export function Modal<
-    TBase extends new (...args: any[]) => Expandable
-> ( Base: TBase ) {
-    return class ModalMixin extends Base implements Modal {
+    TBase extends Constructor<Popover>
+>(Base: TBase) {
+    return class ModalElement extends Base implements Modal {
 
         /** Backdrop of the modal. */
         private readonly backdrop: Backdrop;
@@ -103,15 +67,18 @@ export function Modal<
 
         constructor(...args: any[]) {
             super(...args);
-            
-            this.backdrop = new Backdrop(() => this.close());
+            brand(this);
+
+            this.backdrop = new Backdrop('placeholder', () => this.close());
+            this.setAttribute('role', 'dialog');
+            this.setAttribute('aria-haspopup', 'dialog');
+            this.setAttribute('aria-modal', 'true');
             // Observer for focusables mutations
             this.observer = new MutationObserver(() => this.updateFocusables());
         }
 
         // DOM Insertion Callback =======================================================
         /**
-         * 
          * Sets `role` to `dialog` and `aria-modal` to `true`
          * 
          * Updates focusable extremities
@@ -119,8 +86,6 @@ export function Modal<
          */
         override connectedCallback(): void {
             super.connectedCallback();
-            this.setAttribute('role', 'dialog');
-            this.setAttribute('aria-modal', 'true');
             this.updateFocusables();
         }
 
@@ -152,7 +117,7 @@ export function Modal<
         // OPEN & CLOSE EXPANSION =======================================================
         override[expandableOpenTransition](): void {
             super[expandableOpenTransition]();
-            this.backdrop.open();
+            this.backdrop.show();
             this.activateFocusTrap();
         }
         override[expandableCloseTransition](): void {
@@ -173,7 +138,6 @@ export function Modal<
          */
         private focusTrapEvent = (e: KeyboardEvent): void => {
 
-            if (e.key === 'Escape') this.close();
             if (e.key !== 'Tab') return;
 
             if (e.shiftKey && document.activeElement === this.firstFocusable) {
@@ -214,5 +178,52 @@ export function Modal<
             this.removeEventListener('keydown', this.focusTrapEvent);
         }
 
+        /**     
+         * - opens the modal and backdrop
+         * - traps the focus in the modal
+         * - gives focus to the modal's focusable
+         * - locks the document's scrolling
+         * @inheritdoc
+         */
+        override show(...callbacks: (() => void)[]) {
+            super.show(...callbacks);
+        }
+        /** 
+         * - closes the modal and backdrop
+         * - returns the focus to the document
+         * - gives focus to the document's last focused
+         * - unlocks the document's scrolling
+         * @inheritdoc
+         */
+        override close(...callbacks: (() => void)[]) {
+            super.close(...callbacks);
+        }
     }
+}
+
+// EXPORTED NAMESPACE ==================================================================
+export namespace Modal {
+    /**
+     * Validates an element as a `Modal`
+     * 
+     * @param that - Element that needs to be validated
+     * @returns the validated element
+     * 
+     * @throws {ValidationError} If the element passed as argument 
+     * has not been branded as a `Modal`
+     */
+    export function getValidated(that: Popover): Modal {
+        if (branded.has(that)) return that as Modal;
+        else throw new ValidationError(
+            `${that.constructor.name} does not extend ${Modal.name}`
+        );
+    }
+}
+
+// PRIVATE INTERNAL IDENTIFICATION =====================================================
+/** Holds all branded instances of `Modal`. */
+const branded = new WeakSet();
+/** Brands an element as an instance of `Modal`. */
+function brand(toBrand: Modal) {
+    branded.add(toBrand);
 }

@@ -1,116 +1,4 @@
-
-import companionSharedConstants from '../../../../config/companion-synced-constants.json' with { type: 'json' };
-import { getValidatedElement } from '../../shared/get-validated-element.js';
-import { ElementWithLock, requestTransitionFrame } from '../../shared/utilities.js';
-
-// TOGGLEABLE ELEMENT ===================================================================
-/** CSS class utility to mark an open toggleable. */
-const OPEN = companionSharedConstants.classes.common.isOpen;
-/**
- * Generic Toggleable Element.
- * 
- * The class provides basic structure for handling an HTML element's
- * transition between hidden states.
- * 
- * States are switched by using `close()` and `open()` public methods;
- * an opening transition must complete to start a closing one and viceversa.
- * 
- * @remarks
- * - *Requires a DOM environment* — not compatible with Node.js.
- * - Must be instantiated after DOM is ready (`DOMContentLoaded`).
- * - create a custom getter for `this.ELEMENT` to use a different name for the element.
- * @example
- * class Modal extends ToggleableElement<HTMLDialogElement> {
- *    constructor(modalId, HTMLDialogElement) {
- *        super(modalId, 'modal', HTMLDialogElement)
- *    }
- * }
- * 
- * @see {@link TriggerElement} for associated controller class
- * @see {@link pairTriggerAndToggleable} for function to pair trigger and toggle 
- * (**the function expects derived classes to have resolved the generics**)
- */
-export class ToggleableElement<
-    H extends HTMLElement = HTMLElement
-> extends ElementWithLock {
-    /** Animated element. */
-    protected readonly ELEMENT: H;
-    private readonly ID: string;
-    
-    /**
-     * @param idOrEl - Id attribute or the element itself
-     * @param elType - Type of the element (defaults to HTMLElement)
-     * @see {@link getValidatedElement} for the function used for obtaining the element
-     * @see {@link ElementWithLock} for the base class that provides the lock methods
-     */
-    constructor(
-        idOrEl: string | H, 
-        elType: new (...args: unknown[]) => H
-    ) {
-        super();
-        this.ELEMENT = getValidatedElement(elType, idOrEl);
-        this.ID = this.ELEMENT.id;
-    }
-    /** 
-     * Sets `hidden` attribute of the element. 
-     * @param hide - The new value for `hidden`
-    */
-    override set hidden(hide: boolean) {
-        this.ELEMENT.hidden = hide;
-    }
-    public isOpen(): boolean {
-        return this.ELEMENT.classList.contains(OPEN);
-    }
-    /**
-     * Handles *end of transition* cleanup:
-     * - hides the element if it doesn't have `OPEN` constant class
-     * - releases transition lock
-     */
-    private onTransitionEnd(...callbacks: (() => void)[]): void {
-        this.hidden = !this.isOpen();
-        callbacks.forEach(
-            callback => {
-                try { callback(); } 
-                catch(e) { console.error(e); }
-            }
-        );
-        this.unlock();
-    }
-    /** 
-     * @param callbacks - Allows scheduling any amount of callback functions
-     * that will be called at end of transition
-     * 
-     * - Element exits `hidden` state
-     * - Adds `OPEN` constant class
-     * - Applies lock to the transition playing on the element
-     */
-    public open(...callbacks: (() => void)[]) {
-        if(this.isLocked) return;
-        this.lock();
-        this.hidden = false;
-        requestTransitionFrame(() => this.ELEMENT.classList.add(OPEN));        
-        this.ELEMENT.addEventListener('transitionend', 
-            () => this.onTransitionEnd(...callbacks), { once: true });
-    }
-    /** 
-     * @param callbacks - Allows scheduling any amount of callback functions
-     * that will be called at end of transition
-     * 
-     * - Removes `OPEN` constant class
-     * - Element enters `hidden` state at end of transition
-     * - Applies lock to the transition playing on the element
-     */
-    public close(...callbacks: (() => void)[]) {
-        if(this.isLocked) return;
-        this.lock();
-        this.ELEMENT.classList.remove(OPEN);
-        this.ELEMENT.addEventListener('transitionend', 
-            () => this.onTransitionEnd(...callbacks), { once: true });
-    }   
-    /** @returns element's id attribute. */
-    override get id(): string { return this.ID; }
-    override get style(): CSSStyleDeclaration { return this.ELEMENT.style; }
-}
+import { Expandable } from "../mixins/add_behaviour/expandable.mixin.js";
 
 /** Any HTMLElement that implements the `disabled` attribute */
 interface HTMLDisableableElement extends HTMLElement {
@@ -132,7 +20,7 @@ interface HTMLDisableableElement extends HTMLElement {
  * @remarks
  * - *Requires a DOM environment* — not compatible with Node.js.
  * - Must be instantiated after DOM is ready (`DOMContentLoaded`).
- * - create a custom getter for `this.trigger` to use a different name for the element.
+ * - create a custom getter for `this` to use a different name for the element.
  * @example
  * ```ts
  * class ModalTrigger extends TriggerElement<HTMLButtonElement> {
@@ -143,10 +31,9 @@ interface HTMLDisableableElement extends HTMLElement {
  * ```
  */
 export class TriggerElement<
-    D extends HTMLDisableableElement = HTMLDisableableElement,
-    H extends ToggleableElement = ToggleableElement> {
-    protected readonly trigger: D;
-    protected readonly controlled: H;
+    H extends Expandable = Expandable>
+extends HTMLElement implements HTMLDisableableElement {
+    protected controlled!: Expandable;
 
     /**
      * @param idOrEl - Id attribute or the element itself.   
@@ -156,20 +43,17 @@ export class TriggerElement<
      * @param ctrlObj - (optional) Controlled element (obtained from trigger's`aria-controls` otherwise)
      * @see {@link ToggleableElement} for full specifications on the controlled element
     */
-    constructor(
-        idOrEl: string | D, 
-        elType: new (...args: unknown[]) => D,
-        ctrlObj: H
-    ) {
-        this.trigger = getValidatedElement(elType, idOrEl);
-
-        const controlledId = this.trigger.getAttribute('aria-controls');
+    constructor() {
+        super();
+    }
+    connectedCallback() {
+        const controlledId = this.getAttribute('aria-controls');
         if(!controlledId) 
-            throw new Error(`Trigger with id "${this.trigger.id}" does not have associated controlled element.`);
-        if(ctrlObj && controlledId !== ctrlObj.id) 
-            throw new Error(`Trigger's references different element than the one passed: ${controlledId} !== ${ctrlObj.id}`)
-        
-        this.controlled = ctrlObj;
+            throw new Error(`Trigger with id "${this.id}" does not have associated controlled element.`);
+        const controlled = document.getElementById(controlledId);
+        if(!controlled)
+            throw new Error("");
+        this.controlled = Expandable.getValidated(controlled);
 
         this.init();
     }
@@ -177,16 +61,16 @@ export class TriggerElement<
      * sets trigger element's `aria-expanded` attribute (private; used by `open` and `close` methods)
      * @returns trigger element's `aria-expanded` attribute 
      */
-    get expanded() { return this.trigger.getAttribute('aria-expanded') === 'true'; }
+    get expanded() { return this.getAttribute('aria-expanded') === 'true'; }
     private set expanded(isExpanded: boolean) {
-        this.trigger.setAttribute('aria-expanded', String(isExpanded));
+        this.setAttribute('aria-expanded', String(isExpanded));
     }
     /** 
      * sets trigger element's `disabled` attribute (private; used by `disable` and `init` methods)
      * @returns trigger element's `disabled` attribute 
      */
-    get disabled() { return this.trigger.disabled; }
-    private set disabled(disable: boolean) { this.trigger.disabled = disable; }
+    get disabled() { return this.disabled; }
+    private set disabled(disable: boolean) { this.disabled = disable; }
     /**
      * - sets trigger's `aria-expanded` to `true`
      * - opens ToggleableElement
@@ -194,7 +78,7 @@ export class TriggerElement<
     open(): void {
         if(this.controlled.isLocked) return;
         this.expanded = true;
-        this.controlled.open();
+        this.controlled.show();
     }
     /**
      * - sets trigger's `aria-expanded` to `false`
@@ -218,13 +102,13 @@ export class TriggerElement<
     /** Enable element and adds event listener for clicks. */
     private init() {
         this.disabled = false;
-        this.trigger.addEventListener('click', this.toggle);
+        this.addEventListener('click', this.toggle);
     }
     /** Disables the element and removes the event listener. */
     disable() {
         if(this.disabled) return;
         this.disabled = true;
-        this.trigger.removeEventListener('click', this.toggle);
+        this.removeEventListener('click', this.toggle);
     }
 }
 
@@ -272,7 +156,7 @@ export class TriggerElement<
  * 
  * @see {@link TriggerElement} for specifics about trigger's class and how to properly extend it
  * @see {@link ToggleableElement} for specifics about toggleable's class and how to properly extend it
- */
+ *//* 
 export default function pairTriggerAndToggleable<
     D extends HTMLDisableableElement,
     H extends ToggleableElement,
@@ -301,4 +185,4 @@ export default function pairTriggerAndToggleable<
 
     const controlled = ctrlChildClassInstance ?? new ctrlChildClass(controlledId);
     return new triggerChildClass(triggerIdOrEl, controlled);
-}
+} */

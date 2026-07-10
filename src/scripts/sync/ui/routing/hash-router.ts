@@ -1,8 +1,8 @@
 
-import { IllegalArgumentError, ValidationError } from "../../../errors/common-errors.js";
-import { RouterInitializationError, RouterInvalidRequestError } from "../../../errors/route-errors.js";
-import { escapeRegExp } from "../../shared/utilities/string-parsers.js";
-import { hashRouterEvent, hashRouterRequestEvent, type hash, type HashRouterEventInit, type HashRouterOptions, type HashRouterRequestEventInit, type route, type title } from "../../types/router-types.js";
+import { IllegalArgumentError, ValidationError } from "../../../../errors/common-errors.js";
+import { RouterInitializationError, RouterInvalidRequestError } from "../../../../errors/route-errors.js";
+import { escapeRegExp } from "../../../shared/utilities/string-parsers.js";
+import { hashRouterEvent, hashRouterRequestEvent, type hash, type HashRouterEventInit, type HashRouterOptions, type HashRouterRequestEventInit, type route, type title } from "../../../types/router-types.js";
 
 
 /**

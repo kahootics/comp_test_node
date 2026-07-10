@@ -48,7 +48,7 @@ Documenting Node setup steps for WordPress integration
 
 as follows:
 
-(?<pluginId>[A-F0-9]{4})\-(?<companionId>[A-F0-9]{3})\-(?<localFormId>[A-F0-9]{6}\|XFE[A-F0-9]{3})
+(?&lt;pluginId\>[A-F0-9]{4})\-(?&lt;companionId\>[A-F0-9]{3})\-(?&lt;localFormId\>[A-F0-9]{6}\|XFE[A-F0-9]{3})
 
 
 <!-- ## Scripts

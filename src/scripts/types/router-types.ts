@@ -1,4 +1,4 @@
-import type { HashRouterEvent, HashRouterRequestEvent } from "../sync/ui/hash-router.js";
+import type { HashRouterEvent, HashRouterRequestEvent } from "../sync/ui/routing/hash-router.js";
 
 export const hashRouterEvent: hashroutechange = "hashroutechange";
 export type hashroutechange = "hashroutechange";

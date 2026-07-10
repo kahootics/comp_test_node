@@ -1,3 +1,4 @@
+import type { ExtendibleElement } from "../components/extendible-element.js";
 
 
 const CLOSER_CLASS = '';
@@ -6,16 +7,12 @@ const TITLE_CLASS = '';
 const BODY_CLASS = '';
 const FOOTER_CLASS = '';
 
-declare const Extendible: unique symbol;
 
-interface ExtendibleHTMLElement extends HTMLElement { [Extendible]: number }
-// This should stay outside
-
-class CardElement extends HTMLElement implements ExtendibleHTMLElement {
-
-    [Extendible] = 0;
+class CardElement extends HTMLElement implements ExtendibleElement {
 
     private static cardsNO: number = 0;
+
+    connectedCallback(): void {}
 
     /** Header of card. */
     private readonly HEADER: HTMLElement;
@@ -132,8 +129,22 @@ class CardElement extends HTMLElement implements ExtendibleHTMLElement {
 
 customElements.define("card-element", CardElement);
 
-function Expandable<TBase extends new () => ExtendibleHTMLElement>(base: TBase) {
-    /** stuff */
+function CloserButton<TBase extends new (...args: any[]) => ExtendibleElement & { connectedCallback(): void }>(Base: TBase) {
+    return class CloserButtonMixin extends Base {
+        /** Close button of card. */
+        private readonly CLOSER: HTMLButtonElement;
+
+        constructor(...args: any[]) {
+            super(...args);
+            this.CLOSER = document.createElement('button');
+        }
+
+        override connectedCallback() {
+            super.connectedCallback();
+            const target = super.querySelector('header');
+            target ? target.appendChild(this.CLOSER) : super.prepend(this.CLOSER);
+        }
+    }
 }
 
-Expandable(CardElement);
+const t = CloserButton(CardElement);

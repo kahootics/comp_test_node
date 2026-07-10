@@ -1,7 +1,4 @@
 
-- separate getValidatedElement from expandable pair
-- internalize getPair in ToggleableElement
-
 - handle to mixin (?)
 - close button to mixin (?)
 
