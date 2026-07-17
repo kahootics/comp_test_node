@@ -8,6 +8,8 @@ import { createHashFromBuffer } from '../writers/hash.js';
 import * as esbuild from 'esbuild';
 import { isDev } from '../../../main.js';
 
+const TARGET_BASELINE = 'ES2020';
+
 /**
  * `filename`: *path relative to `OUT` dir with hash*
  */
@@ -51,16 +53,16 @@ export async function bundleScripts(
         const result = await esbuild.build({
             entryPoints: [entry],
             bundle: true,
-            target: ['ES2022'],
+            target: [TARGET_BASELINE],
             platform: 'browser',
             format: 'esm',
             write: false, // Returns buffer array
             minify: !isDev,
             sourcemap: isDev,
-            /* minifyWhitespace: true,
-            minifyIdentifiers: !isDev,
-            minifySyntax: !isDev,
-             */
+            minifyWhitespace: true,
+            minifyIdentifiers: true,
+            minifySyntax: true,
+            
         });
         const arrBuf = result.outputFiles[0]?.contents
         if(!arrBuf) throw new Error(

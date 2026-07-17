@@ -1,11 +1,9 @@
 import type { ExtendibleElement } from "../components/extendible-element.js";
 
 
-const CLOSER_CLASS = '';
 const HEADER_CLASS = '';
 const TITLE_CLASS = '';
 const BODY_CLASS = '';
-const FOOTER_CLASS = '';
 
 
 class CardElement extends HTMLElement implements ExtendibleElement {
@@ -20,12 +18,6 @@ class CardElement extends HTMLElement implements ExtendibleElement {
         this.HEADER.classList.add(HEADER_CLASS);
     }
 
-    /** Close button of card. */
-    private readonly CLOSER: HTMLButtonElement;
-    private initCloser() {
-        this.CLOSER.classList.add(CLOSER_CLASS);
-    }
-
     /** Title of card. */
     private readonly TITLE: HTMLHeadingElement;
     private initTitle() {
@@ -36,11 +28,6 @@ class CardElement extends HTMLElement implements ExtendibleElement {
         this.setAttribute('aria-labelledby',this.TITLE.id);
     }
 
-    /** Footer of card. */
-    private readonly FOOTER: HTMLElement;
-    private initFooter() {
-        this.FOOTER.classList.add(FOOTER_CLASS);
-    }
 
     /** Body of the card */
     private readonly BODY: HTMLElement;
@@ -51,45 +38,26 @@ class CardElement extends HTMLElement implements ExtendibleElement {
     /** Element initializer function. */
     private init() {
 
-        this.initCloser(); this.initBody();
+        this.initBody();
         this.initHeader(); this.initTitle();
-        this.initFooter();
 
         // move child nodes to the body
         this.BODY.append(...this.childNodes);
 
-        this.HEADER.append(this.TITLE, this.CLOSER);
-        this.append(this.HEADER, this.BODY, this.FOOTER);
+        this.HEADER.append(this.TITLE);
+        this.append(this.HEADER, this.BODY);
     }
 
     constructor() {
         super();
 
         this.HEADER = document.createElement('header');
-        this.CLOSER = document.createElement('button');
         this.TITLE  = document.createElement('h2');
         this.BODY   = document.createElement('div');
-        this.FOOTER = document.createElement('footer');
 
         this.init();
     }
 
-    // Closer methods
-    /**
-     * 
-     * @param callback - A function to call whenever the closer button
-     */
-    public onCloserClick(callback: () => void) {
-        this.CLOSER.addEventListener('click',callback);
-    }
-    // Footer methods
-    /**
-     * Inserts nodes after the last child of FOOTER, 
-     * while replacing strings in nodes with equivalent Text nodes. 
-     */
-    public appendToFooter<T extends Node>(node: T): T  {
-        return this.FOOTER.appendChild(node);
-    }
     // Title methods
     /** Brings the focus towards the TITLE. */
     public override focus(options?: FocusOptions): void {
@@ -128,23 +96,3 @@ class CardElement extends HTMLElement implements ExtendibleElement {
 }
 
 customElements.define("card-element", CardElement);
-
-function CloserButton<TBase extends new (...args: any[]) => ExtendibleElement & { connectedCallback(): void }>(Base: TBase) {
-    return class CloserButtonMixin extends Base {
-        /** Close button of card. */
-        private readonly CLOSER: HTMLButtonElement;
-
-        constructor(...args: any[]) {
-            super(...args);
-            this.CLOSER = document.createElement('button');
-        }
-
-        override connectedCallback() {
-            super.connectedCallback();
-            const target = super.querySelector('header');
-            target ? target.appendChild(this.CLOSER) : super.prepend(this.CLOSER);
-        }
-    }
-}
-
-const t = CloserButton(CardElement);

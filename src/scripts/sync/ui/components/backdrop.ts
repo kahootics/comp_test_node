@@ -12,16 +12,15 @@ const OPEN_CLASS = 'gdsdh'
  * const backdrop = new Backdrop(closeMyModalFunc);
  * @see {@link Expandable} for details about inherited methods
  */
-export class Backdrop extends Expandable(ExtendibleElement, OPEN_CLASS) {
+export class Backdrop extends Expandable(ExtendibleElement, 'open', OPEN_CLASS) {
     /**
      * @param backdropClass - Class to apply to the backdrop element;
      * @param modalCloserFunction - Function that closes the modal;
      * required for closing it when backdrop is clicked
      */
-    constructor(backdropClass: string, modalCloserFunction: () => void) {
+    constructor(backdropClass: string) {
         super();
         this.classList.add(backdropClass);
-        this.addEventListener('click', modalCloserFunction);
         this.setAttribute('aria-hidden','true');
     }
     override connectedCallback(): void {

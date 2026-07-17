@@ -1,0 +1,64 @@
+import { ValidationError } from "../../../../../errors/common-errors.js";
+import { ExtendibleElement } from "../../components/extendible-element.js";
+
+// EXTENDED CONSTRUCTOR ================================================================
+type Constructor<T extends {}> = new (...args: any[]) => T;
+
+// MIXIN PUBLIC INTERFACE ==============================================================
+export interface Footer extends ExtendibleElement {
+    appendToFooter<T extends Node>(node: T): T;
+}
+
+// MIXIN FUNCTION ======================================================================
+export function Footer<
+    TBase extends Constructor<ExtendibleElement>
+>(Base: TBase, ...FooterClasses: string[]) {
+    return class FooterClass extends Base implements Footer {
+
+        private readonly FOOTER: HTMLElement;
+
+        /**
+         * Inserts nodes after the last child of FOOTER, 
+         * while replacing strings in nodes with equivalent Text nodes. 
+         */
+        public appendToFooter<T extends Node>(node: T): T {
+            return this.FOOTER.appendChild(node);
+        }
+
+        constructor(...args: any[]) {
+            super(...args);
+            brand(this);
+            this.FOOTER = document.createElement('footer');
+            this.appendChild(this.FOOTER);
+            this.FOOTER.classList.add(...FooterClasses);
+        }
+    }
+}
+
+
+// EXPORTED NAMESPACE ==================================================================
+export namespace Footer {
+    /**
+     * Validates an element as a `Footer`
+     * 
+     * @param that - Element that needs to be validated
+     * @returns the validated element
+     * 
+     * @throws {ValidationError} If the element passed as argument 
+     * has not been branded as a `Footer`
+     */
+    export function getValidated(that: ExtendibleElement): Footer {
+        if (branded.has(that)) return that as Footer;
+        else throw new ValidationError(
+            `${that.constructor.name} does not extend ${Footer.name}`
+        );
+    }
+}
+
+// PRIVATE INTERNAL IDENTIFICATION =====================================================
+/** Holds all branded instances of `Footer`. */
+const branded = new WeakSet();
+/** Brands an element as an instance of `Footer`. */
+function brand(toBrand: Footer) {
+    branded.add(toBrand);
+}

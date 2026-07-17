@@ -7,8 +7,6 @@
 
 - fix dropdown incorrect structure
 
-- implement popover
-- implement popover with expandable card
 - implement temporized popover
 - implement tmprzd ppvr factory: method `post` to open message (time based on msg length)
 

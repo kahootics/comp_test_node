@@ -1,4 +1,5 @@
 import { ValidationError } from "../../../../../errors/common-errors.js";
+// import { _getPrivateProp, _initPrivateProp, SetOnceWeakMap } from "../../../../../tools/encapsulation.js";
 
 // !! Globally change MixinName, MixinClass and BaseClass before implementing !!
 
@@ -10,11 +11,15 @@ type BaseClass = any; // edit //
 export const ObfuscatedProp = Symbol('ObfuscatedProp'); // eg //
 
 // MIXIN PUBLIC INTERFACE ==============================================================
-interface MixinName extends BaseClass {
+export interface MixinName extends BaseClass {
     //# insert public properties 
     //# insert obfuscated properties 
     [ObfuscatedProp](): void; // EG
 }
+
+// PRIVATE FIELDS ======================================================================
+const _privateField = new WeakMap<MixinName,any>();
+// EG //* const _readonlyPrivateField = new SetOnceWeakMap<MixinName,any>(); */
 
 // HELPERS =============================================================================
 /* ... */
@@ -33,6 +38,8 @@ export function MixinName<
             super(...args);
             brand(this);
             
+            //# Init privates here
+            // EG //* _initPrivateProp(this,_privateField,initialValue) */
         }
     }
 }

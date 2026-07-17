@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     /* Modern JavaScript & Browser Compatibility: */
-    "target": "ESNext", // Uses the latest ECMAScript features for modern JavaScript support
+    "target": "ESNext", //"ESNext", // Uses the latest ECMAScript features for modern JavaScript support
 
     "types": ["node"],
     /* Allow JavaScript to be type checked */

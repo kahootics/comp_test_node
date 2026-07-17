@@ -13,14 +13,15 @@ Documenting Node setup steps for WordPress integration
  **zod** | enforce type validation on parsed csv before turning to JSON
  **esbuild** | bundle & minify scripts
 
-## Workflow
+## ToDo
 
 - [x] port and document node-csv functions (**csv-parse**)
 - [x] port and document independent utilities
 - [ ] port and document enchantments filters
 - [ ] port, polish and document mods-compendium filters
 - [x] implement expandables structures
-- [ ] build expandables of dropdown, modal and popover
+- [x] build expandables of dropdown, modal and popover
+- [ ] build trigger component hook
 - [x] implement writers copy and json functions
 - [ ] adjust shared constants json
 - [x] srcset maker function with **sharp**
@@ -31,16 +32,10 @@ Documenting Node setup steps for WordPress integration
 - [ ] implement sitemap function with **glob**
 - [x] implement hashing function
 - [x] implement formatting, renaming and cropping of gallery images with **sharp** and **glob** using rules.json header file of gallery sections
-- [ ] &lt;continue workflow&gt;
+- [ ] polyfill inert
+- [ ] build carousel
+- [ ] build routed carousel
 
-## Build-Steps
-
-1. [ ] run all tests
-2. [ ] Optimize assets & hash & move to dist/
-3. [ ] Build datesets json & integrate assets
-4. [ ] Extract route map & hash it & test it
-5. [x] Bundle scripts & hash
-6. [ ] Build export.json
 
 ## Schemas
 

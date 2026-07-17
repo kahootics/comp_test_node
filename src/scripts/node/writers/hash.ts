@@ -1,6 +1,7 @@
-import { createHash } from 'node:crypto';
+import { createHash, type BinaryLike } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import type { hashString, pathString } from '../../types/general-types.js';
 
 /** 
  * @param algorithm - Hashing algorithm (defaults to `md5`)
@@ -19,9 +20,9 @@ interface HashOptions {
  * @returns hash string
  */
 export function createHashFromBuffer(
-    buffer: Buffer,
+    buffer: BinaryLike,
     options?: HashOptions
-): string {
+): hashString {
     const hashOptions = options ?? {
         algorithm: 'md5',
         length: 8
@@ -29,20 +30,21 @@ export function createHashFromBuffer(
     return createHash(hashOptions.algorithm)
             .update(buffer)
             .digest('hex')
-            .slice(0, hashOptions.length);
+            .slice(0, hashOptions.length) as hashString;
 }
 
 /**
  * Hashes the content of a file.
  * @param filePath - Path to the file
- * @param options - Hashing options
+ * @param [options] - Hashing options: 
+ * @see {@link HashOptions} interface for the list of available options
  * @returns hash string
  * @remarks the hash depends entirely on the buffer obtained from the file
  */
 export function createHashFromFile(
     filePath: string, 
     options?: HashOptions
-): string {
+): hashString {
     const buffer = fs.readFileSync(filePath);
     return createHashFromBuffer(buffer,options);
 }
@@ -50,7 +52,7 @@ export function createHashFromFile(
 /**
  * Hashes the content of a file and adds it to its name before the extension.
  * @param filePath - Path to the file
- * @param options - Hashing options:
+ * @param [options] - Hashing options:
  * see {@link HashOptions} interface for the list of available options
  * @returns new file path with hashing
  * @see {@link createHashFromFile} for the function that creates the hash
@@ -58,7 +60,7 @@ export function createHashFromFile(
 export default function hashFile(
     filePath: string, 
     options?: HashOptions
-): string {
+): pathString {
     const hash = createHashFromFile(filePath, options);
     const dir = path.dirname(filePath);
     const ext = path.extname(filePath); 
@@ -66,5 +68,5 @@ export default function hashFile(
     
     const hashedPath = path.join(dir, `${name}.${hash}${ext}`);
     fs.renameSync(filePath,hashedPath);
-    return hashedPath;
+    return hashedPath as pathString;
 }

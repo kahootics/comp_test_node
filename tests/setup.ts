@@ -2,6 +2,8 @@ import { expect, type MatcherResult } from 'vitest';
 import type { MatcherState } from '@vitest/expect';
 import { IllegalArgumentError } from '../src/errors/common-errors.js';
 
+export type dummy = never;
+
 declare module 'vitest' {
     interface Assertion<T = any> extends CustomMatchers<T> {}
     interface AsymmetricMatchersContaining extends CustomMatchers {}

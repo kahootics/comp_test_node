@@ -1,14 +1,25 @@
 import { ValidationError } from "../../../../../errors/common-errors.js";
+import { _getPrivateProp, _initPrivateProp } from "../../../../../tools/encapsulation.js";
 import { Expandable, expandableCloseTransition, expandableOpenTransition } from "./expandable.mixin.js";
-
-
-// !! Globally change Popover, PopoverElement and Expandable before implementing !!
 
 // EXTENDED CONSTRUCTOR ================================================================
 type Constructor<T extends {}> = new (...args: any[]) => T;
 
 // MIXIN PUBLIC INTERFACE ==============================================================
 export interface Popover extends Expandable {
+}
+
+// PRIVATE FIELDS ======================================================================
+/** Controller of events. */
+const _controller = new WeakMap<Popover, AbortController>();
+/** Closes element on pressing somewhere outside the element. */
+function closeWhenOutOfBounds(this: Popover, e: MouseEvent) {
+    if (e.target instanceof Node &&
+        !this.contains(e.target)) this.close();
+}
+/** Closes element on pressing `Escape`. */
+function closeOnEscape(this: Popover, e: KeyboardEvent) {
+    if (e.key === 'Escape') this.close();
 }
 
 // MIXIN FUNCTION ======================================================================
@@ -25,32 +36,29 @@ export function Popover<
     TBase extends Constructor<Expandable>
 >(Base: TBase) {
     return class PopoverElement extends Base implements Popover {
-        
+
         constructor(...args: any[]) {
             super(...args);
             brand(this);
-        }
-
-        /** Closes element on pressing `Escape`. */
-        private closeOnEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') this.close();
-        }
-
-        /** Closes element on pressing somewhere outside the element. */
-        private closeWhenOutOfBounds(e: MouseEvent) {
-            if (e.target instanceof Node &&
-                this.contains(e.target)) this.close();
+            _initPrivateProp(this, _controller, new AbortController());
         }
 
         override[expandableOpenTransition](): void {
             super[expandableOpenTransition]();
-            document.addEventListener('keydown', this.closeOnEscape);
-            document.addEventListener('mousedown', this.closeWhenOutOfBounds);
+            const signal = _getPrivateProp(this, _controller).signal;
+            document.addEventListener(
+                'keydown',
+                (e: KeyboardEvent) => closeOnEscape.call(this, e),
+                { signal: signal });
+            document.addEventListener(
+                'mousedown',
+                (e: MouseEvent) => closeWhenOutOfBounds.call(this, e),
+                { signal: signal }
+            );
         }
         override[expandableCloseTransition](): void {
             super[expandableCloseTransition]();
-            document.removeEventListener('keydown', this.closeOnEscape);
-            document.removeEventListener('mousedown', this.closeWhenOutOfBounds)
+            _getPrivateProp(this, _controller).abort();
         }
     }
 }

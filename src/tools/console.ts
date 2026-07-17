@@ -20,20 +20,20 @@ function style(
     return (text: string) => ansi + text + (chain ? '' : '\x1b[0m');
 }
 
-export const Log = Object.freeze({
-    file(outPath: string, size?: number) {
+export namespace Log {
+    export function file(outPath: string, size?: number) {
         console.log(`${style('green')('▶')} ${toPublicUrl(outPath)} [${toUnitBytes(size ?? fs.statSync(outPath).size)}]`);
-    },
-    msg(message: string) {
-        console.info(`${style('yellow')('●')} ${message}`);
-    },
-    hdr(header: string) {
-        console.info(`${style('green', 'background', 'regular')(`⏹ ${style('black', 'text', 'bold', true)(header)} ⏹ `)}`);
-    },
-    wrn(warning: string) {
-        console.warn(warning);
-    },
-    err(e: Error, message: string) {
-        console.error(`${e.name}`);
     }
-});
+    export function msg(message: string) {
+        console.info(`${style('yellow')('●')} ${message}`);
+    }
+    export function hdr(header: string) {
+        console.info(`${style('green', 'background', 'regular')(`⏹ ${style('black', 'text', 'bold', true)(header)} ⏹ `)}`);
+    }
+    export function wrn(warning: string) {
+        console.warn(warning);
+    }
+    export function err(e: Error, message: string) {
+        console.error(`]${e.name}]: ${message}`);
+    }
+};

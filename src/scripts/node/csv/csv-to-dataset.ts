@@ -14,7 +14,7 @@ export interface OptionalStringSymbols {
 /**
  * Validate any amount of strings to be a symbol
  * @param strings - Rest parameter that accepts any number of strings to validate
- * @throws {Error} If any of the provided strings is not valid
+ * @throws {ValidationError} If any of the provided strings is not valid
  */
 function validateSymbolStrings(...strings: string[]) {
     const invalid: Set<string> = new Set();

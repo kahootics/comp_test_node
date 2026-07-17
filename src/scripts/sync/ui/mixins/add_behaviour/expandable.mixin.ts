@@ -1,8 +1,9 @@
-import { ValidationError } from "../../../../../errors/common-errors.js";
-import type { Closeable, HasOpen, Showable } from "../../../../types/general-types.js";
+import { IllegalArgumentError, ValidationError } from "../../../../../errors/common-errors.js";
+import type { Closeable, Showable } from "../../../../types/general-types.js";
 import type { ExtendibleElement } from "../../components/extendible-element.js";
 import { requestTransitionFrame } from "../../../shared/utilities.js";
-import { Lock } from "../../components/lock.js";
+import { Lock } from "../../../shared/lock.js";
+import { _getPrivateProp, _initPrivateProp, _setPrivateProp, SetOnceWeakMap } from "../../../../../tools/encapsulation.js";
 
 
 // EXTENDED CONSTRUCTOR ================================================================
@@ -15,7 +16,6 @@ export const expandableOpenTransition: unique symbol = Symbol('expandableOpenTra
 export const expandableCloseTransition: unique symbol = Symbol('expandableCloseTransition');
 /** Executes after transition has ended. */
 export const expandableOnTransitionEnd: unique symbol = Symbol('expandableOnTransitionEnd');
-
 
 // MIXIN PUBLIC INTERFACE ==============================================================
 /** Methods `show` and `close` */
@@ -57,13 +57,11 @@ export interface Expandable extends ExpandableToggles, ExtendibleElement {
     [expandableCloseTransition](): void;
     [expandableOnTransitionEnd](): void;
 
-    /** 
-     * Boolean value reflecting the `open` HTML attribute, 
-     * indicating whether the element is available for interaction. 
-     */
-    [OPEN_ATTRIBUTE]: boolean;
-    /** Indicates whether the element is in an ctive transition. */
+    /** Indicates whether the element is in an active transition. */
     isLocked: boolean;
+
+    /** Indicates whether the element is in open state. */
+    isOpen: boolean
 
     /** 
      * Calls opening/closing method of element
@@ -89,9 +87,63 @@ export interface Expandable extends ExpandableToggles, ExtendibleElement {
     connectedCallback(): void;
 }
 
+// PRIVATE FIELDS ======================================================================
+const _lock = new SetOnceWeakMap<Expandable, Lock>();
+const _scheduledCallbacks = new SetOnceWeakMap<Expandable, Set<() => void>>();
+function _scheduleCallbacks(self: Expandable, callbacks: (() => void)[]) {
+    const set = _getPrivateProp(self, _scheduledCallbacks);
+    for (const callback of callbacks) {
+        set.add(callback);
+    }
+}
+
+/** Adds `OPEN` class in an AnimationFrame requested after setting `hidden` to `false`. */
+function _handleOpening(self: Expandable, OpenClass: string): void {
+    self.hidden = false;
+    requestTransitionFrame(() => {
+        self.classList.add(OpenClass);
+    });
+    self[expandableOpenTransition]();
+}
+/** Removes `OPEN` class. */
+function _handleClosing(self: Expandable, OpenClass: string): void {
+    self.classList.remove(OpenClass);
+    self[expandableCloseTransition]();
+}
+const _pendingOnTransitionEnd = new WeakMap<Expandable, boolean>();
+/**
+ * @inner
+ * Handles *end of transition* cleanup:
+ * - hides the element if it doesn't have `open` attribute
+ * - calls all pending callbacks safely
+ * - empties pending callbacks
+ * - releases transition lock
+ */
+function _onTransitionEnd(self: Expandable) {
+    self.hidden = !self.isOpen; // only hide at end of transition
+    self[expandableOnTransitionEnd]();
+    const callbacks = _getPrivateProp(self, _scheduledCallbacks);
+    callbacks.forEach(
+        callback => {
+            try { callback(); }
+            catch (e) { console.error(e); }
+        }
+    );
+    (self as any).onTransitionEnd() // remove
+    // Release resources:
+    callbacks.clear();
+    _setPrivateProp(self, _pendingOnTransitionEnd, false);
+    _getPrivateProp(self, _lock).unlock();
+}
+
+/** Activates the one-time listener for the end of transition operations. */
+function _setupOnTransitionEnd(self: Expandable) {
+    if (_getPrivateProp(self, _pendingOnTransitionEnd)) return;
+    _setPrivateProp(self, _pendingOnTransitionEnd, true);
+    self.addEventListener('transitionend', () => _onTransitionEnd(self), { once: true });
+}
+
 // MIXIN FUNCTION ======================================================================
-/** Name of the attribute `open`. */
-const OPEN_ATTRIBUTE: keyof HasOpen = 'open';
 /**
  * Generic Expandable Element.
  * 
@@ -122,152 +174,115 @@ const OPEN_ATTRIBUTE: keyof HasOpen = 'open';
  */
 export function Expandable<
     TBase extends Constructor<ExtendibleElement>
->( Base: TBase, OpenClass: string ) {
+>(Base: TBase, OpenAttribute: string, OpenClass: string) {
+    if (OpenAttribute in Base.prototype)
+        throw new IllegalArgumentError("Cannot overwrite existing attribute " + OpenAttribute);
     return class ExpandableElement extends Base implements Expandable {
-
-        private readonly lock: Lock;
-        public get isLocked() { return this.lock.isLocked; }
 
         constructor(...args: any[]) {
             super(...args);
             brand(this);
-            this.lock = new Lock();
+            _initPrivateProp(this, _lock, new Lock());
+            _initPrivateProp(this, _scheduledCallbacks, new Set());
+            _initPrivateProp(this, _pendingOnTransitionEnd, false);
         }
+        get isLocked(): boolean { return _getPrivateProp(this, _lock).isLocked; };
 
         // OPEN ATTRIBUTE SETUP =============================================================
 
-        public get [OPEN_ATTRIBUTE](): boolean {
-            return this.hasAttribute(OPEN_ATTRIBUTE);
+        public get [OpenAttribute](): boolean {
+            return this.hasAttribute(OpenAttribute);
         }
-        public set [OPEN_ATTRIBUTE](value: boolean) {
+        public set [OpenAttribute](value: boolean) {
             if (value) {
-                this.setAttribute(OPEN_ATTRIBUTE, '');
+                this.setAttribute(OpenAttribute, '');
             } else {
-                this.removeAttribute(OPEN_ATTRIBUTE);
+                this.removeAttribute(OpenAttribute);
             }
         }
+        public get isOpen(): boolean { return this[OpenAttribute]; }
 
         /** Element's observed attributes. */
         static get observedAttributes(): string[] {
-            return [OPEN_ATTRIBUTE, 'hidden'];
+            return [OpenAttribute, 'hidden'];
         }
 
-        /** Adds `OPEN` class in an AnimationFrame requested after setting `hidden` to `false`. */
-        private handleOpening() {
-            this.hidden = false;
-            requestTransitionFrame(() => {
-                this.classList.add(OpenClass);
-            });
-            this[expandableOpenTransition]();
-        }
+        
         public [expandableOpenTransition](): void { }
-        /** Removes `OPEN` class. */
-        private handleClosing() {
-            this.classList.remove(OpenClass);
-            this[expandableCloseTransition]();
-        }
+        
         public [expandableCloseTransition](): void { }
 
         // Attribute related callbacks ==================================================
         connectedCallback(): void {
-            this[OPEN_ATTRIBUTE] ? this.classList.add(OpenClass) : this.classList.remove(OpenClass);
-            this.hidden = !this[OPEN_ATTRIBUTE];
+            this[OpenAttribute] ? this.classList.add(OpenClass) : this.classList.remove(OpenClass);
+            this.hidden = !this[OpenAttribute];
         }
         attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
             if (
-                name === OPEN_ATTRIBUTE
+                name === OpenAttribute
                 && typeof oldValue !== typeof newValue
             ) {
-                this.lock.lock();
+                _getPrivateProp(this, _lock).lock();
                 if (newValue !== null) {
                     // OPEN
-                    this.handleOpening();
+                    _handleOpening(this, OpenClass);
+                    // this.handleOpening();
                 } else {
                     // CLOSE
-                    this.handleClosing();
+                    //this.handleClosing();
+                    _handleClosing(this, OpenClass);
                 }
+                // LOCK RELEASE
                 this.setupOnTransitionEnd();
+                _setupOnTransitionEnd(this);
 
             } else if (
                 name === 'hidden'
                 && typeof oldValue !== typeof newValue
-                && this[OPEN_ATTRIBUTE] === this.hidden
+                && this[OpenAttribute] === this.hidden
             ) {
-                this[OPEN_ATTRIBUTE] = !this.hidden
+                this[OpenAttribute] = !this.hidden
             }
         }
 
-        /** 
-         * An array of functions that are to be called 
-         * at the end of an opening/closing transition. 
-         */
-        private pendingCallbacks: (() => void)[] = [];
-        /** Add one or more functions to callback schedule. */
-        private scheduleCallbacks(callbacks: (() => void)[]): void {
-            this.pendingCallbacks.push(...callbacks);
-        }
-        /** Flush all pending callbacks. */
-        private clearCallbacks(): void { this.pendingCallbacks = []; }
-
-        /**
-         * Handles *end of transition* cleanup:
-         * - hides the element if it doesn't have `open` attribute
-         * - calls all pending callbacks safely
-         * - empties pending callbacks
-         * - releases transition lock
-         */
-        private onTransitionEnd = () => {
-            this.hidden = !this[OPEN_ATTRIBUTE]; // only hide at end of transition
-            this[expandableOnTransitionEnd]();
-            this.pendingCallbacks.forEach(
-                callback => {
-                    try { callback(); }
-                    catch (e) { console.error(e); }
-                }
-            );
-            this.clearCallbacks();
-            this.lock.unlock();
-        }
+        onTransitionEnd = () => null;
         public [expandableOnTransitionEnd](): void { }
-        /** Activates the one-time listener for the end of transition operations. */
         private setupOnTransitionEnd(): void {
-            this.addEventListener('transitionend',
-                this.onTransitionEnd, { once: true });
         }
 
         // SHOW =========================================================================
         public show(...callbacks: (() => void)[]): void {
-            if (this.lock.isLocked)
+            if (_getPrivateProp(this, _lock).isLocked)
                 throw new DOMException(
                     "Cannot open the element while a transition is in progress",
                     "InvalidStateError"
                 );
-            if (this[OPEN_ATTRIBUTE]) {
+            if (this[OpenAttribute]) {
                 if (callbacks.length === 0) return; // second request without extra arguments quietly fails
                 else throw new DOMException(
                     "Cannot schedule callbacks without a state change",
                     "InvalidStateError"
                 );
             };
-            this.scheduleCallbacks(callbacks);
-            this[OPEN_ATTRIBUTE] = true;
+            _scheduleCallbacks(this, callbacks);
+            this[OpenAttribute] = true;
         }
         // CLOSE ========================================================================
         public close(...callbacks: (() => void)[]): void {
-            if (this.lock.isLocked)
+            if (_getPrivateProp(this, _lock).isLocked)
                 throw new DOMException(
                     "Cannot close the element while a transition is in progress",
                     "InvalidStateError",
                 );
-            if (!this[OPEN_ATTRIBUTE]) {
+            if (!this[OpenAttribute]) {
                 if (callbacks.length === 0) return; // second request without extra arguments quietly fails
                 else throw new DOMException(
                     "Cannot schedule callbacks without a state change",
                     "InvalidStateError"
                 );
             };
-            this.scheduleCallbacks(callbacks);
-            this[OPEN_ATTRIBUTE] = false;
+            _scheduleCallbacks(this, callbacks);
+            this[OpenAttribute] = false;
         }
 
         // SAFE CALL ====================================================================

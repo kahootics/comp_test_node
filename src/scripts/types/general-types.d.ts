@@ -14,3 +14,6 @@ export interface Closeable {
 
 declare const PathSymbol: unique symbol;
 export type pathString = string & { [PathSymbol]: void };
+
+declare const HashSymbol: unique symbol;
+export type hashString = string & { [HashSymbol]: void };
