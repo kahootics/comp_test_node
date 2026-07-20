@@ -5,25 +5,25 @@ import { ExtendibleElement } from "../../components/extendible-element.js";
 // !! Globally change CloserButton, CloserButtonMixin and ExtendibleElementPlus before implementing !!
 
 // EXTENDED CONSTRUCTOR ================================================================
-type Constructor<T extends {}> = new (...args: any[]) => T; 
+type Constructor<T extends {}> = new (...args: any[]) => T;
 type ExtendibleElementPlus = ExtendibleElement & {
     connectedCallback(): void,
 } & Closeable;
 
 // MIXIN PUBLIC INTERFACE ==============================================================
-export interface CloserButton extends ExtendibleElementPlus {}
+export interface CloserButton extends ExtendibleElementPlus { }
 
 // MIXIN FUNCTION ======================================================================
 export function CloserButton<
     TBase extends Constructor<ExtendibleElementPlus>
-> ( Base: TBase, ...CloserButtonClasses: string[] ) {
+>(Base: TBase, ...CloserButtonClasses: string[]) {
     return class CloserButtonMixin extends Base implements CloserButton {
         /** Close button of card. */
         private readonly CLOSER: HTMLButtonElement;
 
         constructor(...args: any[]) {
             super(...args);
-            brand(this);
+            _brand(this);
             this.CLOSER = document.createElement('button');
         }
 
@@ -50,7 +50,7 @@ export namespace CloserButton {
      * has not been branded as a `CloserButton`
      */
     export function getValidated(that: ExtendibleElementPlus): CloserButton {
-        if(branded.has(that)) return that as CloserButton;
+        if (branded.has(that)) return that as CloserButton;
         else throw new ValidationError(
             `${that.constructor.name} does not extend ${CloserButton.name}`
         );
@@ -60,7 +60,11 @@ export namespace CloserButton {
 // PRIVATE INTERNAL IDENTIFICATION =====================================================
 /** Holds all branded instances of `CloserButton`. */
 const branded = new WeakSet();
+function _assertBranded(instance: CloserButton): true {
+    if (branded.has(instance)) return true;
+    throw new TypeError("Cannot access private member");
+}
 /** Brands an element as an instance of `CloserButton`. */
-function brand(toBrand: CloserButton) {
-    branded.add(toBrand);
+function _brand(instance: CloserButton) {
+    branded.add(instance);
 }

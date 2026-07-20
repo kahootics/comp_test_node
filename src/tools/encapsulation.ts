@@ -184,15 +184,19 @@ export function _getPrivateMethod<
     /* assert */_hasAccess(instance, register, "Cannot access private method");
     return method;
 }
-export function _isRegistered<
-    T extends object
->(
-    instance: T,
-    register: WeakSet<T>,
-): true {
-    return _hasAccess(instance, register, "Cannot access private method");
-}
-
+/**
+ * Checks authorization of `istance` for calling a private method defined for its class.
+ *
+ * @typeParam T - Type of the object whose method belongs to.
+ * @param instance - Object whose property belongs to (usually `this`).
+ * @param register - Scoped (module or other) `WeakSet` that stores the authenticated, 
+ * preventing them to be accessed from outside its definition scope.
+ * @throws {TypeError} If `instance` is not in the `register`;
+ * it means that the private method was not defined on the object.
+ * @remarks
+ * * Use {@link _allowPrivateMethod} to register the instance before using this function.
+ * * No setter is provided; **the method must be defined in the same scope of its register and outside the class**
+ */
 export function _assertRegistered<T extends object>(
     instance: T,
     register: WeakSet<T>,

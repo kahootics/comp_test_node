@@ -30,52 +30,50 @@ function sDate(a: Date, b: Date) {
 }
 
 const sortby = {
-        name(a: Asset, b: Asset) {
-            return sString(a.name, b.name);
-        },
-        date(a: Asset, b: Asset) {
-            const c = getFileBirthTime(a.path);
-            const d = getFileBirthTime(b.path);
-            return sDate(c, d);
-        },
-        screenshot(c: Asset, d: Asset) {
-            const a = reorderScreenshotName(c.name);
-            const b = reorderScreenshotName(d.name);
-            return sString(a, b);
-        },
-        none(a: Asset, b: Asset) { return 0; }
-    };
-    const sortKeys = Object.keys(sortby) as [keyof typeof sortby, ...(keyof typeof sortby)[]];
+    name(a: Asset, b: Asset) {
+        return sString(a.name, b.name);
+    },
+    date(a: Asset, b: Asset) {
+        const c = getFileBirthTime(a.path);
+        const d = getFileBirthTime(b.path);
+        return sDate(c, d);
+    },
+    screenshot(c: Asset, d: Asset) {
+        const a = reorderScreenshotName(c.name);
+        const b = reorderScreenshotName(d.name);
+        return sString(a, b);
+    },
+    none(a: Asset, b: Asset) { return 0; }
+};
+const sortKeys = Object.keys(sortby) as [keyof typeof sortby, ...(keyof typeof sortby)[]];
 
 const includeSchema = z.instanceof(RegExp).default(/.*/s);
 type includeType = z.infer<typeof includeSchema>;
-    const sortSchema = z.enum(sortKeys);
+const sortSchema = z.enum(sortKeys);
 type sortType = z.infer<typeof sortSchema>;
-    const renameSchema = z.array(z.string().trim().nonempty()).nonempty();
-    type renameType = z.infer<typeof renameSchema>
-    type namesType = Set<nameType>;
-    const ruleSchema = z.object({
-        include: includeSchema, sort: sortSchema, names: renameSchema
-    });
+const renameSchema = z.array(z.string().trim().nonempty()).nonempty();
+type namesType = Set<nameType>;
+const ruleSchema = z.object({
+    include: includeSchema, sort: sortSchema, names: renameSchema
+});
 type ruleType = z.infer<typeof ruleSchema>;
 
 
 class RenameRule extends BatchRule<ruleType> {
 
-    public static readonly category = ruleCategory.LOCAL;  
+    public static override readonly priority = 9;
+    public static readonly category = ruleCategory.LOCAL;
     public static readonly schema = ruleSchema;
 
     private readonly include: includeType;
     private readonly sort: sortType;
-    private readonly names: namesType;
-    private readonly rename: renameType;
+    private readonly names: nameType[];
 
     constructor(data: ruleType) {
         super(data);
         this.include = data.include;
         this.sort = data.sort;
-        this.rename = data.names;
-        this.names = new Set(data.names) as namesType;
+        this.names = data.names as nameType[];
     }
 
     /**
@@ -91,16 +89,28 @@ class RenameRule extends BatchRule<ruleType> {
     ): void {
         if (assetsList.length < 1) return;
 
+        const namesToReplace = new Set(this.names.slice());
+
         const assetsSortedList = assetsList
+            // removes files with names from the list
+            .filter(asset => {
+                if (namesToReplace.has(asset.name)) {
+                    namesToReplace.delete(asset.name);
+                    return true;
+                }
+                return false;
+            })
+            // excludes non-matching names
             .filter(asset => asset.name.match(this.include))
-            .filter(asset => this.names.has(asset.name) )
+            // sorts according to rule
             .sort(sortby[this.sort]);
 
-        if (assetsSortedList.length !== this.names.size)
+        if (assetsSortedList.length !== namesToReplace.size)
             throw new Error(`Assets at ${path.dirname(assetsList[0]!.path)} do not match final names size`);
 
+        const rename = Array.from(namesToReplace);
         assetsSortedList.forEach((asset, i) => {
-            const outName = this.rename[i];
+            const outName = rename[i];
             if (!outName) throw new Error("Cannot assign empty name");
             asset.outName = outName as nameType;
         });

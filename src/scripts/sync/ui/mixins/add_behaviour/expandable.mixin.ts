@@ -87,32 +87,54 @@ export interface Expandable extends ExpandableToggles, ExtendibleElement {
     connectedCallback(): void;
 }
 
+// HELPERS =============================================================================
+function throwDOMException(message: string): never {
+    throw new DOMException(
+        message,
+        "InvalidStateError");
+}
+
 // PRIVATE FIELDS ======================================================================
 const _lock = new SetOnceWeakMap<Expandable, Lock>();
 const _scheduledCallbacks = new SetOnceWeakMap<Expandable, Set<() => void>>();
+
+/* Schedules a set of callback functions to be executed at the end of the transition. */
 function _scheduleCallbacks(self: Expandable, callbacks: (() => void)[]) {
+    _assertBranded(self);
     const set = _getPrivateProp(self, _scheduledCallbacks);
     for (const callback of callbacks) {
         set.add(callback);
     }
 }
 
-/** Adds `OPEN` class in an AnimationFrame requested after setting `hidden` to `false`. */
+/** 
+ * Adds `OPEN` class in an AnimationFrame requested after setting `hidden` to `false`.
+ * 
+ * Extra behaviour can be added by using the symbol public method `expandableOpenTransition`
+ */
 function _handleOpening(self: Expandable, OpenClass: string): void {
+    _assertBranded(self);
     self.hidden = false;
     requestTransitionFrame(() => {
         self.classList.add(OpenClass);
     });
     self[expandableOpenTransition]();
 }
-/** Removes `OPEN` class. */
+/** 
+ * Removes `OPEN` class. 
+ * 
+ * Extra behaviour can be added by using the symbol public method `expandableCloseTransition`
+ */
 function _handleClosing(self: Expandable, OpenClass: string): void {
+    _assertBranded(self);
     self.classList.remove(OpenClass);
     self[expandableCloseTransition]();
 }
+
+/** Indicates whether a 'ontransitionend' handler is already set. */
 const _pendingOnTransitionEnd = new WeakMap<Expandable, boolean>();
 /**
- * @inner
+ * @unchecked
  * Handles *end of transition* cleanup:
  * - hides the element if it doesn't have `open` attribute
  * - calls all pending callbacks safely
@@ -129,15 +151,15 @@ function _onTransitionEnd(self: Expandable) {
             catch (e) { console.error(e); }
         }
     );
-    (self as any).onTransitionEnd() // remove
     // Release resources:
     callbacks.clear();
     _setPrivateProp(self, _pendingOnTransitionEnd, false);
     _getPrivateProp(self, _lock).unlock();
 }
 
-/** Activates the one-time listener for the end of transition operations. */
+/** Activates a one-time listener for the end of transition operations. */
 function _setupOnTransitionEnd(self: Expandable) {
+    _assertBranded(self);
     if (_getPrivateProp(self, _pendingOnTransitionEnd)) return;
     _setPrivateProp(self, _pendingOnTransitionEnd, true);
     self.addEventListener('transitionend', () => _onTransitionEnd(self), { once: true });
@@ -145,7 +167,7 @@ function _setupOnTransitionEnd(self: Expandable) {
 
 // MIXIN FUNCTION ======================================================================
 /**
- * Generic Expandable Element.
+ * Generic branded Expandable Element.
  * 
  * The class provides basic structure for handling an HTML element's
  * transition between hidden states; refer to the configurable `OPEN`
@@ -181,12 +203,12 @@ export function Expandable<
 
         constructor(...args: any[]) {
             super(...args);
-            brand(this);
+            _brand(this);
             _initPrivateProp(this, _lock, new Lock());
             _initPrivateProp(this, _scheduledCallbacks, new Set());
             _initPrivateProp(this, _pendingOnTransitionEnd, false);
         }
-        get isLocked(): boolean { return _getPrivateProp(this, _lock).isLocked; };
+        public get isLocked(): boolean { return _getPrivateProp(this, _lock).isLocked; };
 
         // OPEN ATTRIBUTE SETUP =============================================================
 
@@ -207,10 +229,10 @@ export function Expandable<
             return [OpenAttribute, 'hidden'];
         }
 
-        
+        // Hooks for derivate classes
         public [expandableOpenTransition](): void { }
-        
         public [expandableCloseTransition](): void { }
+        public [expandableOnTransitionEnd](): void { }
 
         // Attribute related callbacks ==================================================
         connectedCallback(): void {
@@ -226,14 +248,11 @@ export function Expandable<
                 if (newValue !== null) {
                     // OPEN
                     _handleOpening(this, OpenClass);
-                    // this.handleOpening();
                 } else {
                     // CLOSE
-                    //this.handleClosing();
                     _handleClosing(this, OpenClass);
                 }
                 // LOCK RELEASE
-                this.setupOnTransitionEnd();
                 _setupOnTransitionEnd(this);
 
             } else if (
@@ -245,24 +264,13 @@ export function Expandable<
             }
         }
 
-        onTransitionEnd = () => null;
-        public [expandableOnTransitionEnd](): void { }
-        private setupOnTransitionEnd(): void {
-        }
-
         // SHOW =========================================================================
         public show(...callbacks: (() => void)[]): void {
             if (_getPrivateProp(this, _lock).isLocked)
-                throw new DOMException(
-                    "Cannot open the element while a transition is in progress",
-                    "InvalidStateError"
-                );
+                throwDOMException("Cannot open the element while a transition is in progress");
             if (this[OpenAttribute]) {
                 if (callbacks.length === 0) return; // second request without extra arguments quietly fails
-                else throw new DOMException(
-                    "Cannot schedule callbacks without a state change",
-                    "InvalidStateError"
-                );
+                throwDOMException("Cannot schedule callbacks without a state change");
             };
             _scheduleCallbacks(this, callbacks);
             this[OpenAttribute] = true;
@@ -270,16 +278,10 @@ export function Expandable<
         // CLOSE ========================================================================
         public close(...callbacks: (() => void)[]): void {
             if (_getPrivateProp(this, _lock).isLocked)
-                throw new DOMException(
-                    "Cannot close the element while a transition is in progress",
-                    "InvalidStateError",
-                );
+                throwDOMException("Cannot close the element while a transition is in progress");
             if (!this[OpenAttribute]) {
                 if (callbacks.length === 0) return; // second request without extra arguments quietly fails
-                else throw new DOMException(
-                    "Cannot schedule callbacks without a state change",
-                    "InvalidStateError"
-                );
+                throwDOMException("Cannot schedule callbacks without a state change");
             };
             _scheduleCallbacks(this, callbacks);
             this[OpenAttribute] = false;
@@ -323,7 +325,11 @@ export namespace Expandable {
 // PRIVATE INTERNAL IDENTIFICATION =====================================================
 /** Holds all branded instances of `Expandable`. */
 const branded = new WeakSet();
+function _assertBranded(instance: Expandable): true {
+    if (branded.has(instance)) return true;
+    throw new TypeError("Cannot access private member");
+}
 /** Brands an element as an instance of `Expandable`. */
-function brand(toBrand: Expandable) {
-    branded.add(toBrand);
+function _brand(instance: Expandable) {
+    branded.add(instance);
 }

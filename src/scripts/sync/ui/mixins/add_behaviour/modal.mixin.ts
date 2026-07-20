@@ -16,7 +16,8 @@ export interface Modal extends Popover { }
 // PRIVATE FIELDS ======================================================================
 /** Mutation Observer to refresh focusables if needed. */
 const _observer = new SetOnceWeakMap<Modal, MutationObserver>();
-
+/** Native dialog element to wrap around expandable. */
+const _nativeDialog = new SetOnceWeakMap<Modal, HTMLDialogElement>();
 // HELPERS =============================================================================
 const BrowserSupportsDialog = document.createElement('dialog') instanceof HTMLUnknownElement;
 
@@ -53,7 +54,7 @@ export function Modal<
 
             constructor(...args: any[]) {
                 super(...args);
-                brand(this);
+                _brand(this);
 
                 this.backdrop = new Backdrop('placeholder');
                 this.setAttribute('role', 'dialog');
@@ -186,12 +187,11 @@ export function Modal<
             }
         };
     else {
-        const _nativeDialog = new SetOnceWeakMap<Modal, HTMLDialogElement>();
         return class NativeDialog extends Base implements Modal {
 
             constructor(...args: any[]) {
                 super(...args);
-                brand(this);
+                _brand(this);
 
                 const NATIVE_DIALOG = document.createElement('dialog');
                 // make the dialog completely transparent
@@ -203,7 +203,6 @@ export function Modal<
                 // let the popover class handle out of bounds and Esc closes
                 NATIVE_DIALOG.closedBy = 'none';
                 _initPrivateProp(this, _nativeDialog, NATIVE_DIALOG);
-
                 _initPrivateProp(this, _observer, new MutationObserver(() => this.reflectOpenDialog()));
             }
             /**
@@ -217,7 +216,7 @@ export function Modal<
                 super.connectedCallback();
                 const NATIVE_DIALOG = _getPrivateProp(this, _nativeDialog);
                 if (!NATIVE_DIALOG.contains(this)) {
-                    // run once
+                    // run once: wrap dialog around element
                     const parent = this.parentNode;
                     if (parent) parent.replaceChild(NATIVE_DIALOG, this);
                     else document.body.appendChild(NATIVE_DIALOG);
@@ -277,7 +276,11 @@ export namespace Modal {
 // PRIVATE INTERNAL IDENTIFICATION =====================================================
 /** Holds all branded instances of `Modal`. */
 const branded = new WeakSet();
+function _assertBranded(instance: Modal): true {
+    if (branded.has(instance)) return true;
+    throw new TypeError("Cannot access private member");
+}
 /** Brands an element as an instance of `Modal`. */
-function brand(toBrand: Modal) {
-    branded.add(toBrand);
+function _brand(instance: Modal) {
+    branded.add(instance);
 }

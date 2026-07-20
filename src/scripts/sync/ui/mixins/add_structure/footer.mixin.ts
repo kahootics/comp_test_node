@@ -27,7 +27,7 @@ export function Footer<
 
         constructor(...args: any[]) {
             super(...args);
-            brand(this);
+            _brand(this);
             this.FOOTER = document.createElement('footer');
             this.appendChild(this.FOOTER);
             this.FOOTER.classList.add(...FooterClasses);
@@ -58,7 +58,11 @@ export namespace Footer {
 // PRIVATE INTERNAL IDENTIFICATION =====================================================
 /** Holds all branded instances of `Footer`. */
 const branded = new WeakSet();
+function _assertBranded(instance: Footer): true {
+    if (branded.has(instance)) return true;
+    throw new TypeError("Cannot access private member");
+}
 /** Brands an element as an instance of `Footer`. */
-function brand(toBrand: Footer) {
-    branded.add(toBrand);
+function _brand(instance: Footer) {
+    branded.add(instance);
 }

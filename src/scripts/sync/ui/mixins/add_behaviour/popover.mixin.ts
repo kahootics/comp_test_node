@@ -1,3 +1,4 @@
+import { assert } from "node:console";
 import { ValidationError } from "../../../../../errors/common-errors.js";
 import { _getPrivateProp, _initPrivateProp } from "../../../../../tools/encapsulation.js";
 import { Expandable, expandableCloseTransition, expandableOpenTransition } from "./expandable.mixin.js";
@@ -13,13 +14,15 @@ export interface Popover extends Expandable {
 /** Controller of events. */
 const _controller = new WeakMap<Popover, AbortController>();
 /** Closes element on pressing somewhere outside the element. */
-function closeWhenOutOfBounds(this: Popover, e: MouseEvent) {
+function _closeWhenOutOfBounds(self: Popover, e: MouseEvent) {
+    _assertBranded(self);
     if (e.target instanceof Node &&
-        !this.contains(e.target)) this.close();
+        !self.contains(e.target)) self.close();
 }
 /** Closes element on pressing `Escape`. */
-function closeOnEscape(this: Popover, e: KeyboardEvent) {
-    if (e.key === 'Escape') this.close();
+function _closeOnEscape(self: Popover, e: KeyboardEvent) {
+    _assertBranded(self);
+    if (e.key === 'Escape') self.close();
 }
 
 // MIXIN FUNCTION ======================================================================
@@ -39,7 +42,7 @@ export function Popover<
 
         constructor(...args: any[]) {
             super(...args);
-            brand(this);
+            _brand(this);
             _initPrivateProp(this, _controller, new AbortController());
         }
 
@@ -48,11 +51,11 @@ export function Popover<
             const signal = _getPrivateProp(this, _controller).signal;
             document.addEventListener(
                 'keydown',
-                (e: KeyboardEvent) => closeOnEscape.call(this, e),
+                (e: KeyboardEvent) => _closeOnEscape(this, e),
                 { signal: signal });
             document.addEventListener(
                 'mousedown',
-                (e: MouseEvent) => closeWhenOutOfBounds.call(this, e),
+                (e: MouseEvent) => _closeWhenOutOfBounds(this, e),
                 { signal: signal }
             );
         }
@@ -86,7 +89,11 @@ export namespace Popover {
 // PRIVATE INTERNAL IDENTIFICATION =====================================================
 /** Holds all branded instances of `Popover`. */
 const branded = new WeakSet();
+function _assertBranded(instance: Popover): true {
+    if (branded.has(instance)) return true;
+    throw new TypeError("Cannot access private member");
+}
 /** Brands an element as an instance of `Popover`. */
-function brand(toBrand: Popover) {
-    branded.add(toBrand);
+function _brand(instance: Popover) {
+    branded.add(instance);
 }

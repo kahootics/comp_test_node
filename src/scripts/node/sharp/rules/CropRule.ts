@@ -32,9 +32,9 @@ const ruleSchema = z.object({
 type ruleType = z.infer<typeof ruleSchema>;
 
 /**
-     * @param name - Full name of the asset
-     * @returns a crop hash from filename
-     */
+ * @param name - Full name of the asset
+ * @returns a crop hash from filename
+ */
 function extractHash(name: nameType): hashString | null {
     const { hash } = name.match(/\.crop(?<hash>[0-9a-zA-Z]{8})/)?.groups ?? {};
     return hash ? z.hash('md5').parse(hash) as hashString : null;
