@@ -1,11 +1,11 @@
 import sharp from "sharp";
 import z from "zod";
-import { type extType } from "../no.js";
-import { AssetRule, ruleCategory, allRuleClasses } from "../Rule.js";
-import { Asset } from "../Asset.js";
+import { AssetRule, allRuleClasses } from "../rule.js";
+import { Asset } from "../asset.js";
+import type { extType } from "../../../types/general-types.js";
 
-const formatSchema = z.enum(['jpeg', 'gif', 'avif', 'webp', 'png']);
-const optionsSchema = z.object({
+export const formatSchema = z.enum(['jpeg', 'gif', 'avif', 'webp', 'png']);
+export const optionsSchema = z.object({
     quality: z.number().min(1).max(100).optional(),
     lossless: z.boolean().optional()
 });
@@ -17,8 +17,8 @@ type ruleType = z.infer<typeof ruleSchema>;
 
 
 class FormatRule extends AssetRule<ruleType> {
-
-    public static readonly category = ruleCategory.LOCAL;
+    
+    public static readonly ownName = 'FormatRule';
 
     private readonly format: extType;
     private readonly options?: optionsType;

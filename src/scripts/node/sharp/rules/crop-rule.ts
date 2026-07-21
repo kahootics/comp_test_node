@@ -1,10 +1,9 @@
 import sharp from "sharp";
 import z from "zod";
 import { IllegalArgumentError } from "../../../../errors/common-errors.js";
-import type { hashString } from "../../../types/general-types.js";
-import { type nameType } from "../no.js";
-import { AssetRule, ruleCategory, allRuleClasses } from "../Rule.js";
-import { Asset } from "../Asset.js";
+import type { hashString, nameString } from "../../../types/general-types.js";
+import { AssetRule, ruleCategory, allRuleClasses } from "../rule.js";
+import { Asset } from "../asset.js";
 
 enum Use {
     PERCENTAGE = "percentage",
@@ -35,24 +34,25 @@ type ruleType = z.infer<typeof ruleSchema>;
  * @param name - Full name of the asset
  * @returns a crop hash from filename
  */
-function extractHash(name: nameType): hashString | null {
+function extractHash(name: nameString): hashString | null {
     const { hash } = name.match(/\.crop(?<hash>[0-9a-zA-Z]{8})/)?.groups ?? {};
     return hash ? z.hash('md5').parse(hash) as hashString : null;
 }
 
-function injectHash(name: nameType, hash: hashString): nameType {
+function injectHash(name: nameString, hash: hashString): nameString {
     const current = extractHash(name);
     if (current)
-        return name.replace(current, hash) as nameType;
+        return name.replace(current, hash) as nameString;
 
     else
-        return name + '.crop' + hash as nameType;
+        return name + '.crop' + hash as nameString;
 }
 
 
 // ================================================================================
 export class CropRule extends AssetRule<ruleType> {
-    public static readonly category = ruleCategory.LOCAL;
+    
+    public static readonly ownName = 'CropRule';
 
     private readonly use: useType;
     private readonly extract: extractType;

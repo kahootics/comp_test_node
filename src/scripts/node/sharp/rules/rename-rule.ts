@@ -1,9 +1,9 @@
 import path from "node:path";
 import z from "zod";
 import { getFileBirthTime } from "../../../../tools/companion-util.js";
-import { type nameType } from "../no.js";
-import { BatchRule, ruleCategory, allRuleClasses } from "../Rule.js";
-import { Asset } from "../Asset.js";
+import { BatchRule, ruleCategory, allRuleClasses } from "../rule.js";
+import { Asset } from "../asset.js";
+import type { nameString } from "../../../types/general-types.js";
 
 function reorderScreenshotName(filename: string): string {
     const regex = /^Screenshot (\d{2})_(\d{2})_(\d{4}) (\d{2})_(\d{2})_(\d{2})/;
@@ -52,7 +52,6 @@ type includeType = z.infer<typeof includeSchema>;
 const sortSchema = z.enum(sortKeys);
 type sortType = z.infer<typeof sortSchema>;
 const renameSchema = z.array(z.string().trim().nonempty()).nonempty();
-type namesType = Set<nameType>;
 const ruleSchema = z.object({
     include: includeSchema, sort: sortSchema, names: renameSchema
 });
@@ -61,19 +60,21 @@ type ruleType = z.infer<typeof ruleSchema>;
 
 class RenameRule extends BatchRule<ruleType> {
 
+    public static readonly ownName = 'RenameRule';
+
     public static override readonly priority = 9;
-    public static readonly category = ruleCategory.LOCAL;
+    
     public static readonly schema = ruleSchema;
 
     private readonly include: includeType;
     private readonly sort: sortType;
-    private readonly names: nameType[];
+    private readonly names: nameString[];
 
     constructor(data: ruleType) {
         super(data);
         this.include = data.include;
         this.sort = data.sort;
-        this.names = data.names as nameType[];
+        this.names = data.names as nameString[];
     }
 
     /**
@@ -112,7 +113,7 @@ class RenameRule extends BatchRule<ruleType> {
         assetsSortedList.forEach((asset, i) => {
             const outName = rename[i];
             if (!outName) throw new Error("Cannot assign empty name");
-            asset.outName = outName as nameType;
+            asset.outName = outName as nameString;
         });
     }
 }

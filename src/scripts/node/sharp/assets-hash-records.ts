@@ -1,8 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import z from "zod";
-import type { hashString } from "../../types/general-types.js";
-import type { directoryType } from "./no.js";
+import type { directoryString, hashString } from "../../types/general-types.js";
 
 const LIB_PATH = "src/data/assets-hash-records-library.json"; // move to config
 const passwordRecords = Symbol("AssetsHashRecords");
@@ -14,7 +13,7 @@ const hashRecordSchema = z.record(
 );
 export type hashRecordType = { [key: hashString]: hashString[] };
 const hashLibrarySchema = z.array(z.tuple([z.string(), hashRecordSchema]));
-type assetsHashRecordsType = Map<directoryType, hashRecordType>
+type assetsHashRecordsType = Map<directoryString, hashRecordType>
 
 let _instance: AssetsHashRecords;
 
@@ -26,12 +25,12 @@ export class AssetsHashRecords {
 
         const libPath = path.resolve(LIB_PATH);
 
-        let hashStr = "[[,{}]]";
+        let hashStr = "[]";
         if (fs.existsSync(libPath))
             hashStr = fs.readFileSync(libPath, 'utf-8')
         else {
-            fs.mkdirSync(path.dirname(libPath));
-            fs.writeFileSync(libPath,hashStr);
+            fs.mkdirSync(path.dirname(libPath), { recursive: true });
+            fs.writeFileSync(libPath, hashStr);
         }
 
         const RecordsRaw = JSON.parse(hashStr);
@@ -58,7 +57,7 @@ export class AssetsHashRecords {
 
         return this;
     }
-    public getHashRecord(directory: directoryType, ruleHash: hashString): hashString[] {
+    public getHashRecord(directory: directoryString, ruleHash: hashString): hashString[] {
         let records = this.#records.get(directory);
         if (!records) {
             records = this.#records
@@ -70,7 +69,7 @@ export class AssetsHashRecords {
         }
         return Array.from(records[ruleHash]);
     }
-    public setHashRecord(directory: directoryType, ruleHash: hashString, hashes: hashString[]) {
+    public setHashRecord(directory: directoryString, ruleHash: hashString, hashes: hashString[]) {
         let records = this.#records.get(directory);
         if (!records) {
             this.#records
