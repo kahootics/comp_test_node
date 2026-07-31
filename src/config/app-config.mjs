@@ -8,6 +8,7 @@ const prefix = 'tx-cp'
 export default {
     version: pkg.version,
     repo: path.basename(pkg.repository.url, `.${pkg.repository.type}`),
+    site: 'https://kahootics.github.io',
     paths: {
         base: 'https://',
         outDir: "dist",

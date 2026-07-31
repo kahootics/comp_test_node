@@ -27,8 +27,11 @@
     "allowSyntheticDefaultImports": true,
     "verbatimModuleSyntax": true, 
 
+    "sourceMap": true, 
+    
+
     "lib": ["ES2022", "DOM"] 
   },
   "include": ["src"], 
-  "exclude": ["node_modules", "dist", "build", "scripts/**/*.{mjs,js}", "**/*.template.ts"]
+  "exclude": ["node_modules", "dist", "build", "**/*.template.ts"]
 }

@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-import { asDir } from '../utils';
-import { AssetsDirectory } from '../../src/scripts/node/sharp/assets-directory';
-import { AssetsLibrary } from '../../src/scripts/node/sharp/assets-library';
+import { asDir } from '../utils.js';
+import { AssetsDirectory } from '../../src/scripts/node/sharp/assets-directory.js';
+import { AssetsLibrary } from '../../src/scripts/node/sharp/assets-library.js';
 
 vi.mock('../../src/scripts/node/sharp/assets-directory.js', () => ({
     AssetsDirectory: { buildAll: vi.fn() },
