@@ -1,13 +1,13 @@
 import type sharp from "sharp";
 import type { directoryString } from "../../types/general-types.js";
 import { AssetsDirectory } from "./assets-directory.js";
-import type { Asset } from "./asset.js";
+import type { Asset } from "./tmp-asset.js";
 import type { ExportOutput } from "../../shared/assets-export-classes.js";
 import { DirectoryNotFoundError, NotFoundError, ValidationError } from "../../../errors/common-errors.mjs";
 import { PrivateConstructorError, SingletonDuplicateError, SingletonNotInitializedError } from "../../../errors/specialized-errors.mjs";
 import { duplicatesOfStringList, formatList } from "../../../tools/string-parsers.js";
 import fs from "node:fs";
-import { _stabilizePath, type $stable } from "./rule.js";
+import { _stabilizePath, type $stable } from "./tmp-rule.js";
 
 // PRIVATE HELPERS ====================================================================
 

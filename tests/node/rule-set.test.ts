@@ -2,13 +2,13 @@ import { describe, test, expect, beforeEach, vi } from 'vitest';
 import path from 'node:path';
 import fs from 'node:fs';
 import sharp from 'sharp';
-import { Asset } from '../../src/scripts/node/sharp/asset.js';
+import { Asset } from '../../src/scripts/node/sharp/tmp-asset.js';
 import { RuleSet } from '../../src/scripts/node/sharp/rule-set.js';
 import { AssetsHashRecords } from '../../src/scripts/node/sharp/assets-hash-records.js';
 import { rulesetSchema, allRuleClassesMap } from '../../src/scripts/node/sharp/rule-registry.js';
 import { dummy } from '../setup.js';
 import { createHashFromFile } from '../../src/scripts/node/writers/hash.js';
-import { _stabilizePath } from '../../src/scripts/node/sharp/rule.js';
+import { _stabilizePath } from '../../src/scripts/node/sharp/tmp-rule.js';
 import { asDir, asHash } from '../utils.js';
 
 
@@ -50,7 +50,7 @@ vi.mock('../../../tools/console.js', () => ({
 
 
 vi.mock('../../src/scripts/node/sharp/rule-registry.js', async () => {
-    const { AssetRule, BatchRule, ExportRule } = await vi.importActual<typeof import('../../src/scripts/node/sharp/rule.js')>('../../src/scripts/node/sharp/rule.js');
+    const { AssetRule, BatchRule, ExportRule } = await vi.importActual<typeof import('../../src/scripts/node/sharp/tmp-rule.js')>('../../src/scripts/node/sharp/rule.js');
     const { z } = await vi.importActual<typeof import('zod')>('zod');
 
     const anySchema = z.object({}).loose();
