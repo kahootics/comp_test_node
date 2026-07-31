@@ -1,10 +1,14 @@
-import { IllegalArgumentError } from "../../../errors/common-errors.js";
+import { IllegalArgumentError } from "../../../errors/common-errors.mjs";
 
 interface HandleTarget {
     style: CSSStyleDeclaration,
     id: string,
     close: () => void,
     open: () => void
+}
+
+export function isPointerCoarse(e: PointerEvent): boolean {
+    return e.isPrimary && e.pointerType !== 'mouse';
 }
 
 abstract class Handle<
@@ -15,17 +19,13 @@ abstract class Handle<
 
     private readonly onPointerDown = (e: PointerEvent) => this.handleTouchStart(e);
     private readonly onPointerMove = (e: PointerEvent) => this.handleTouchMove(e);
-    private readonly onPointerUp   = (e: PointerEvent) => this.handleTouchEnd(e);
-
-    protected isValid(e: PointerEvent) {
-        return e.isPrimary && e.pointerType !== 'mouse';
-    }
+    private readonly onPointerUp = (e: PointerEvent) => this.handleTouchEnd(e);
 
     constructor(
         target: T
     ) {
         this.handle = document.createElement('div');
-        this.target  = target;
+        this.target = target;
         this.handle.setAttribute('aria-controls', target.id);
         this.handle.setAttribute('aria-hidden', 'true');
     }
@@ -34,14 +34,14 @@ abstract class Handle<
         this.handle.style.setProperty('visibility', 'visible');
         this.handle.addEventListener('pointerdown', this.onPointerDown);
         this.handle.addEventListener('pointermove', this.onPointerMove);
-        this.handle.addEventListener('pointerup',   this.onPointerUp);
+        this.handle.addEventListener('pointerup', this.onPointerUp);
     }
 
     public disable() {
         this.handle.style.setProperty('visibility', 'hidden');
         this.handle.removeEventListener('pointerdown', this.onPointerDown);
         this.handle.removeEventListener('pointermove', this.onPointerMove);
-        this.handle.removeEventListener('pointerup',   this.onPointerUp);
+        this.handle.removeEventListener('pointerup', this.onPointerUp);
         this.reset();
     }
 
@@ -55,7 +55,7 @@ abstract class Handle<
 interface HasNumberProperties {
     [key: string]: number
 }
-interface VerticalFadeHandleOptions extends HasNumberProperties  {
+interface VerticalFadeHandleOptions extends HasNumberProperties {
     closeThresholdYPercentage: number,
     minOpacity: number
 }
@@ -80,10 +80,10 @@ class VerticalFadeHandle extends Handle {
         options?: VerticalFadeHandleOptions
     ) {
         super(target);
-        if(options && !hasUnitaryProperties(options))
+        if (options && !hasUnitaryProperties(options))
             throw new IllegalArgumentError(
                 "Vertical handle's options must be not smaller than 0 and not greater than 1"
-        );
+            );
         this.CLOSE_THRESHOLD_Y_PERCENTAGE = options?.closeThresholdYPercentage ?? 0.25;
         this.MIN_OPACITY = options?.minOpacity ?? 0.2;
     }
@@ -94,7 +94,7 @@ class VerticalFadeHandle extends Handle {
 
     private setTop(dY: number) {
         this.target.style.setProperty('top', `${dY}px`);
-        if(this.MIN_OPACITY !== 1) 
+        if (this.MIN_OPACITY !== 1)
             this.target.style.setProperty(
                 'opacity',
                 `clamp(${this.MIN_OPACITY}, ${1 - dY / this.closingThresholdY}, 1)`
@@ -111,27 +111,27 @@ class VerticalFadeHandle extends Handle {
     }
 
     protected override reset() {
-        this.startY   = null;
+        this.startY = null;
         this.currentY = 0;
         this.unsetTop();
     }
 
     protected handleTouchStart(e: PointerEvent) {
-        if(!this.isValid(e)) return;
+        if (!isPointerCoarse(e)) return;
         this.startY = e.clientY;
     }
 
     protected handleTouchMove(e: PointerEvent) {
-        if (!this.isValid(e) || this.startY === null) return;
+        if (!isPointerCoarse(e) || this.startY === null) return;
         this.currentY = e.clientY;
         this.applyDrag(this.currentY - this.startY);
     }
 
     protected handleTouchEnd(e: PointerEvent) {
-        if (!this.isValid(e) || this.startY === null) return;
+        if (!isPointerCoarse(e) || this.startY === null) return;
 
         if (this.currentY - this.startY > this.closingThresholdY) {
-                this.target.close();
+            this.target.close();
         } else {
             this.unsetTop();
         }

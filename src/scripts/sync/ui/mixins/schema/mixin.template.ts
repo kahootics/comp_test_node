@@ -4,7 +4,7 @@ import { ValidationError } from "../../../../../errors/common-errors.js";
 // !! Globally change MixinName, MixinClass and BaseClass before implementing !!
 
 // EXTENDED CONSTRUCTOR ================================================================
-type Constructor<T extends {}> = new (...args: any[]) => T;
+type Constructor<T extends object> = new (...args: any[]) => T;
 type BaseClass = any; // edit //
 
 // OBFUSCATED PROPERTIES ===============================================================

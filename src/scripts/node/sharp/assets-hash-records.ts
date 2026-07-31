@@ -2,27 +2,39 @@ import fs from "node:fs";
 import path from "node:path";
 import z from "zod";
 import type { directoryString, hashString } from "../../types/general-types.js";
+import appConfig from "../../../config/app-config.mjs";
+import { _stabilizePath, type $stable } from "./rule.js";
+import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
 
-const LIB_PATH = "src/data/assets-hash-records-library.json"; // move to config
-const passwordRecords = Symbol("AssetsHashRecords");
+const LIB_PATH = appConfig.paths.assetsHashLibrary;
 
-const HashSchema = z.hash('md5').length(8);
+const HashSchema = z.string().regex(/^[0-9a-zA-Z]{8}$/);
 const hashRecordSchema = z.record(
     HashSchema,
     z.array(HashSchema)
 );
 export type hashRecordType = { [key: hashString]: hashString[] };
 const hashLibrarySchema = z.array(z.tuple([z.string(), hashRecordSchema]));
-type assetsHashRecordsType = Map<directoryString, hashRecordType>
+type assetsHashRecordsType = Map<directoryString & $stable, hashRecordType>
 
-let _instance: AssetsHashRecords;
-
+/**
+ * Singleton that automatically reads and stores a 
+ * directory's assets' hashes from a ruleset enforcement
+ * in a json file at a predetermined location.
+ */
 export class AssetsHashRecords {
+    /** Token needed to access constructor. */
+    static readonly #constructionToken: unique symbol = Symbol();
+    /** All the records available at the path. */
     readonly #records: assetsHashRecordsType;
-    private constructor(password: symbol) {
-        if (password !== passwordRecords)
-            throw new Error("Cannot use class constructor; use static method `open` to initialize singleton")
+    /** Own singleton instance. */
+    static #instance: AssetsHashRecords | null = null;
 
+    private constructor(token: symbol) {
+        // Privacy of constructor
+        if (token !== AssetsHashRecords.#constructionToken)
+            throw new PrivateConstructorError("AssetsHashRecords");
+        // Read records
         const libPath = path.resolve(LIB_PATH);
 
         let hashStr = "[]";
@@ -35,20 +47,28 @@ export class AssetsHashRecords {
 
         const RecordsRaw = JSON.parse(hashStr);
         this.#records = new Map(hashLibrarySchema.parse(RecordsRaw)) as assetsHashRecordsType;
-        _instance = this;
     }
 
-    public static get instance() {
-        return _instance;
+    static get #self(): AssetsHashRecords {
+        if (this.#instance) return this.#instance;
+        return (this.#instance = new this(this.#constructionToken));
     }
 
-    public static open(): AssetsHashRecords {
-        if (this.instance) return this.instance;
-        return new AssetsHashRecords(passwordRecords);
+    // PUBLIC =============================================================================
+    /**
+     * Releases the records data from memory.
+     * @remarks
+     * **All changes made to the records that have not been written will be lost**.
+     */
+    public static terminate() {
+        this.#instance = null;
     }
-
-    public write(): AssetsHashRecords {
-        const RecordsRaw = Array.from(this.#records);
+    /**
+     * Saves on disk the current state of the records.
+     * @returns itself
+     */
+    public static write() {
+        const RecordsRaw = Array.from(this.#self.#records);
         const hashStr = JSON.stringify(RecordsRaw);
 
         const libPath = path.resolve(LIB_PATH);
@@ -57,25 +77,40 @@ export class AssetsHashRecords {
 
         return this;
     }
-    public getHashRecord(directory: directoryString, ruleHash: hashString): hashString[] {
-        let records = this.#records.get(directory);
+    /**
+     * Fetches a directory's assets' hashes of a ruleset.
+     * @param directory - directory of the assets AND rule.
+     * @param rulesetHash - ruleset's hash.
+     * @returns an array of hashes belonging to the assets on which the rule has been enforced (may be empty)
+     */
+    public static getHashRecord(directory: directoryString, rulesetHash: hashString): hashString[] {
+        const dir = _stabilizePath(directory);
+        let records = this.#self.#records.get(dir);
         if (!records) {
-            records = this.#records
-                .set(directory, { [ruleHash]: [] })
-                .get(directory)!;
+            records = this.#self.#records
+                .set(dir, { [rulesetHash]: [] })
+                .get(dir)!;
         }
-        if (!records[ruleHash]) {
-            records[ruleHash] = [];
+        if (!records[rulesetHash]) {
+            records[rulesetHash] = [];
         }
-        return Array.from(records[ruleHash]);
+        return Array.from(records[rulesetHash]);
     }
-    public setHashRecord(directory: directoryString, ruleHash: hashString, hashes: hashString[]) {
-        let records = this.#records.get(directory);
+    /**
+     * Overwrites a directory's assets' hashes of a ruleset.
+     * @param directory - directory of the assets AND rule.
+     * @param rulesetHash - ruleset's hash.
+     * @param hashes - New hash list to overwrite the old one.
+     * @returns itself
+     */
+    public static setHashRecord(directory: directoryString, rulesetHash: hashString, hashes: hashString[]) {
+        const dir = _stabilizePath(directory);
+        let records = this.#self.#records.get(dir);
         if (!records) {
-            this.#records
-                .set(directory, { [ruleHash]: hashes })
+            this.#self.#records
+                .set(dir, { [rulesetHash]: hashes })
         } else {
-            records[ruleHash] = hashes;
+            records[rulesetHash] = hashes;
         }
         return this;
     }

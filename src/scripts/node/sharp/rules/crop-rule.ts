@@ -1,8 +1,7 @@
 import sharp from "sharp";
 import z from "zod";
-import { IllegalArgumentError } from "../../../../errors/common-errors.js";
-import type { hashString, nameString } from "../../../types/general-types.js";
-import { AssetRule, ruleCategory, allRuleClasses } from "../rule.js";
+import { IllegalArgumentError } from "../../../../errors/common-errors.mjs";
+import { AssetRule } from "../rule.js";
 import { Asset } from "../asset.js";
 
 enum Use {
@@ -30,34 +29,16 @@ const ruleSchema = z.object({
 });
 type ruleType = z.infer<typeof ruleSchema>;
 
-/**
- * @param name - Full name of the asset
- * @returns a crop hash from filename
- */
-function extractHash(name: nameString): hashString | null {
-    const { hash } = name.match(/\.crop(?<hash>[0-9a-zA-Z]{8})/)?.groups ?? {};
-    return hash ? z.hash('md5').parse(hash) as hashString : null;
-}
-
-function injectHash(name: nameString, hash: hashString): nameString {
-    const current = extractHash(name);
-    if (current)
-        return name.replace(current, hash) as nameString;
-
-    else
-        return name + '.crop' + hash as nameString;
-}
-
 
 // ================================================================================
 export class CropRule extends AssetRule<ruleType> {
     
-    public static readonly ownName = 'CropRule';
+    public static override readonly ownName = 'CropRule';
 
     private readonly use: useType;
     private readonly extract: extractType;
 
-    public static readonly schema = ruleSchema;
+    public static override readonly schema = ruleSchema;
 
     constructor(data: ruleType) {
         super(data);
@@ -70,14 +51,11 @@ export class CropRule extends AssetRule<ruleType> {
         sharpAsset: sharp.Sharp
     ): Promise<sharp.Sharp> {
 
-        const { fullName, name } = asset;
-
-        const cropHash = extractHash(fullName);
-
+        const cropHash = asset.getParam('crop');
         // If alredy cropped according to current rule, exit
         if (cropHash === this.hash) return sharpAsset;
         if (cropHash && cropHash !== this.hash)
-            throw new Error(`Asset ${name} has already been cropped according to a different rule, \nan asset can oly be cropped once`);
+            throw new Error(`Asset ${asset.name} has already been cropped according to a different rule, \nan asset can only be cropped once`);
 
         const { width, height } = await sharpAsset.clone().metadata();
 
@@ -100,8 +78,7 @@ export class CropRule extends AssetRule<ruleType> {
             default:
                 throw new IllegalArgumentError('A type for extraction parameters must be passed in the rule');
         }
-        asset.outName = injectHash(asset.outName, this.hash);
+        asset.setOutParam('crop',this.hash);
         return result;
     }
 }
-allRuleClasses.add(CropRule);

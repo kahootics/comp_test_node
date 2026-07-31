@@ -1,4 +1,4 @@
-import type { ExtendibleElement } from "../components/extendible-element.js";
+import { ExtendibleElement } from "../components/extendible-element.js";
 
 
 const HEADER_CLASS = '';
@@ -6,11 +6,9 @@ const TITLE_CLASS = '';
 const BODY_CLASS = '';
 
 
-class CardElement extends HTMLElement implements ExtendibleElement {
-
+export class CardElement extends ExtendibleElement {
+    private connected: boolean = false;
     private static cardsNO: number = 0;
-
-    connectedCallback(): void {}
 
     /** Header of card. */
     private readonly HEADER: HTMLElement;
@@ -21,11 +19,11 @@ class CardElement extends HTMLElement implements ExtendibleElement {
     /** Title of card. */
     private readonly TITLE: HTMLHeadingElement;
     private initTitle() {
-        this.TITLE.setAttribute('tabindex','-1');
+        this.TITLE.setAttribute('tabindex', '-1');
         this.TITLE.classList.add(TITLE_CLASS);
-        this.TITLE.id = TITLE_CLASS + CardElement.cardsNO; 
+        this.TITLE.id = TITLE_CLASS + CardElement.cardsNO;
         CardElement.cardsNO++; // different id for every title
-        this.setAttribute('aria-labelledby',this.TITLE.id);
+        this.setAttribute('aria-labelledby', this.TITLE.id);
     }
 
 
@@ -41,21 +39,28 @@ class CardElement extends HTMLElement implements ExtendibleElement {
         this.initBody();
         this.initHeader(); this.initTitle();
 
-        // move child nodes to the body
-        this.BODY.append(...this.childNodes);
 
-        this.HEADER.append(this.TITLE);
-        this.append(this.HEADER, this.BODY);
     }
 
     constructor() {
         super();
 
         this.HEADER = document.createElement('header');
-        this.TITLE  = document.createElement('h2');
-        this.BODY   = document.createElement('div');
+        this.TITLE = document.createElement('h2');
+        this.BODY = document.createElement('div');
 
         this.init();
+    }
+
+    connectedCallback() {
+        // move child nodes to the body
+        if (!this.connected) {
+            this.connected = true;
+            this.BODY.append(...this.childNodes);
+
+            this.HEADER.append(this.TITLE);
+            this.append(this.HEADER, this.BODY);
+        }
     }
 
     // Title methods
@@ -92,7 +97,7 @@ class CardElement extends HTMLElement implements ExtendibleElement {
     public removeFromBody<T extends Node>(node: T): T {
         return this.BODY.removeChild(node);
     }
-    
+
 }
 
 customElements.define("card-element", CardElement);

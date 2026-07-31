@@ -1,8 +1,11 @@
 
-import { IllegalArgumentError, ValidationError } from "../../../../errors/common-errors.js";
-import { RouterInitializationError, RouterInvalidRequestError } from "../../../../errors/route-errors.js";
-import { escapeRegExp } from "../../../shared/utilities/string-parsers.js";
-import { hashRouterEvent, hashRouterRequestEvent, type hash, type HashRouterEventInit, type HashRouterOptions, type HashRouterRequestEventInit, type route, type title } from "../../../types/router-types.js";
+import { IllegalArgumentError, ValidationError } from "../../../errors/common-errors.mjs";
+import { RouterInitializationError, RouterInvalidRequestError } from "../../../errors/route-errors.js";
+import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
+import { escapeRegExp } from "../../../tools/string-parsers.js";
+import { hashRouterEvent, hashRouterRequestEvent, type hash, type HashRouterOptions, type route, type title } from "../../types/router-types.js";
+import { HashRouterEvent } from "./hash-router-event.js";
+import type { HashRouterRequestEvent } from "./hash-router-request-event.js";
 
 
 /**
@@ -10,26 +13,36 @@ import { hashRouterEvent, hashRouterRequestEvent, type hash, type HashRouterEven
  */
 export class HashRouter {
 
-    /** RegularExpression to extract route and title from hash */
-    private readonly validHashRE: RegExp;
-    /** Regular Expression (String) a route must match */
-    public static readonly routeCapture: string = "(?<route>[A-Za-z0-9_\\-.~!()]+)";
-    /** Regular Expression a route must match */
-    public static readonly routeCaptureRegExp: RegExp = new RegExp(HashRouter.routeCapture);
+    /** Token needed to access constructor. */
+    static readonly #constructionToken: unique symbol = Symbol("Hash Router");
 
-    /** Hash prefix (after #) */
-    private readonly prefix: string;
+    /** RegularExpression to extract route and title from hash */
+    readonly #validHashRE: RegExp;
+    /** Regular Expression (String) a route must match */
+    static readonly #routeCapture: string = "(?<route>[A-Za-z0-9_\\-.~!()]+)";
+    /** Regular Expression a route must match */
+    static readonly #routeCaptureRegExp: RegExp = new RegExp(HashRouter.#routeCapture);
+
     /** Any hash route's complete prefix (including `#`) */
     private readonly hashStaticBeginning: string;
-    
+
     /** Map that links each route to the corresponding title */
-    private readonly routes: Map<route,title>;
+    private readonly routes: Map<route, title>;
     /** List of all available titles */
     private readonly titles: Set<title>;
 
     /** Singleton class instance */
-    private static self: HashRouter;
-    
+    static #instance: HashRouter | null = null;
+    static get #self(): HashRouter {
+        if (!this.#instance) throw new RouterInitializationError("HashRouter is not initialized yet");
+        return this.#instance;
+    }
+    /** Returns the `singleton` instance of the router. */
+    public static get instance(): HashRouter {
+        if (!this.#self) throw new RouterInitializationError("HashRouter is not initialized yet");
+        return this.#self;
+    }
+
     // LAST NON ROUTE STATE
     private readonly lastNonRoute: {
         hash: hash,
@@ -53,7 +66,7 @@ export class HashRouter {
         document.title = this.documentOgTitle;
     }
     private storeCurrentHash(): void {
-        this.lastNonRoute.hash  = location.hash as hash;
+        this.lastNonRoute.hash = location.hash as hash;
     }
     private storeLastHash(hash: hash): void {
         this.lastNonRoute.hash = hash;
@@ -70,7 +83,42 @@ export class HashRouter {
         return this.lastNonRoute.title;
     };
 
-    /**
+
+    private constructor(
+        token: symbol,
+        documentOriginalTitle: string,
+        routesMap: Map<string, string>,
+        routerOptions?: HashRouterOptions
+    ) {
+        // Privacy of constructor
+        if (token !== HashRouter.#constructionToken)
+            throw new PrivateConstructorError("HashRouter", { init: { method: 'build', type: 'singleton' } });
+        // RUN ONCE
+        this.lastNonRoute = { title: document.title as title, hash: location.hash as hash };
+        this.documentOgTitle = documentOriginalTitle as title;
+        const { hashPrefix, slashAfterHash } = routerOptions ?? {};
+
+        /** Hash prefix (after #) */
+        const prefix = hashPrefix ?? '';
+        if (prefix.includes('#'))
+            throw new IllegalArgumentError("A fragment cannot contain another '#' character");
+        const regPrefix = escapeRegExp(prefix);
+
+        this.routes = HashRouter.getValidatedRoutesMap(routesMap);
+        this.titles = new Set(this.routes.values());
+
+        this.hashStaticBeginning = `#${slashAfterHash ? '/' : ''}${prefix}`;
+        this.#validHashRE = new RegExp(
+            `^#${slashAfterHash ? '\\/' : ''}${regPrefix}`
+            + `${HashRouter.#routeCapture}\\/$`
+        );
+
+        this.init();
+    }
+
+    /** 
+     * Builds a singleton instance of the router and returns a reference to it. 
+     * 
      * @param documentOriginalTitle - Document's original title
      * @param routesMap - [Route -> Title] map for all of the routes
      * @param [routerOptions] - (optional) a set of options to configure for the router;   
@@ -80,47 +128,20 @@ export class HashRouter {
      * @throws {ValidationError} If the routes map is invalid;
      * see {@link getValidatedRoutesMap} for more information about the validation
      */
-    private constructor(
-        documentOriginalTitle: string,
-        routesMap: Map<string,string>,
-        routerOptions?: HashRouterOptions
-    ) {
-        if(HashRouter.self) throw new RouterInitializationError("HashRouter cannot be initialized twice");
-        // RUN ONCE
-        this.lastNonRoute = { title: document.title as title, hash: location.hash as hash };
-        this.documentOgTitle = documentOriginalTitle as title;
-        const { hashPrefix, slashAfterHash } = routerOptions ?? {};
-
-        this.prefix     = hashPrefix ?? '';
-        if(this.prefix.includes('#'))
-            throw new IllegalArgumentError("A fragment cannot contain another '#' character");
-        const regPrefix = escapeRegExp(this.prefix);
-        this.routes     = HashRouter.getValidatedRoutesMap(routesMap);
-        this.titles     = new Set(this.routes.values());
-
-        this.hashStaticBeginning = `#${slashAfterHash ? '/' : ''}${this.prefix}`; 
-        this.validHashRE = new RegExp(
-            `^#${slashAfterHash ? '\\/' : ''}${regPrefix}`
-            + `${HashRouter.routeCapture}\\/$`
-        );
-        
-        this.init();
-    }
-
-    /** Builds a singleton instance of the router and returns a reference to it. */
     public static build(
         documentOriginalTitle: string,
-        routesMap: Map<string,string>,
+        routesMap: Map<string, string>,
         routerOptions?: HashRouterOptions
     ): HashRouter {
-        this.self = new HashRouter(documentOriginalTitle, routesMap, routerOptions);
-        return this.self;
+        if (HashRouter.#instance)
+            throw new RouterInitializationError("HashRouter cannot be initialized twice");
+
+        this.#instance = new HashRouter(
+            this.#constructionToken, documentOriginalTitle, routesMap, routerOptions
+        );
+        return this.#self;
     }
-    /** Returns the `singleton` instance of the router. */
-    public static get instance(): HashRouter {
-        if(!this.self) throw new RouterInitializationError("HashRouter is not initialized yet");
-        return this.self;
-    }
+
 
     /**
      * @param e - HashChangeEvent
@@ -139,21 +160,21 @@ export class HashRouter {
     public isAHashRoute(hash: hash): boolean {
         const route = this.getRouteIfValid(hash);
         return route ? true : false;
-    } 
+    }
     /** Returns the validated route; 
      * @throws {ValidationError} If the given route is invalid
      */
     public getValidatedRoute(route: string): route {
-        if(!this.routes.has(route as route)) 
+        if (!this.routes.has(route as route))
             throw new ValidationError(`${route} is not a route`);
         return route as route;
     }
 
     /** Extracts and validates a route from a hash, returns `undefined` if it is not valid */
     private getRouteIfValid(hash: hash): route | undefined {
-        const match = hash.match(this.validHashRE);
+        const match = hash.match(this.#validHashRE);
         const { route } = match?.groups ?? {};
-        if(route && this.routes.has(route as route))
+        if (route && this.routes.has(route as route))
             return route as route;
         // undefined is returned by default
     }
@@ -169,7 +190,7 @@ export class HashRouter {
      */
     public getTitle(route: route): title {
         const title = this.routes.get(route);
-        if(!title) 
+        if (!title)
             throw new IllegalArgumentError("You must pass a valid route to this function");
         return title as title;
     }
@@ -178,13 +199,13 @@ export class HashRouter {
     public buildHashFrom(route: route): hash {
         return this.hashStaticBeginning + route + '/' as hash;
     }
-    
+
     /** Builds an URL from a hash using current location as reference. */
     public getURLWithNewHash(hash: hash): URL {
         const newLoc = new URL(location.href);
         newLoc.hash = hash;
         return newLoc;
-    }    
+    }
 
     /** 
      * ON hashChange & DOMContentLoaded:
@@ -209,14 +230,14 @@ export class HashRouter {
      * - no event is emitted 
      */
     private handleHashChange = (e?: HashChangeEvent) => {
-        
+
         const route = this.getRouteIfValid(location.hash as hash);
         const lastHash = e && this.getOldHash(e);
         const itWasNotARoute = (lastHash || lastHash === '') && !this.isAHashRoute(lastHash);
-        if(route) {
-        // a route was found
-            if(itWasNotARoute) {
-            // store title if it is not a route one
+        if (route) {
+            // a route was found
+            if (itWasNotARoute) {
+                // store title if it is not a route one
                 this.storeCurrentTitle();
                 this.storeLastHash(lastHash);
             }
@@ -225,13 +246,13 @@ export class HashRouter {
             document.title = title;
             this.dispatchRouteChangeEvent(route, title);
         } else {
-        // no route found
-            if(itWasNotARoute) {
-            // we were not in a route
+            // no route found
+            if (itWasNotARoute) {
+                // we were not in a route
                 this.storeCurrentTitle();
             } else {
-            // we were in a route
-                if(this.titles.has(document.title as title))
+                // we were in a route
+                if (this.titles.has(document.title as title))
                     // restore title to initial
                     this.restoreOriginalTitle();
 
@@ -257,7 +278,7 @@ export class HashRouter {
         document.dispatchEvent(routerDataEvent);
     }
 
-    
+
 
     // HASH CHANGE REQUEST
 
@@ -271,14 +292,14 @@ export class HashRouter {
         e: HashRouterRequestEvent
     ) => {
         const { newRoute, reset, terminate } = e;
-        if(terminate) {
+        if (terminate) {
             this.reset();
-            this.terminate();
+            this.#terminate();
         }
-        else if(reset) {
+        else if (reset) {
             this.reset();
         }
-        else if(newRoute) {
+        else if (newRoute) {
             this.pushRouteChange(newRoute);
         }
     }
@@ -292,7 +313,7 @@ export class HashRouter {
         const newHash = this.buildHashFrom(newRoute);
         const route = this.getRouteIfValid(newHash);
 
-        if(route === newRoute) {
+        if (route === newRoute) {
             const title = this.getTitle(newRoute);
             document.title = title;
             const newLoc = this.getURLWithNewHash(newHash);
@@ -304,68 +325,50 @@ export class HashRouter {
 
     /** Activate event listeners on router. */
     public init(): void {
-        if(!HashRouter.self) 
+        if (!HashRouter.#instance)
             window.addEventListener('DOMContentLoaded', () => this.handleHashChange(), { once: true });
-        
+
         window.addEventListener("hashchange", this.handleHashChange);
         document.addEventListener(hashRouterRequestEvent, this.handleRouteChangeRequest);
     }
 
     /** Remove event listeners from router. */
-    private terminate(): void {
+    #terminate(): void {
         window.removeEventListener("hashchange", this.handleHashChange);
         document.removeEventListener(hashRouterRequestEvent, this.handleRouteChangeRequest);
+    }
+    private static terminate() {
+        this.#self.#terminate();
+    }
+
+    /** Destroys singleton; will require new build. */
+    private static destroy() {
+        this.#instance = null;
     }
 
     /**
      * Verifies that 
      * - a route must match the class regular expression (must only contain characters compatible with a url fragment)
      * - a title must not be blank
-     * @see {@link routeCapture} for the specific regex a route must match against
+     * @see {@link #routeCapture} for the specific regex a route must match against
      * 
      * @returns test results as validated map
      * @throws {ValidationError} If any key or value of the map is not compatible with restrictions
      */
-    private static getValidatedRoutesMap(map: Map<string,string>): Map<route,title> {
-        const routeRegExp = this.routeCaptureRegExp;
-        for(const [route,title] of map) {
+    private static getValidatedRoutesMap(map: Map<string, string>): Map<route, title> {
+        const routeRegExp = this.#routeCaptureRegExp;
+        for (const [route, title] of map) {
             // route validation
-            const mRoute = route.match(this.routeCaptureRegExp)?.groups?.route;
-            if(!mRoute) 
+            const mRoute = route.match(this.#routeCaptureRegExp)?.groups?.route;
+            if (!mRoute)
                 throw new ValidationError(`Route ${route} contains illegal syntax for a hash`);
-            if(mRoute !== route)
+            if (mRoute !== route)
                 throw new ValidationError(`Route ${route} ends or starts with illegal characters for a hash`);
             // title validation
-            if(title.trim().length <= 0)
+            if (title.trim().length <= 0)
                 throw new ValidationError(`Title for route ${route} cannot be blank`);
         }
-        return map as Map<route,title>;
-    }
-}
-
-
-export class HashRouterEvent extends HashChangeEvent implements HashRouterEventInit {
-    public readonly reset?: boolean;
-    public readonly route?: route;
-    public readonly title?: title;
-    constructor(type: string, eventInitDict?: HashRouterEventInit) {
-        super(type, eventInitDict);
-        this.reset = eventInitDict?.reset;
-        this.route = eventInitDict?.route;
-        this.title = eventInitDict?.title;
-    }
-}
-
-export class HashRouterRequestEvent extends Event implements HashRouterRequestEventInit {
-    public readonly newRoute?: route;
-    public readonly reset?: boolean;
-    public readonly terminate?: boolean;
-    constructor(type: string, eventInitDict?: HashRouterRequestEventInit) {
-        super(type, eventInitDict);
-        const newRoute = eventInitDict?.newRoute;
-        if(newRoute) this.newRoute = HashRouter.instance.getValidatedRoute(newRoute);
-        this.reset    = eventInitDict?.reset;
-        this.terminate= eventInitDict?.terminate;
+        return map as Map<route, title>;
     }
 }
 

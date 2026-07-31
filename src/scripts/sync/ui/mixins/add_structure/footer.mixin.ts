@@ -1,8 +1,8 @@
-import { ValidationError } from "../../../../../errors/common-errors.js";
+import { ValidationError } from "../../../../../errors/common-errors.mjs";
 import { ExtendibleElement } from "../../components/extendible-element.js";
 
 // EXTENDED CONSTRUCTOR ================================================================
-type Constructor<T extends {}> = new (...args: any[]) => T;
+type Constructor<T extends object> = new (...args: any[]) => T;
 
 // MIXIN PUBLIC INTERFACE ==============================================================
 export interface Footer extends ExtendibleElement {

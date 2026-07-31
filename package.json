@@ -1,6 +1,6 @@
 {
   "name": "tuxborn-companion",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "author": "kahootics",
   "description": "",
   "main": "dist/main.js",
@@ -10,7 +10,7 @@
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",
     "test": "node scripts/test.mjs",
-    "start": "node dist/main.js",
+    "start": "node build/main.js",
     "write": "tsc",
     "mute": "tsx src/scripts/node/sharp/mutate.ts",
     "set": "tsx src/scripts/node/sharp/build-srcset.ts",

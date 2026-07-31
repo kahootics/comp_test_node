@@ -1,8 +1,9 @@
+import config from "../../../../config/app-config.mjs";
 import { Expandable } from "../mixins/add_behaviour/expandable.mixin.js";
 import { ExtendibleElement } from "./extendible-element.js";
 
 /** Backdrop specific css class name. */
-const OPEN_CLASS = 'gdsdh'
+const OPEN_CLASS = config.css.classes.BACKDROP_OPEN;
 /**
  * Backdrop component. Appended to the body automatically.
  * @remarks

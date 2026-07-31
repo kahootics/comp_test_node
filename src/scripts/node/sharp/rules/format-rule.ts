@@ -1,6 +1,6 @@
 import sharp from "sharp";
 import z from "zod";
-import { AssetRule, allRuleClasses } from "../rule.js";
+import { AssetRule } from "../rule.js";
 import { Asset } from "../asset.js";
 import type { extType } from "../../../types/general-types.js";
 
@@ -16,14 +16,14 @@ const ruleSchema = z.object({
 type ruleType = z.infer<typeof ruleSchema>;
 
 
-class FormatRule extends AssetRule<ruleType> {
+export class FormatRule extends AssetRule<ruleType> {
     
-    public static readonly ownName = 'FormatRule';
+    public static override readonly ownName = 'FormatRule';
 
     private readonly format: extType;
     private readonly options?: optionsType;
 
-    public static readonly schema = ruleSchema;
+    public static override readonly schema = ruleSchema;
 
     constructor(data: ruleType) {
         super(data);
@@ -36,4 +36,3 @@ class FormatRule extends AssetRule<ruleType> {
         return sharpAsset.toFormat(this.format, this.options);
     }
 }
-allRuleClasses.add(FormatRule);

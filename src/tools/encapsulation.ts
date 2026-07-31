@@ -3,7 +3,7 @@
  * Checks whether the `register` already has `instance` stored 
  * as a key (if it is a Map) or as a value (if it is a Set).
  * 
- * @typeParam T - Type of the object whose field should belong to.
+ * @template {T extends object} - Type of the object whose field should belong to.
  * @param instance - Object whose field should belong to (usually `this`).
  * @param register - 
  * Scoped (module or other) `WeakMap` that stores the private properties of a class
@@ -92,7 +92,6 @@ export function _initSetPrivateProp<
  * @typeParam T - Type of the object whose property belongs to.
  * @param instance - Object whose method belongs to (usually `this`).
  * @param register - Scoped (module or other) `WeakSet` that stores the allowed callers of the method.
- * @returns the value of the private property.
  * @throws {TypeError} If `instance` is in the `register`;
  * it means that the private method was already defined on the object.
  * @remarks
@@ -108,6 +107,28 @@ export function _allowPrivateMethod<
         _throwTypeError("Cannot initialize the same private method more than once");
     register.add(instance);
 }
+/**
+ * Inerts `istance` in a private register.
+ * 
+ * @typeParam T - Type of the object.
+ * @param instance - Object to register in order to enforce privacy (usually `this`).
+ * @param register - Scoped (module or other) `WeakSet` that stores the registered instances.
+ * @throws {TypeError} If `instance` is in the `register`;
+ * it means that the private method was already defined on the object.
+ * @remarks
+ * * Use {@link _assertRegistered} in any field where you want the register safety.
+ */
+export function _insertInRegister<
+    T extends object
+>(
+    instance: T,
+    register: WeakSet<T>,
+): void {
+    if (register.has(instance))
+        _throwTypeError("Cannot have the same element in the same private register twice");
+    register.add(instance);
+}
+
 
 // GETTER =============================================================
 /**
@@ -287,4 +308,17 @@ export class SetOnceWeakMap<K extends WeakKey = object, V = any> extends WeakMap
         if (super.has(key)) _throwTypeError("Cannot write to readonly field");
         return super.set(key, value);
     }
+}
+
+// MISC ==================================================
+/**
+ * Checks whether `baseClassConstructor` is in the prototype chain of `classConstructor`.
+ */
+export function extendsClass(classConstructor: Function, baseClassConstructor: Function): boolean {
+    let proto = Object.getPrototypeOf(classConstructor);
+    while (proto) {
+        if (proto === baseClassConstructor) return true;
+        proto = Object.getPrototypeOf(proto);
+    }
+    return false;
 }

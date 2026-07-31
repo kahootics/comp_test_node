@@ -1,11 +1,11 @@
-import { ValidationError } from "../../../../../errors/common-errors.js";
+import { ValidationError } from "../../../../../errors/common-errors.mjs";
 import type { Closeable } from "../../../../types/general-types.js";
 import { ExtendibleElement } from "../../components/extendible-element.js";
 
 // !! Globally change CloserButton, CloserButtonMixin and ExtendibleElementPlus before implementing !!
 
 // EXTENDED CONSTRUCTOR ================================================================
-type Constructor<T extends {}> = new (...args: any[]) => T;
+type Constructor<T extends object> = new (...args: any[]) => T;
 type ExtendibleElementPlus = ExtendibleElement & {
     connectedCallback(): void,
 } & Closeable;

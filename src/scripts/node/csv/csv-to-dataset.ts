@@ -3,7 +3,7 @@
 import { CsvError, parse,  } from 'csv-parse/sync';
 import normalizeCellValue from './normalize-cell-value.js';
 import normalizeCellArray from './normalize-cell-array.js';
-import { ValidationError } from '../../../errors/common-errors.js';
+import { ValidationError } from '../../../errors/common-errors.mjs';
 
 export interface OptionalStringSymbols {
     newLineReplacer?: string, 

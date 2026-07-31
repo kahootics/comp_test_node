@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { toNormalized } from "../shared/utilities/string-parsers.js";
-import { buildSrcset } from "../node/sharp/build-srcset.js";
+import { toNormalized } from "../../tools/string-parsers.js";
 
 const hasId = z.object({
     id: z.string()

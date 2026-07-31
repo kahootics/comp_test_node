@@ -2,11 +2,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { glob } from 'glob';
-import { toPublicUrl, OUT_NAME, OUT, getDirname } from '../../../tools/companion-util.js';
+import { toPublicUrl, getDirname } from '../../../tools/companion-util.js';
 import { Log } from '../../../tools/console.js';
 import { createHashFromBuffer } from '../writers/hash.js';
 import * as esbuild from 'esbuild';
 import { isDev } from '../../../main.js';
+import config from '../../../config/app-config.mjs'
+
 
 const TARGET_BASELINE = 'ES2020';
 
@@ -17,16 +19,14 @@ interface Scripts {
     [key: string]: string
 }
 
-const dest = OUT + 'scripts.json'; // temp
-
 /**
  * For more info on inner function see {@link bundleScripts}
  * @returns an object that maps all the bundles of main.js files with hashing.
  */
 export default async function buildScripts(): Promise<Scripts> {
     const out = await bundleScripts(
-        OUT_NAME + '/scripts/{sync,shared}/**/main.js', 
-        OUT_NAME + '/scripts/output/', 
+        config.paths.tsDir + '/scripts/{sync,shared}/**/main.js',
+        config.paths.outDir + '/scripts/',
         true
     );
     return out;
@@ -59,27 +59,27 @@ export async function bundleScripts(
             write: false, // Returns buffer array
             minify: !isDev,
             sourcemap: isDev,
-            minifyWhitespace: true,
+            /* minifyWhitespace: true,
             minifyIdentifiers: true,
-            minifySyntax: true,
-            
+            minifySyntax: true, */
+
         });
         const arrBuf = result.outputFiles[0]?.contents
-        if(!arrBuf) throw new Error(
+        if (!arrBuf) throw new Error(
             `File at ${entry} cannot be bundled correctly.`
         );
 
         const buffer = Buffer.from(arrBuf);
-        const hash   = createHashFromBuffer(buffer);
-        const name   = useDirnameAsKey 
+        const hash = createHashFromBuffer(buffer);
+        const name = useDirnameAsKey
             ? getDirname(entry)
             : path.basename(entry, '.js');
         const filename = `${name}.${hash}.js`;
-        const keyName  = `${name}.js`;
-        const outPath  = path.resolve(path.join(outDir, filename));
+        const keyName = `${name}.js`;
+        const outPath = path.resolve(path.join(outDir, filename));
 
         // check for duplicates
-        if(output[keyName]) 
+        if (output[keyName])
             throw new Error(
                 `${keyName} has duplicate sources: `
                 + `\n${toPublicUrl(outPath)}`

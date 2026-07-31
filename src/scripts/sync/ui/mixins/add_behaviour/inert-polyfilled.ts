@@ -1,7 +1,7 @@
 import { getAllFocusables } from "../../../shared/getFocusableExtremities.js";
 
 // EXTENDED CONSTRUCTOR ================================================================
-type Constructor<T extends {}> = new (...args: any[]) => T;
+type Constructor<T extends object> = new (...args: any[]) => T;
 
 // HELPERS =============================================================================
 interface InertCapable { inert: boolean }

@@ -1,4 +1,4 @@
-import { ValidationError } from "../../../../errors/common-errors.js";
+import { ValidationError } from "../../../../errors/common-errors.mjs";
 
 /** Holds all branded instances of `ExtendibleElement`. */
 const branded = new WeakSet();

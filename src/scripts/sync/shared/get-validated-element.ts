@@ -1,4 +1,4 @@
-import { IllegalArgumentError, NullPointerError, ValidationError } from "../../../errors/common-errors.js";
+import { IllegalArgumentError, NullPointerError, ValidationError } from "../../../errors/common-errors.mjs";
 
 
 /**
@@ -63,7 +63,7 @@ export function getElementByIdAs<
 ): E {
     const element = document.getElementById(id);
     if(element instanceof typeConstructor) return element;
-    else if(element === null) throw new NullPointerError("The element");
+    else if(element === null) throw new NullPointerError("the element");
     else throw new ValidationError(`No ${typeConstructor.name} element exists with id "${id}"`);
 }
 

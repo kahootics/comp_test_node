@@ -1,4 +1,4 @@
-import { IllegalArgumentError, ValidationError } from "../../../../../errors/common-errors.js";
+import { IllegalArgumentError, ValidationError } from "../../../../../errors/common-errors.mjs";
 import type { Closeable, Showable } from "../../../../types/general-types.js";
 import type { ExtendibleElement } from "../../components/extendible-element.js";
 import { requestTransitionFrame } from "../../../shared/utilities.js";
@@ -7,7 +7,7 @@ import { _getPrivateProp, _initPrivateProp, _setPrivateProp, SetOnceWeakMap } fr
 
 
 // EXTENDED CONSTRUCTOR ================================================================
-type Constructor<T extends {}> = new (...args: any[]) => T;
+type Constructor<T extends object> = new (...args: any[]) => T;
 
 // OBFUSCATED PROPERTIES ===============================================================
 /** Executes during opening transition. */

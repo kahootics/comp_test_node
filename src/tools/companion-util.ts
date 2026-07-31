@@ -1,10 +1,9 @@
 
 import path from 'node:path';
 import fs from 'node:fs';
-import { OUT } from '../config/global-const.mjs';
+import config from '../config/app-config.mjs';
+import { _stabilizePath } from '../scripts/node/sharp/rule.js';
 
-export { OUT_NAME } from '../config/global-const.mjs';
-export { OUT } from '../config/global-const.mjs';
 
 const UNITS = ['B', 'KB', 'MB', 'GB', 'TB'];
 const UNITS_LIMIT = UNITS.length - 1;
@@ -29,7 +28,8 @@ export function toUnitBytes(bytes: number, decimals: number = 2): string {
  */
 export function toPublicUrl(filePath: string): string {
     // take anything after dist/
-    return path.sep + filePath.split(OUT)[1];
+    
+    return _stabilizePath(path.resolve(filePath).split(config.paths.outDir)[1]!);
    // return `${config.site + config.base}/${relative}`;
 }
 
@@ -46,4 +46,3 @@ export function getFileBirthTime(filePath: string) {
     birthRegister.set(filePath,res);
     return res;
 }
-

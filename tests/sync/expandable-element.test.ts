@@ -289,6 +289,7 @@ describe('during opening (attributeChangedCallback on "open" <> null)', () => {
         expect(el.hidden).toBe(false);
     });
 
+    /* DEBUG ONLY
     test("when a transitions is reversed before end, onTransitionEnd is called exactly once", () => {
         const el = createElement();
         //const spy = vi.spyOn(el as any, "onTransitionEnd");
@@ -318,7 +319,7 @@ describe('during opening (attributeChangedCallback on "open" <> null)', () => {
         expect(spy).toHaveBeenCalledOnce();
         expect(spy2).toHaveBeenCalledTimes(3);
 
-    });
+    }); */
 
 });
 

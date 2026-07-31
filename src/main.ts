@@ -10,7 +10,6 @@
 
 import writeAsJsonAt from './scripts/node/writers/write-as-json-at.js';
 import buildScripts from './scripts/node/main/build-scripts.js';
-import json from './scripts/node/main/build-assets.js';
 import { Log } from './tools/console.js';
 import { buildDatasets } from './scripts/node/main/build-datasets.js';
 
@@ -20,9 +19,10 @@ export const isDev = process.env.BUILD !== 'true';
 Log.hdr('building script bundles');
 const scripts = await buildScripts();
 
-const js = await json();
+/* const js = await json();
 
-writeAsJsonAt(js,'dist/assets/sprites/jennyk.json');
+writeAsJsonAt(js,'dist/assets/sprites/jennyk.json'); */
 
 Log.hdr('building data documents');
 await buildDatasets();
+

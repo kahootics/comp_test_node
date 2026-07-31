@@ -1,7 +1,7 @@
 import path from "node:path";
 import z from "zod";
 import { getFileBirthTime } from "../../../../tools/companion-util.js";
-import { BatchRule, ruleCategory, allRuleClasses } from "../rule.js";
+import { BatchRule } from "../rule.js";
 import { Asset } from "../asset.js";
 import type { nameString } from "../../../types/general-types.js";
 
@@ -58,13 +58,13 @@ const ruleSchema = z.object({
 type ruleType = z.infer<typeof ruleSchema>;
 
 
-class RenameRule extends BatchRule<ruleType> {
+export class RenameRule extends BatchRule<ruleType> {
 
-    public static readonly ownName = 'RenameRule';
+    public static override readonly ownName = 'RenameRule';
 
     public static override readonly priority = 9;
-    
-    public static readonly schema = ruleSchema;
+
+    public static override readonly schema = ruleSchema;
 
     private readonly include: includeType;
     private readonly sort: sortType;
@@ -117,4 +117,3 @@ class RenameRule extends BatchRule<ruleType> {
         });
     }
 }
-allRuleClasses.add(RenameRule);

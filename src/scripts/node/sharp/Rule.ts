@@ -1,59 +1,100 @@
 import type sharp from "sharp";
 import z from "zod";
-import type { hashString } from "../../types/general-types.js";
+import type { directoryString, hashString } from "../../types/general-types.js";
 import type { Asset } from "./asset.js";
-import { hashFromRule } from "./ruleset.js";
+import { createHashFromBuffer } from "../writers/hash.js";
+import type { ExportOutput } from "../../shared/assets-export-classes.js";
+import path from "node:path";
+import { stableStringify } from "../../../tools/string-parsers.js";
 
-type Constructor = new (...args: any[]) => Rule<{}>;
-type zobject = z.ZodObject<{
+
+declare const StableSymbol: unique symbol;
+export type $stable = { [StableSymbol]: never };
+/**
+ * Normalizes a path and sets the separator to be `/`
+ * regardless of system.
+ */
+export function _stabilizePath<S extends string>(s: S): S & $stable {
+    return path.normalize(s).split(path.sep).join('/') as S & $stable;
+}
+/**
+ * @param rule - Rule to hash.
+ * @returns a stable hash from a rule's raw data; does not depend on the rule's keys order.
+ */
+function hashFromRule<R extends object>(rule: R): hashString {
+    const buffer = stableStringify(rule);
+    return createHashFromBuffer(buffer) as hashString;
+}
+
+type from1to10 = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+
+export type zobject = z.ZodObject<{
     [x: string]: any;
 }, z.z.core.$strip>;
 
-export enum ruleCategory { LOCAL = 'local', EXPORT = 'export' }
-type from1to10 = 1|2|3|4|5|6|7|8|9|10;
+type Constructor = new (...args: any[]) => Rule<object>;
+
+export const ruleConstructorStaticShape = z.custom<RuleConstructor>(cstr =>
+    typeof cstr === 'function' &&
+    typeof (cstr as any).ownName === 'string' &&
+    (cstr as any).schema instanceof z.ZodObject &&
+    typeof (cstr as any).priority === 'number' &&
+    (cstr as any).priority > 0 && (cstr as any).priority <= 10,
+    { error: 'errrr' }
+);
 export interface RuleConstructor extends Constructor {
     readonly ownName: string;
     readonly schema: zobject;
     readonly priority: from1to10;
 }
-export abstract class Rule<T extends {} = {}> {
+export abstract class Rule<T extends object = object> {
+    /** Class name identifier; this is the key for the rule data object in a rule file. */
+    public static readonly ownName: string;
+    /** Zod schema of the rule data (the ones passed to the constructor). */
+    public static readonly schema: zobject;
+    /** Determines the order for rule enforcing. */
     public static readonly priority: from1to10 = 3;
+
+    /** A unique per-instance hash generated from the rule's data. */
     public readonly hash: hashString;
-    abstract enforce(...args: any[]): any;
     constructor(data: T) {
-        this.hash = hashFromRule(data);
+        this.hash = hashFromRule<T>(data);
     }
+    abstract enforce(...args: any[]): any;
 }
 /**
  * Plain asset rules edit the sharp instance of a single asset
- * and return the edited instance correcting the asset 'out' properties
+ * and return the edited instance correcting the asset 'out' properties.
  */
-export abstract class AssetRule<T extends {}> extends Rule<T> {
+export abstract class AssetRule<T extends object> extends Rule<T> {
     abstract override enforce(asset: Asset, sharpAsset: sharp.Sharp): sharp.Sharp | Promise<sharp.Sharp>;
 }
 /**
  * Batch rules edit a group of assets in place;
  * 
  * the editing is only performed on a specific subset of assets and 
- * in a specific order correcting the asset 'out' properties
+ * in a specific order correcting the asset 'out' properties.
  */
-export abstract class BatchRule<T extends {}> extends Rule<T> {
+export abstract class BatchRule<T extends object> extends Rule<T> {
     abstract override enforce(assetsList: Asset[]): void;
 }
+
+
 /**
  * Export rules don't edit the original file but create a clone
- * or a modified copy to another directory and return the file data
+ * or a modified copy to another directory and return the file metadata.
  * 
  * These rules cannot be enforced in group and they do not contribute
- * to a ruleset's hash signature
+ * to a ruleset's hash signature.
  * 
  * The exported files from these rules are expected to be used in a temporary
  * folder or cleared after use.
  * 
- * The Asset instance will be left untouched
+ * The Asset instance will be left untouched.
+ * 
+ * @see {@link ExportOutput} for details on the base output of an export rule's enforce.
  */
-export abstract class ExportRule<T extends {},E extends {}> extends Rule<T> {
-    abstract override enforce(asset: Asset): E | Promise<E>;
+export abstract class ExportRule<T extends object> extends Rule<T> {
+    abstract override enforce(asset: Asset, dest: directoryString): ExportOutput | Promise<ExportOutput>;
 }
 
-export const allRuleClasses: Set<RuleConstructor> = new Set();

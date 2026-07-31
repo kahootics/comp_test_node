@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 
 import { describe, expect, beforeEach, afterEach, vi, test } from "vitest";
-import { HashRouter, HashRouterEvent, HashRouterRequestEvent } from '../../src/scripts/sync/ui/routing/hash-router.js';
+import { HashRouter } from '../../src/scripts/sync/ui/routing/hash-router.js';
 import { hashRouterRequestEvent, route, hashRouterEvent, title } from "../../src/scripts/types/router-types.js";
-import { resetSingleton } from "../utils.js";
 import { dummy } from '../setup.js';
+import { HashRouterRequestEvent } from "../../src/scripts/sync/ui/routing/hash-router-request-event.js";
+import { HashRouterEvent } from "../../src/scripts/sync/ui/routing/hash-router-event.js";
 
 // HELPERS ==============================================================================
 
@@ -23,7 +24,11 @@ function buildRouter(options?: Parameters<typeof HashRouter.build>[2]) {
     return HashRouter.build("Original Title", routes, options);
 }
 
-/** Fire a native hashchange event; also updates location.hash */
+function resetSingleton() {
+    (HashRouter as any).destroy();
+}
+
+/** Firchange event; also updates location.hash */
 function fireHashChange(oldHash: string, newHash: string) {
     location.hash = newHash;
     const event = new HashChangeEvent("hashchange", {
@@ -47,16 +52,16 @@ function requestRoute(newRoute?: string, reset?: boolean, terminate?: boolean) {
 // SETUP & TEARDOWN =====================================================================
 
 beforeEach(() => {
-    resetSingleton(HashRouter as any, "self");
+    resetSingleton();
     location.hash = "";
     document.title = "Original Title";
     vi.spyOn(history, "pushState")//.mockImplementation(() => {});
 });
 
 afterEach(() => {
-    try { (HashRouter as any).instance.terminate(); } catch { /* not initialized */ }
+    try { (HashRouter as any).terminate(); } catch { /* not initialized */ }
     vi.restoreAllMocks();
-    resetSingleton(HashRouter as any, "self");
+    resetSingleton();
 });
 
 // SINGLETON LIFECYCLE ==================================================================
@@ -105,48 +110,48 @@ describe("HashRouter: singleton & lifecycle", () => {
 describe("getValidatedRoutesMap(routesMap) & build()", () => {
 
     test("throws ValidationError when a key contains an invalid character", () => {
-        resetSingleton(HashRouter as any, "self");
+        resetSingleton();
         const routesMap = new Map([["cos", 'Cos'], ["&atmora", "at"]]);
         expect(() => HashRouter.build("T", routesMap)).toThrowWithName("ValidationError");
     });
 
     test("throws ValidationError when a key is blank", () => {
-        resetSingleton(HashRouter as any, "self");
+        resetSingleton();
         const routesMap = new Map([["cos", 'Cos'], ["   ", "at"]]);
         expect(() => HashRouter.build("T", routesMap)).toThrowWithName("ValidationError");
     });
 
     test("throws ValidationError when a title is blank", () => {
-        resetSingleton(HashRouter as any, "self");
+        resetSingleton();
         const routesMap = new Map([["cos", 'Cos'], ["mos", ""]]);
         
         expect(() => HashRouter.build("T", routesMap)).toThrowWithName("ValidationError");
 
-        resetSingleton(HashRouter as any, "self");
+        resetSingleton();
         const routesMap1 = new Map([["cos", 'Cos'], ["mos", "          "]]);
         expect(() => HashRouter.build("T", routesMap1)).toThrowWithName("ValidationError");
     });
 
     test("doesn't throw when a key contains allowed special characters", () => {
-        resetSingleton(HashRouter as any, "self");
+        resetSingleton();
         const routesMap = new Map([["cos", 'Cos'], ["~_-.~!()", "specials"]]);
         HashRouter.build("T", routesMap);
         expect(HashRouter.instance.getTitle("~_-.~!()" as route)).toStrictEqual("specials");
     });
 
     test("running build() throws ValidationError when the route map has invalid keys", () => {
-        resetSingleton(HashRouter as any, "self");
+        resetSingleton();
         expect(() => HashRouter.build("T", new Map([["@home", "Home"]]))).toThrowWithName("ValidationError");
 
-        resetSingleton(HashRouter as any, "self");
+        resetSingleton();
         expect(() => HashRouter.build("T", new Map([["[]{}", "Symbols"]]))).toThrowWithName("ValidationError");
     });
 
     test("running build() throws ValidationError when the route map has empty titles", () => {
-        resetSingleton(HashRouter as any, "self");
+        resetSingleton();
         expect(() => HashRouter.build("T", new Map([["home", ""]]))).toThrowWithName("ValidationError");
 
-        resetSingleton(HashRouter as any, "self");
+        resetSingleton();
         expect(() => HashRouter.build("T", new Map([["home", "   "]]))).toThrowWithName("ValidationError");
     });
 
@@ -191,20 +196,20 @@ describe("isAHashRoute()", () => {
     });
 
     test("respects the slashAfterHash option", () => {
-        resetSingleton(HashRouter as any, "self");
+        resetSingleton();
         const router = HashRouter.build("T", new Map([["home", "Home"]]), { slashAfterHash: true });
         expect(router.isAHashRoute("#/home/" as any)).toBe(true);
         expect(router.isAHashRoute("#home/" as any)).toBe(false);
     });
 
     test("respects all valid characters", () => {
-        resetSingleton(HashRouter as any, "self");
+        resetSingleton();
         const router = HashRouter.build("T", new Map([["~_-.~!()", "Symbols"]]), { slashAfterHash: true });
         expect(router.isAHashRoute("#/~_-.~!()/" as any)).toBe(true);
     });
 
     test("respects the slashAfterHash option AND trailing slash", () => {
-        resetSingleton(HashRouter as any, "self");
+        resetSingleton();
         const router = HashRouter.build("T", new Map([["home", "Home"]]), { slashAfterHash: true });
         expect(router.isAHashRoute("#/home/" as any)).toBe(true);
         expect(router.isAHashRoute("#/home/e" as any)).toBe(false);
