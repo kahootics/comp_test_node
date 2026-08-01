@@ -1,34 +1,39 @@
 {
   "compilerOptions": {
-    "target": "ESNext", 
-
-    "types": ["node"],
+    "target": "ESNext",
+    "types": [
+      "node"
+    ],
     "allowJs": true,
     "checkJs": true,
-
     "removeComments": true,
-
-    "module": "NodeNext", 
-    "rootDir": "src", 
-    "outDir": "build", 
-
-    "moduleResolution": "NodeNext", 
-    "moduleDetection": "force", 
-
-    "esModuleInterop": true, 
-    "forceConsistentCasingInFileNames": true, 
-
-    "strict": true, 
-    "noUncheckedIndexedAccess": true, 
-    "noImplicitOverride": true, 
-    "noImplicitAny": true, 
-    "skipLibCheck": true, 
-    "resolveJsonModule": true, 
+    "module": "NodeNext",
+    "rootDir": "src",
+    "outDir": "build",
+    "moduleResolution": "NodeNext",
+    "moduleDetection": "force",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noImplicitAny": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
-    "verbatimModuleSyntax": true, 
-
-    "lib": ["ES2022", "DOM"] 
+    "verbatimModuleSyntax": true,
+    "lib": [
+      "ES2022",
+      "DOM"
+    ]
   },
-  "include": ["src"], 
-  "exclude": ["node_modules", "dist", "build", "**/*.template.ts"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "**/*.template.ts"
+  ]
 }

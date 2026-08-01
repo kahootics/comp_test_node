@@ -1,5 +1,5 @@
 import path from "path";
-import { Asset } from "./tmp-asset.js";
+import { Asset } from "./asset.js";
 import { glob } from "glob";
 import { RuleSet } from "./rule-set.js";
 import type { extType, directoryString, nameString } from "../../types/general-types.js";
@@ -7,7 +7,7 @@ import { IllegalArgumentError, NotFoundError, ValidationError } from "../../../e
 import { duplicatesOfStringList, formatList } from "../../../tools/string-parsers.js";
 import fs from "node:fs";
 import { AssetsHashRecords } from "./assets-hash-records.js";
-import { _stabilizePath, type $stable } from "./tmp-rule.js";
+import { _stabilizePath, type $stable } from "./rule.js";
 import type { ExportOutput } from "../../shared/assets-export-classes.js";
 import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
 

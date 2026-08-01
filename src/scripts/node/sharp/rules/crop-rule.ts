@@ -1,8 +1,8 @@
 import sharp from "sharp";
 import z from "zod";
 import { IllegalArgumentError } from "../../../../errors/common-errors.mjs";
-import { AssetRule } from "../tmp-rule.js";
-import { Asset } from "../tmp-asset.js";
+import { AssetRule } from "../rule.js";
+import { Asset } from "../asset.js";
 
 enum Use {
     PERCENTAGE = "percentage",

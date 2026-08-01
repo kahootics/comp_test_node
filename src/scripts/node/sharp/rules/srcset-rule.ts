@@ -1,8 +1,8 @@
 import sharp from 'sharp';
 import { Log } from '../../../../tools/console.js';
-import { ExportRule } from '../tmp-rule.js';
+import { ExportRule } from '../rule.js';
 import z from 'zod';
-import { Asset } from '../tmp-asset.js';
+import { Asset } from '../asset.js';
 import { ValidationError } from '../../../../errors/common-errors.mjs';
 import { CopyRule } from './copy-rule.js';
 import { SrcsetOutput } from "../../../shared/assets-export-classes.js";

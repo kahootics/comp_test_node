@@ -2,7 +2,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import config from '../config/app-config.mjs';
-import { _stabilizePath } from '../scripts/node/sharp/tmp-rule.js';
+import { _stabilizePath } from '../scripts/node/sharp/rule.js';
 
 
 const UNITS = ['B', 'KB', 'MB', 'GB', 'TB'];

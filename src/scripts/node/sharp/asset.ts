@@ -2,7 +2,7 @@ import path from "path";
 import type { nameString, directoryString, extType } from "../../types/general-types.js";
 import { IllegalArgumentError } from "../../../errors/common-errors.mjs";
 import { parseQueryString } from "../../../tools/string-parsers.js";
-import { _stabilizePath, type $stable } from "./tmp-rule.js";
+import { _stabilizePath, type $stable } from "./rule.js";
 
 /**
  * @param str - string to parse.

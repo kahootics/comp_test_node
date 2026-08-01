@@ -1,7 +1,7 @@
 import type sharp from "sharp";
 import z from "zod";
 import type { directoryString, hashString } from "../../types/general-types.js";
-import type { Asset } from "./tmp-asset.js";
+import type { Asset } from "./asset.js";
 import { createHashFromBuffer } from "../writers/hash.js";
 import type { ExportOutput } from "../../shared/assets-export-classes.js";
 import path from "node:path";

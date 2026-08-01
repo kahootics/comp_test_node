@@ -1,4 +1,4 @@
-import { $stable } from "../src/scripts/node/sharp/tmp-rule";
+import { $stable } from "../src/scripts/node/sharp/rule";
 import { directoryString, extType, hashString, nameString } from "../src/scripts/types/general-types";
 
 /**

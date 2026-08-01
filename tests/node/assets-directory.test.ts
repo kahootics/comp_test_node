@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import fs from 'node:fs';
 import { glob } from 'glob';
-import { Asset } from '../../src/scripts/node/sharp/tmp-asset.js';
+import { Asset } from '../../src/scripts/node/sharp/asset.js';
 import { AssetsHashRecords } from '../../src/scripts/node/sharp/assets-hash-records.js';
 import { AssetsDirectory } from '../../src/scripts/node/sharp/assets-directory.js';
 import { RuleSet } from '../../src/scripts/node/sharp/rule-set.js';

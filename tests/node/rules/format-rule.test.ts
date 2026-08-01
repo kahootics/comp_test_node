@@ -1,6 +1,6 @@
 import { describe, test, expect, vi } from 'vitest';
 import { FormatRule } from '../../../src/scripts/node/sharp/rules/format-rule.js';
-import { Asset } from '../../../src/scripts/node/sharp/tmp-asset.js';
+import { Asset } from '../../../src/scripts/node/sharp/asset.js';
 
 describe('FormatRule', () => {
     test('returns the sharp instance unchanged when the asset already has the target format', () => {
