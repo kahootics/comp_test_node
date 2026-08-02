@@ -19,7 +19,7 @@ export const expandableOnTransitionEnd: unique symbol = Symbol('expandableOnTran
 
 // MIXIN PUBLIC INTERFACE ==============================================================
 /** Methods `show` and `close` */
-interface ExpandableToggles extends Closeable, Showable {
+export interface ExpandableToggles extends Closeable, Showable {
     /** 
      * - Element exits `hidden` state
      * - Adds `OPEN` constant class

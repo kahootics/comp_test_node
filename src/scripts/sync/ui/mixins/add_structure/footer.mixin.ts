@@ -1,4 +1,5 @@
 import { ValidationError } from "../../../../../errors/common-errors.mjs";
+import { _getPrivateProp, _initPrivateProp, SetOnceWeakMap } from "../../../../../tools/encapsulation.js";
 import { ExtendibleElement } from "../../components/extendible-element.js";
 
 // EXTENDED CONSTRUCTOR ================================================================
@@ -9,28 +10,30 @@ export interface Footer extends ExtendibleElement {
     appendToFooter<T extends Node>(node: T): T;
 }
 
+const _FOOTER = new SetOnceWeakMap<ExtendibleElement,HTMLElement>();
+
 // MIXIN FUNCTION ======================================================================
 export function Footer<
     TBase extends Constructor<ExtendibleElement>
 >(Base: TBase, ...FooterClasses: string[]) {
     return class FooterClass extends Base implements Footer {
 
-        private readonly FOOTER: HTMLElement;
-
         /**
          * Inserts nodes after the last child of FOOTER, 
          * while replacing strings in nodes with equivalent Text nodes. 
          */
         public appendToFooter<T extends Node>(node: T): T {
-            return this.FOOTER.appendChild(node);
+            return _getPrivateProp(this,_FOOTER).appendChild(node);
         }
 
         constructor(...args: any[]) {
             super(...args);
             _brand(this);
-            this.FOOTER = document.createElement('footer');
-            this.appendChild(this.FOOTER);
-            this.FOOTER.classList.add(...FooterClasses);
+
+            const FOOTER = document.createElement('footer');
+            this.appendChild(FOOTER);
+            FOOTER.classList.add(...FooterClasses);
+            _initPrivateProp(this,_FOOTER,FOOTER);
         }
     }
 }

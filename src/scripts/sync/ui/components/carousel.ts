@@ -1,4 +1,4 @@
-import { IllegalArgumentError } from "../../../../errors/common-errors.mjs";
+import { IllegalArgumentError, IllegalStateError, NotFoundError } from "../../../../errors/common-errors.mjs";
 import { Lock } from "../../shared/lock.js";
 import { requestTransitionFrame } from "../../shared/utilities.js";
 import { isPointerCoarse } from "../handle.js";
@@ -50,25 +50,27 @@ const Position = {
     CENTER: '0%',
     RIGHT: '100%'
 } as const;
-/* function _positionAtLeft(target: HTMLElement): void {
-    target.style.setProperty(POSITION_CSS_VAR, Position.LEFT);
-} */
+
 function _positionAtCenter(target: HTMLElement): void {
     target.style.setProperty(POSITION_CSS_VAR, Position.CENTER);
 }
-/* function _positionAtRight(target: HTMLElement): void {
-    target.style.setProperty(POSITION_CSS_VAR, Position.RIGHT);
-} */
-function _positionAtLeftOrRight(target: HTMLElement, posLeft: boolean): void {
-    target.style.setProperty(POSITION_CSS_VAR, posLeft ? Position.LEFT : Position.RIGHT);
+
+function _positionAtSides(target: HTMLElement, position: TransitionDirection): void {
+    target.style.setProperty(POSITION_CSS_VAR, position ? Position.LEFT : Position.RIGHT);
 }
 
-const MovementDirection = {
+const PointerMoveDirection = {
     HORIZONTAL: 10, VERTICAL: 20
 } as const;
 
+const TransitionDirection = {
+    LEFT: true,
+    RIGHT: false
+} as const;
+type TransitionDirection = typeof TransitionDirection[keyof (typeof TransitionDirection)];
+
 class Coordinates {
-    public direction: typeof MovementDirection[keyof (typeof MovementDirection)] | null = null;
+    public direction: typeof PointerMoveDirection[keyof (typeof PointerMoveDirection)] | null = null;
     public startY: number | null = null;
     public startX: number | null = null;
     /**
@@ -79,126 +81,234 @@ class Coordinates {
     }
 }
 
-const _viewObsOpt: MutationObserverInit = {
+const _childListObsOpt: MutationObserverInit = {
     childList: true,
-    subtree: false, // redundant
+} as const;
+const _eachChildObsOpt: MutationObserverInit = {
     attributes: true,
     attributeFilter: ["hidden"]
 } as const;
 const placeholder = new HTMLElement();
-
+/**
+ * 
+ */
 export class Carousel extends HTMLElement {
 
     // STATE MANAGERS =========================================
-    readonly #viewObserver = new MutationObserver(() => this.#buildView());
+    /** Observes changes in disposition of direct childern of the carousel. */
+    readonly #childObserver = new MutationObserver(() => this.#buildView());
+    /** The total amount of children in the carousel (includes 'hidden' elements) */
+    //#childrenAmount: number = 0;
+    /** Observes changes to the `hidden` attribute on the carousel's subtree. */
+    readonly #hiddnObserver = new MutationObserver(() => this.#buildView());
+    /** Controls the touch listeners. */
     readonly #controller = new AbortController();
+    /** Locks transitions, so that only one can occur at a time. */
     readonly #lock = new Lock();
+
     // VIEW ================================================
+    /** Index reference of all the elements in the view. */
     readonly #indexesMap = new Map<HTMLElement, number>();
+    /** The entire list of the elementss displayed by the carousel. */
     #view: /* E */HTMLElement[] = [];
+    /** Size of the view. */
     #viewSize: number = 0;
+    /** Size of the carousel's view. */
     get size() { return this.#viewSize; }
 
+    // STATE ==================================================
+    /** Currently displayed element. */
     #curr?:/* E */HTMLElement;
-    #prev:/* E */HTMLElement = placeholder;
-    #nextE:/* E */HTMLElement = placeholder;
-
+    /** Currently displayed element. */
     get current() {
-        if (!this.#curr) throw new Error()
+        if (!this.#curr)
+            throw new NotFoundError("carousel current element");
         return this.#curr;
     }
-    get #positionedPrev() {
-        const prev = this.#prev;
-        _positionAtLeftOrRight(prev, true);
-        return prev;
-    }
-    get previous() { return this.#prev; }
-    get #positionedNext() {
-        const next = this.#nextE;
-        _positionAtLeftOrRight(next, false);
-        return next;
-    }
-    get next() { return this.#nextE; }
-    set #current(target: HTMLElement) {
-        this.#assertIsChild(target);
-        this.#curr = target;
-        this.#setPrev();
-        this.#setNext();
-        _positionAtCenter(target);
-    }
-    #setPrev() {
-        const target = this.#findPrev();
-        _positionAtLeftOrRight(this.#prev = target, true);
-    }
-    #setNext() {
-        const target = this.#findNext();
-        _positionAtLeftOrRight(this.#nextE = target, false);
-    }
-
-
-    #assertIsChild(target: HTMLElement): void {
-        if (!this.isChild(target)) throw new Error();
-    }
-    #assertGetCurrent(): HTMLElement {
-        // check if current stored still exists, 
-        // is connected and still attached to the carousel
-        if (this.#curr?.isConnected && this.isChild(this.#curr))
-            return this.#curr;
-
-        // if not, make the first element of view as current
-        const maybe = this.#view[0];
-        if (!maybe)
-            throw new Error("The carousel has no available elements");
-        return maybe;
-    }
-
+    /** Currently displayed element's position in the view (-1 otherwise). */
     get currentIndex(): number {
         return this.indexOf(this.current);
     }
 
+    /** Element of the view preceding current one. */
+    #prev:/* E */HTMLElement = placeholder;
+    /** Element of the view preceding current one. */
+    get previous() { return this.#prev; }
+
+    /** Element of the view succeding current one. */
+    #next:/* E */HTMLElement = placeholder;
+    /** Element of the view succeding current one. */
+    get next() { return this.#next; }
+
+    // STATE MANAGERS ==========================================
+
+    /** Renders all the elements within the view `inert`. */
+    #inertAll() {
+        for (const child of this.#view) {
+            child.inert || (child.inert = true); // or just child.inert = true
+        }
+    }
+
+    /**
+     * Ensures the current element is present and correctly set up
+     * along with its side elements.
+     */
+    #ensureCurrentState() {
+        // current has been estabilished:
+        const current = this.#curr = this.#assertGetCurrent();
+        // makes sure all elements are inactive
+        this.#inertAll();
+        // update side elements.
+        this.#ensureSides();
+        // Centering of current is done last; 
+        // this ensures that, if the view contains only 2 elements, 
+        // then the current one is certainly set at the center.
+        _positionAtCenter(current);
+        current.inert = false;
+    }
+
+    /**
+     * @returns the current element of the view;
+     * if it is no longer in the view, fallbacks 
+     * to the first element of the view.
+     * @throws {NotFoundError} If the view contains no suitable element.
+     */
+    #assertGetCurrent(): HTMLElement {
+        // check if current stored still exists, 
+        // is connected and still attached to the carousel
+        const curr = this.#curr;
+        if (curr?.isConnected && this.isChild(curr))
+            return curr;
+
+        // if not, make the first element of view as current
+        const maybe = this.#view[0];
+        if (!maybe)
+            throw new NotFoundError("any available carousel element");
+        return maybe;
+    }
+
+    /**
+     * Finds and stores previous and next element of the view.
+     */
+    #ensureSides() {
+        _positionAtSides(this.#prev = this.#findPrev(), TransitionDirection.LEFT);
+        _positionAtSides(this.#next = this.#findNext(), TransitionDirection.RIGHT);
+    }
+
+    /** Element of the view preceding current one; positioned to the left. */
+    get #positionedPrev() {
+        const prev = this.#prev;
+        _positionAtSides(prev, TransitionDirection.LEFT);
+        return prev;
+    }
+    /** Element of the view succeding current one; positioned to the right. */
+    get #positionedNext() {
+        const next = this.#next;
+        _positionAtSides(next, TransitionDirection.RIGHT);
+        return next;
+    }
 
     // FINDER METHODS ==================================================
 
+    /** Finds the element after the current one according to the order of the view. */
     #findNext(): HTMLElement {
         return this.getCircularChild(this.currentIndex + 1);
     }
+    /** Finds the element before the current one according to the order of the view. */
     #findPrev(): HTMLElement {
         return this.getCircularChild(this.currentIndex - 1);
     }
+    /**
+     * @param child - Element of the view to index.
+     * @returns an integer indicating the position (0-based) of `child` within the current view; -1 if not present
+     */
     public indexOf(child: HTMLElement): number {
         return this.#indexesMap.get(child) ?? -1;
     }
 
+    /**
+     * @param maybe - Element to look for in the view.
+     * @returns `true` if the element is in the current view, `false` otherwise.
+     */
     public isChild(maybe: HTMLElement): boolean {
         return this.#indexesMap.has(maybe);
     }
 
+    /**
+     * @param index - Position (0-based) of searched element within the current view.
+     * @returns 
+     * the element at the indicated position;    
+     * `undefined` if the index is negative or exceeds the range of the view.
+     */
     public getChild(index: number): HTMLElement | undefined {
         return this.#view[index];
     }
-
+    /**
+     * @param index - Position (0-based) of an element within the current view.
+     * @returns the normalized index according to current view size.
+     */
     #getCircularIndex(index: number): number {
         const length = this.#viewSize;
         return (index % length) + (index < 0 ? length : 0);
     }
-
+    /**
+     * @param index - Position (0-based) of searched element within the current view; 
+     * the index will be normalized to fit the size of the view.
+     * @returns the element at the indicated position.
+     */
     public getCircularChild(index: number): HTMLElement {
         const i = this.#getCircularIndex(index);
         return this.#view[i]!;
     }
 
+    /**
+     * 
+     * @param id - Id of the element within the current view.
+     * @returns the element if it exists and is in the view; `undefined` otherwise.
+     */
     public getChildById(id: string): HTMLElement | undefined {
         const maybe = document.getElementById(id);
-        if (maybe && this.indexOf(maybe) > 0) return maybe;
+        if (maybe && this.isChild(maybe)) return maybe;
     }
 
     // VIEW OBSERVER =============================================
 
-    #startViewObserver() {
-        this.#viewObserver.observe(this, _viewObsOpt);
+    /**
+     * Iterates on all the children of the carousel
+     * to set un an observer for their 'hidden'
+     * attributes.
+     * 
+     * The process only triggers when the total
+     * count of elements in the carousel changes.
+     */
+    #observeChildren() {
+        const { children } = this;
+        const { length } = children;
+        // Verify if a recalc of observed children is needed
+        // if (this.#childrenAmount === length) return; // exit if not
+
+        // The amount of children has changed; 
+        // update to new amount
+        //this.#childrenAmount = length;
+        // reset the observer
+        this.#hiddnObserver.disconnect();
+        // recalc observed children
+        for (const child of children) {
+            this.#hiddnObserver.observe(child, _eachChildObsOpt);
+        }
     }
+    /**
+     * Start watching carousel for child injection/removal
+     * and all of its children for `hidden` attribute changes.
+     */
+    #startViewObserver() {
+        this.#childObserver.observe(this, _childListObsOpt);
+        this.#observeChildren();
+    }
+    /** Stops all the observers. */
     #stopViewObserver() {
-        this.#viewObserver.disconnect();
+        this.#childObserver.disconnect();
+        this.#hiddnObserver.disconnect();
     }
 
     /**
@@ -217,14 +327,19 @@ export class Carousel extends HTMLElement {
                 visible.push(child);
             }
         }
+
+        // update view size
         this.#view = visible;
         const { length } = visible;
         this.#viewSize = length;
 
-        if (length === 1) this.removeTouchListeners();
+        // if the number of elements in the view is too small, 
+        // remove touch listeners, else add them.
+        if (length <= 1) this.removeTouchListeners();
         else this.addTouchListeners();
- 
-        this.#current = this.#assertGetCurrent();
+
+        // set up current, previous and next
+        this.#ensureCurrentState();
     }
 
     // STARTUP & TEARDOWN =============================================
@@ -232,8 +347,6 @@ export class Carousel extends HTMLElement {
     connectedCallback(): void {
         this.#startViewObserver();
         this.#buildView();
-
-        this.#current = this.#assertGetCurrent();
     }
 
     disconnectedCallback(): void {
@@ -249,15 +362,33 @@ export class Carousel extends HTMLElement {
         this.#afterTransition = callback;
     }
 
+    #startTransitionTo(target: HTMLElement, direction: TransitionDirection) {
+        // If we need to translate left,
+        // then `current` must move on the left
+        _positionAtSides(this.current, direction);
+        // will move to the center
+        _positionAtCenter(this.#curr = target);
+    }
+
+    #setupTransitionEnd() {
+        this.current.addEventListener('transitionend', () => {
+            this.#ensureCurrentState();
+            this.current.focus();
+            this.#lock.unlock();
+            if (this.#afterTransition) this.#afterTransition();
+        }, { once: true });
+    }
+
     toNext() { this.#transitionTo(this.next); }
     toPrev() { this.#transitionTo(this.previous); }
     to(target: HTMLElement) { this.#transitionTo(target); }
 
     #transitionTo(target: HTMLElement) {
-        const current = this.current;
         // If target is the same as current, do nothing;
         // this also excludes `this.currentIndex === i`|`distance === 0` case
-        if (current === target) return;
+        const lock = this.#lock;
+        if (lock.isLocked || this.current === target) return;
+        lock.lock();
 
         const i = this.indexOf(target);
         if (i < 0)
@@ -273,22 +404,13 @@ export class Carousel extends HTMLElement {
 
         // If we need to translate left,
         // then `target` must be on the right
-        _positionAtLeftOrRight(target, !translateLeft);
+        _positionAtSides(target, !translateLeft);
         target.inert = false;
 
         requestTransitionFrame(() => {
-            // If we need to translate left,
-            // then `current` must move on the left
-            _positionAtLeftOrRight(current, translateLeft);
-            // will move to the center
-            this.#current = target;
+            this.#startTransitionTo(target, translateLeft);
+            this.#setupTransitionEnd();
         });
-
-        target.addEventListener('transitionend', () => {
-            current.inert = true;
-            target.focus();
-            if (this.#afterTransition) this.#afterTransition();
-        }, { once: true });
 
     }
 
@@ -340,7 +462,7 @@ export class Carousel extends HTMLElement {
      */
     #handlePointerMove(e: PointerEvent, coord: Coordinates) {
         const { startX, startY, direction } = coord;
-        if (direction === MovementDirection.VERTICAL
+        if (direction === PointerMoveDirection.VERTICAL
             || !(startY && startX)
         ) return;
 
@@ -351,21 +473,24 @@ export class Carousel extends HTMLElement {
         // set movement direction
         if (!direction)
             if (Math.abs(startY - clientY) >= Math.abs(deltaX)) {
-                coord.direction = MovementDirection.VERTICAL;
+                coord.direction = PointerMoveDirection.VERTICAL;
                 return;
             } else {
-                coord.direction = MovementDirection.HORIZONTAL;
+                coord.direction = PointerMoveDirection.HORIZONTAL;
                 this.#isTranslating(true);
+                this.#lock.lock();
             }
 
-        // if: direction = MovementDirection.HORIZONTAL;
-        if (deltaX > 0 && this.previous.inert)
+        // if: direction = PointerMoveDirection.HORIZONTAL;
+        if (deltaX > 0 && this.previous.inert) {
             // reposition in case there are only 2 elements
             this.#positionedPrev.inert = false;
-        else if (deltaX < 0 && this.next.inert)
+            this.next.inert = true;
+        }
+        else if (deltaX < 0 && this.next.inert) {
             this.#positionedNext.inert = false;
-        else if (deltaX === 0)
-            this.next.inert = this.previous.inert = true;
+            this.previous.inert = true;
+        }
 
         this.#setTranslationVar(deltaX);
 
@@ -377,7 +502,7 @@ export class Carousel extends HTMLElement {
      */
     #handlePointerUp(e: PointerEvent, coord: Coordinates) {
         const { startX, startY, direction } = coord;
-        if (direction === MovementDirection.VERTICAL
+        if (direction === PointerMoveDirection.VERTICAL
             || !(startY && startX && direction)
         ) return;
         const { clientX } = e;
@@ -385,50 +510,29 @@ export class Carousel extends HTMLElement {
         const deltaX = clientX - startX;
 
         const threshold = Math.abs(this.clientWidth * THRESHOLD);
-        // reset everything
+        // reset coordinates
         coord.reset();
 
         // No need for animation frame since
         // both elements are already visible
 
-        const curr = this.current;
-        const next = this.next;
-        const prev = this.previous;
-        // re-enable transitions
-        this.#isTranslating(false);
         // remove translation vars
         this.#unsetTranslationVar();
         // if above threshold, transition:
+        // re-enable transitions
+        this.#isTranslating(false);
         if (deltaX > threshold) {
-            _positionAtLeftOrRight(curr, false);
-            this.#current = prev;
-            prev.addEventListener('transitionend', () => {
-                curr.inert = true;
-                prev.focus();
-                if (this.#afterTransition) this.#afterTransition();
-            }, { once: true });
+            this.#startTransitionTo(this.previous, TransitionDirection.RIGHT);
         }
         else if (deltaX < -threshold) {
-            _positionAtLeftOrRight(curr, true);
-            this.#current = next;
-            next.addEventListener('transitionend', () => {
-                curr.inert = true;
-                next.focus();
-                if (this.#afterTransition) this.#afterTransition();
-            }, { once: true });
+            this.#startTransitionTo(this.next, TransitionDirection.LEFT);
         }
+        this.#setupTransitionEnd();
 
-        // if not, slide back into position 
+        // if none, slide back into position 
         // (will happen naturally since translation
         // only need to reset all to inert at the end
         // variables have been removed)
-        else {
-            curr.addEventListener('transitionend', () => {
-                next.inert = prev.inert = true;
-            }, { once: true });
-        }
-
-
     }
 
 }

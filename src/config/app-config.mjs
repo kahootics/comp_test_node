@@ -14,7 +14,7 @@ export default {
         outDir: "dist",
         tsDir: tsconfig.compilerOptions.outDir,
 
-        /** Location of the hash records of the assets. */
+        /** Location of the hash records of the assets in src directory. */
         assetsHashLibrary: "src/data/assets/assets-hash-records-library.json",
     },
     prefixes: {

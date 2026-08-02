@@ -1,3 +1,4 @@
+import { _getPrivateProp } from "../../../../../tools/encapsulation.js";
 import { getAllFocusables } from "../../../shared/getFocusableExtremities.js";
 
 // EXTENDED CONSTRUCTOR ================================================================
@@ -38,7 +39,7 @@ export function InertPolyfill<
 
     return class InertPolyfilled extends Base implements InertCapable {
 
-        private focusables: Map<Element, string | null> = new Map();
+        #focusables: Map<Element, string | null> = new Map();
 
         public override get inert(): boolean {
             return this.hasAttribute('inert');
@@ -56,31 +57,32 @@ export function InertPolyfill<
             return ['inert'];
         }
 
-        private applyInert(): void {
+        #applyInert(): void {
             const focusables = getAllFocusables(this);
-            this.focusables.clear;
+            const myFocusables = this.#focusables;
+            myFocusables.clear;
             focusables.forEach(f => {
-                this.focusables.set(f, f.getAttribute('tabindex'));
+                myFocusables.set(f, f.getAttribute('tabindex'));
                 f.setAttribute('tabindex', '-1');
             })
         }
-        private removeInert(): void {
-            this.focusables.forEach((tabI, el) => {
+        #removeInert(): void {
+            this.#focusables.forEach((tabI, el) => {
                 if (tabI) el.setAttribute('tabindex', tabI);
                 else el.removeAttribute('tabindex');
             })
         }
 
         connectedCallback() {
-            if (this.inert) this.applyInert();
+            if (this.inert) this.#applyInert();
         }
 
         attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
             if (name === 'inert'
                 && typeof oldValue === typeof newValue
             ) {
-                if (newValue === null) this.applyInert();
-                else this.removeInert();
+                if (newValue === null) this.#applyInert();
+                else this.#removeInert();
             }
         }
 

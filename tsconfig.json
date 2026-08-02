@@ -4,6 +4,8 @@
     "types": [
       "node"
     ],
+    "sourceMap": true, 
+    "declaration": true,
     "allowJs": true,
     "checkJs": true,
     "removeComments": true,

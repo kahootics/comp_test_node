@@ -6,7 +6,7 @@ carousel-element [inert] {
 carousel-element {
     --§TRANSLATION_CSS_VAR: 0px;
     --§POSITION_CSS_VAR: 100%;
-    --translation-var: clamp(-100,var(--§TRANSLATION_CSS_VAR),100%);
+    --translation-var: clamp(-100%,var(--§TRANSLATION_CSS_VAR),100%);
 }
 
 carousel-element.--§TRANSLATING_CSS_CLASS carousel-item {
@@ -21,5 +21,5 @@ carousel-item {
     top: 0;
     left: 0;
     transform: translateX(var(--x-translation));
-    transition: trasform 1s;
+    transition: transform 1s;
 }

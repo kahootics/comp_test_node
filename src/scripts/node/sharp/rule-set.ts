@@ -145,7 +145,7 @@ export class RuleSet {
 
         // Delete old file (if it hasn't been overwritten already)
         // Won't delete file if it has been moved to new location
-        if (asset.path !== outPath && asset.dir === asset.outDir) {
+        if (path.resolve(asset.path) !== outPath && asset.dir === asset.outDir) {
             fs.unlinkSync(asset.path);
             Log.msg(`Removed asset at ${asset.path}`);
         }

@@ -19,7 +19,7 @@ export function CloserButton<
 >(Base: TBase, ...CloserButtonClasses: string[]) {
     return class CloserButtonMixin extends Base implements CloserButton {
         /** Close button of card. */
-        private readonly CLOSER: HTMLButtonElement;
+        readonly CLOSER: HTMLButtonElement;
 
         constructor(...args: any[]) {
             super(...args);

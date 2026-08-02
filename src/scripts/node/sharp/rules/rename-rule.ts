@@ -4,6 +4,7 @@ import { getFileBirthTime } from "../../../../tools/companion-util.js";
 import { BatchRule } from "../rule.js";
 import { Asset } from "../asset.js";
 import type { nameString } from "../../../types/general-types.js";
+import { ValidationError } from "../../../../errors/common-errors.mjs";
 
 function reorderScreenshotName(filename: string): string {
     const regex = /^Screenshot (\d{2})_(\d{2})_(\d{4}) (\d{2})_(\d{2})_(\d{2})/;
@@ -82,24 +83,27 @@ export class RenameRule extends BatchRule<ruleType> {
      * the rule and assigns to each's `outName` property
      * the corresponding name out of a same-sized list
      *
-     * @param assetsList - A list of assets to rename members of
-     * @param renameRule - A rename rule containing the names to assign
+     * @param assetsList - A list of assets to rename the members of
      */
     enforce(
         assetsList: Asset[]
     ): void {
         if (assetsList.length < 1) return;
-
+        // List of names to replace
+        if (this.names.some(name => name.trim() === ''))
+            throw new ValidationError('Cannot rename a file to empty string');
         const namesToReplace = new Set(this.names.slice());
+        if (namesToReplace.size !== this.names.length)
+            throw new ValidationError('Must provide a list of unique names to rename rule');
 
         const assetsSortedList = assetsList
             // removes files with names from the list
             .filter(asset => {
                 if (namesToReplace.has(asset.name)) {
                     namesToReplace.delete(asset.name);
-                    return true;
+                    return false;
                 }
-                return false;
+                return true;
             })
             // excludes non-matching names
             .filter(asset => asset.name.match(this.include))
@@ -107,12 +111,11 @@ export class RenameRule extends BatchRule<ruleType> {
             .sort(sortby[this.sort]);
 
         if (assetsSortedList.length !== namesToReplace.size)
-            throw new Error(`Assets at ${path.dirname(assetsList[0]!.path)} do not match final names size`);
+            throw new ValidationError(`Assets at ${assetsList[0]!.dir} do not match final names list size of rename rule`);
 
         const rename = Array.from(namesToReplace);
         assetsSortedList.forEach((asset, i) => {
             const outName = rename[i];
-            if (!outName) throw new Error("Cannot assign empty name");
             asset.outName = outName as nameString;
         });
     }

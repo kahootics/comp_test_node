@@ -1,6 +1,6 @@
 import type sharp from "sharp";
 import z from "zod";
-import type { directoryString, hashString } from "../../types/general-types.js";
+import type { Brand, directoryString, hashString } from "../../types/general-types.js";
 import type { Asset } from "./asset.js";
 import { createHashFromBuffer } from "../writers/hash.js";
 import type { ExportOutput } from "../../shared/assets-export-classes.js";
@@ -8,13 +8,14 @@ import path from "node:path";
 import { stableStringify } from "../../../tools/string-parsers.js";
 
 
-declare const StableSymbol: unique symbol;
-export type $stable = { [StableSymbol]: never };
+
+export type $stable = string & { __stable: 'StablePath' };
 /**
  * Normalizes a path and sets the separator to be `/`
  * regardless of system.
  */
 export function _stabilizePath<S extends string>(s: S): S & $stable {
+    console.log(s)
     return path.normalize(s).split(path.sep).join('/') as S & $stable;
 }
 /**

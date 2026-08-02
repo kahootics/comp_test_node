@@ -1,5 +1,5 @@
 import config from "../../../../config/app-config.mjs";
-import { Expandable } from "../mixins/add_behaviour/expandable.mixin.js";
+import { Expandable, expandableOnTransitionEnd, expandableCloseTransition, expandableOpenTransition, type ExpandableToggles } from "../mixins/add_behaviour/expandable.mixin.js";
 import { ExtendibleElement } from "./extendible-element.js";
 
 /** Backdrop specific css class name. */

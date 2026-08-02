@@ -2,6 +2,7 @@ import type { HashRouterRequestEvent } from "../sync/routing/hash-router-request
 import type { HashRouterEvent } from "../sync/routing/hash-router-event.js";
 import type { Response } from "../sync/routing/routes-data-enums.js";
 import type { Request } from "../sync/routing/routes-data-enums.js";
+import type { Brand } from "./general-types.js";
 
 export const hashRouterEvent: hashroutechange = "hashroutechange";
 export type hashroutechange = "hashroutechange";
@@ -9,14 +10,10 @@ export const hashRouterRequestEvent: hashroutechangerequest = "hashroutechange:r
 export type hashroutechangerequest = "hashroutechange:request";
 
 // Branded safety nets
-declare const RouteSymbol: unique symbol;
-export type route = string & { [RouteSymbol]: void };
-declare const TitleSymbol: unique symbol;
-export type title = string & { [TitleSymbol]: void };
-declare const HashSymbol: unique symbol;
-export type hash = string & { [HashSymbol]: void };
-declare const BundleSymbol: unique symbol;
-export type bundleID = string & { [BundleSymbol]: void };
+export type route = Brand<string,'Route'>;
+export type title = Brand<string,'Title'>;
+export type hash = Brand<string,'Hash'>;
+export type bundleID = Brand<string,'Bundle'>;
 
 export type bundleData = [route, routeData][]
 

@@ -5,6 +5,7 @@ import type { directoryString, hashString } from "../../types/general-types.js";
 import appConfig from "../../../config/app-config.mjs";
 import { _stabilizePath, type $stable } from "./rule.js";
 import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
+import { Log } from "../../../tools/console.js";
 
 const LIB_PATH = appConfig.paths.assetsHashLibrary;
 
@@ -15,7 +16,7 @@ const hashRecordSchema = z.record(
 );
 export type hashRecordType = { [key: hashString]: hashString[] };
 const hashLibrarySchema = z.array(z.tuple([z.string(), hashRecordSchema]));
-type assetsHashRecordsType = Map<directoryString & $stable, hashRecordType>
+type assetsHashRecordsType = Map<directoryString /* & $stable */, hashRecordType>
 
 /**
  * Singleton that automatically reads and stores a 

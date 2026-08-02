@@ -43,7 +43,7 @@ export class CopyRule extends ExportRule<
 
         const { width, height } = await this.getAssetSize(asset);
 
-        asset.outDir = path.dirname(destPathCorrected(asset.path, dest)) as directoryString;
+        asset.outDir = path.dirname(path.resolve(destPathCorrected(asset.path,dest))) as directoryString;
         asset.outExt = this.format ? this.format : asset.ext;
 
         const sharpAsset = this.#getFormattedSharpAsset(asset);
@@ -62,9 +62,10 @@ export class CopyRule extends ExportRule<
     }
 
     #getFormattedSharpAsset(asset: Asset) {
+        const assetPath = path.resolve(asset.path);
         return this.format
-            ? sharp(asset.path).toFormat(this.format, this.formatOptions)
-            : sharp(asset.path);
+            ? sharp(assetPath).toFormat(this.format, this.formatOptions)
+            : sharp(assetPath);
     }
 
     protected async getAssetSize(asset: Asset) {

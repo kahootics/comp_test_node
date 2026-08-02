@@ -4,7 +4,7 @@ import { IllegalArgumentError } from "../../../../errors/common-errors.mjs";
 import { AssetRule } from "../rule.js";
 import { Asset } from "../asset.js";
 
-enum Use {
+export enum Use {
     PERCENTAGE = "percentage",
     FLAT = "flat",
 }

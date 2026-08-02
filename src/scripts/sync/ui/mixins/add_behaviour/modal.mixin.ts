@@ -3,7 +3,7 @@ import { Backdrop } from "../../components/backdrop.js";
 import { expandableCloseTransition, expandableOnTransitionEnd, expandableOpenTransition } from "./expandable.mixin.js";
 import { getFocusableExtremities } from "../../../shared/getFocusableExtremities.js";
 import type { Popover } from "./popover.mixin.js";
-import { _getPrivateProp, _initPrivateProp, SetOnceWeakMap } from "../../../../../tools/encapsulation.js";
+import { _getPrivateProp, _initPrivateProp, _setPrivateProp, SetOnceWeakMap } from "../../../../../tools/encapsulation.js";
 
 // EXTENDED CONSTRUCTOR ================================================================
 type Constructor<T extends object> = new (...args: any[]) => T;
@@ -13,11 +13,112 @@ type Constructor<T extends object> = new (...args: any[]) => T;
 // MIXIN PUBLIC INTERFACE ==============================================================
 export interface Modal extends Popover { }
 
-// PRIVATE FIELDS ======================================================================
+// #FIELDS ======================================================================
 /** Mutation Observer to refresh focusables if needed. */
 const _observer = new SetOnceWeakMap<Modal, MutationObserver>();
 /** Native dialog element to wrap around expandable. */
 const _nativeDialog = new SetOnceWeakMap<Modal, HTMLDialogElement>();
+
+// POLYFILL =====================================
+/** Backdrop of the modal. */
+const _backdrop = new SetOnceWeakMap<Modal, Backdrop>();
+/** First focusable element within the modal. */
+const _firstFocusable = new WeakMap<Modal, HTMLElement>();
+/** Last focusable element within the modal. */
+const _lastFocusable = new WeakMap<Modal, HTMLElement>();
+/** Last focused element before focus trap activation. */
+const _lastFocus = new WeakMap<Modal, HTMLElement | null>();
+/** Controls the event listener for the focus trap. */
+const _controller = new SetOnceWeakMap<Modal, AbortController>();
+
+/** Updates focusable elements contained within the modal */
+function _updateFocusables(self: Modal): void {
+    const { first, last } = getFocusableExtremities(self);
+    _setPrivateProp(self, _firstFocusable, first);
+    _setPrivateProp(self, _lastFocusable, last);
+}
+/** Activates the observer */
+function _beginObserveFocusables(self: Modal) {
+    _updateFocusables(self);
+    _getPrivateProp(self, _observer).observe(self, { childList: true, subtree: true });
+}
+/** Stops the observer */
+function _stopObserveFocusables(self: Modal) {
+    _getPrivateProp(self, _observer).disconnect();
+}
+/** 
+ * - **Traps focus** within an element's focusable children
+ * - *When `Escape` key is pressed*:   
+ * closes the modal
+ * - *When `Tab` key is pressed*:   
+ * if focus is on the lastFocusable element, moves it to the firstFocusable one within the modal
+ * - *When `Tab` + `Shift` is pressed*:    
+ * if focus is on the firstFocusable element, moves it to the lastFocusable one within the modal
+ * @param {KeyboardEvent} e - Pressed key 
+ */
+function _focusTrapEvent(this: Modal, e: KeyboardEvent): void {
+
+    if (e.key !== 'Tab') return;
+
+    if (e.shiftKey && document.activeElement === _getPrivateProp(this, _firstFocusable)) {
+        e.preventDefault();
+        _getPrivateProp(this, _lastFocusable).focus();
+    } else if (!e.shiftKey && document.activeElement === _getPrivateProp(this, _lastFocusable)) {
+        e.preventDefault();
+        _getPrivateProp(this, _firstFocusable).focus();
+    }
+}
+/**
+ * - Start observing for changes to focusable elements
+ * - Disables document scrolling
+ * - Stores currently focused element
+ * - Gives focus to modal
+ * - Sets Focus Trap within the modal
+ */
+function _activateFocusTrap(self: Modal) {
+    const signal = _getPrivateProp(self, _controller).signal;
+    _beginObserveFocusables(self);
+    document.documentElement.style.overflow = 'hidden';
+    const element = document.activeElement;
+    _setPrivateProp(self, _lastFocus, element instanceof HTMLElement
+        ? element : null)
+    _getPrivateProp(self, _firstFocusable).focus();
+    self.addEventListener('keydown', _focusTrapEvent.bind(self), { signal });
+}
+/**
+ * - Stop observing for changes to focusable elements
+ * - Re-enables document scrolling
+ * - Gives focus back to stored focused element
+ * - Gives focus to modal
+ * - Removes Focus Trap
+ */
+function _removeFocusTrap(self: Modal) {
+    _stopObserveFocusables(self);
+    document.documentElement.style.removeProperty('overflow');
+    const last = _getPrivateProp(self, _lastFocus);
+    if (last) last.focus();
+    _setPrivateProp(self, _lastFocus, null);
+    _getPrivateProp(self, _controller).abort();
+}
+
+// NATIVE ==========================================
+/** 
+ * Reflects the dialog's open state on the inner element
+ * if it has been set from the outside
+ * 
+ * @remarks
+ * The lock is released only on transition end, 
+ * meaning that, if it the attribute is changed immediately
+ * after the transition has ended, it is a valid change
+ * and triggers a transition
+*/
+function _reflectOpenDialog(self: Modal) {
+    if (self.isLocked) return;
+    _getPrivateProp(self, _nativeDialog).open
+        ? self.show()
+        : self.close();
+}
+
 // HELPERS =============================================================================
 const BrowserSupportsDialog = document.createElement('dialog') instanceof HTMLUnknownElement;
 
@@ -43,25 +144,22 @@ export function Modal<
     if (!BrowserSupportsDialog)
         return class FocusTrap extends Base implements Modal {
 
-            /** Backdrop of the modal. */
-            private readonly backdrop: Backdrop;
-            /** First focusable element within the modal. */
-            private firstFocusable!: HTMLElement;
-            /** Last focusable element within the modal. */
-            private lastFocusable!: HTMLElement;
-            /** Last focused element before focus trap activation. */
-            private _lastFocus: HTMLElement | null = null;
-
             constructor(...args: any[]) {
                 super(...args);
                 _brand(this);
 
-                this.backdrop = new Backdrop('placeholder');
+                const placeholder = document.createElement('div');
+                _initPrivateProp(this, _backdrop, new Backdrop('placeholder'));
+                _initPrivateProp(this, _firstFocusable, placeholder);
+                _initPrivateProp(this, _lastFocusable, placeholder);
+                _initPrivateProp(this, _lastFocus, null);
+                _initPrivateProp(this, _controller, new AbortController());
+
                 this.setAttribute('role', 'dialog');
                 this.setAttribute('aria-haspopup', 'dialog');
                 this.setAttribute('aria-modal', 'true');
                 // Observer for focusables mutations
-                _initPrivateProp(this, _observer, new MutationObserver(() => this.updateFocusables()));
+                _initPrivateProp(this, _observer, new MutationObserver(() => _updateFocusables(this)));
             }
 
             // DOM Insertion Callback =======================================================
@@ -73,96 +171,19 @@ export function Modal<
              */
             override connectedCallback(): void {
                 super.connectedCallback();
-                this.updateFocusables();
-            }
-
-            /** Updates focusable elements contained within the modal */
-            private updateFocusables(): void {
-                const { first, last } = getFocusableExtremities(this);
-                this.firstFocusable = first;
-                this.lastFocusable = last;
-            }
-            /** Activates the observer */
-            private beginObserveFocusables() {
-                this.updateFocusables();
-                _getPrivateProp(this, _observer).observe(this, { childList: true, subtree: true });
-            }
-            /** Stops the observer */
-            private stopObserveFocusables() {
-                _getPrivateProp(this, _observer).disconnect();
-            }
-
-            // Last Focus ===================================================================
-            private set lastFocus(element: any) {
-                this._lastFocus = element instanceof HTMLElement
-                    ? element : null;
-            }
-            private get lastFocus() {
-                return this._lastFocus;
+                _updateFocusables(this);
             }
 
             // OPEN & CLOSE EXPANSION =======================================================
             override[expandableOpenTransition](): void {
                 super[expandableOpenTransition]();
-                this.backdrop.show();
-                this.activateFocusTrap();
+                _getPrivateProp(this, _backdrop).show();
+                _activateFocusTrap(this);
             }
             override[expandableCloseTransition](): void {
                 super[expandableCloseTransition]();
-                this.backdrop.close();
-                this.removeFocusTrap();
-            }
-
-            /** 
-             * - **Traps focus** within an element's focusable children
-             * - *When `Escape` key is pressed*:   
-             * closes the modal
-             * - *When `Tab` key is pressed*:   
-             * if focus is on the lastFocusable element, moves it to the firstFocusable one within the modal
-             * - *When `Tab` + `Shift` is pressed*:    
-             * if focus is on the firstFocusable element, moves it to the lastFocusable one within the modal
-             * @param {KeyboardEvent} e - Pressed key 
-             */
-            private focusTrapEvent = (e: KeyboardEvent): void => {
-
-                if (e.key !== 'Tab') return;
-
-                if (e.shiftKey && document.activeElement === this.firstFocusable) {
-                    e.preventDefault();
-                    this.lastFocusable.focus();
-                } else if (!e.shiftKey && document.activeElement === this.lastFocusable) {
-                    e.preventDefault();
-                    this.firstFocusable.focus();
-                }
-            }
-
-            /**
-             * - Start observing for changes to focusable elements
-             * - Disables document scrolling
-             * - Stores currently focused element
-             * - Gives focus to modal
-             * - Sets Focus Trap within the modal
-             */
-            private activateFocusTrap() {
-                this.beginObserveFocusables();
-                document.documentElement.style.overflow = 'hidden';
-                this.lastFocus = document.activeElement;
-                this.firstFocusable.focus();
-                this.addEventListener('keydown', this.focusTrapEvent);
-            }
-            /**
-             * - Stop observing for changes to focusable elements
-             * - Re-enables document scrolling
-             * - Gives focus back to stored focused element
-             * - Gives focus to modal
-             * - Removes Focus Trap
-             */
-            private removeFocusTrap() {
-                this.stopObserveFocusables();
-                document.documentElement.style.removeProperty('overflow');
-                if (this.lastFocus) this.lastFocus.focus();
-                this.lastFocus = null;
-                this.removeEventListener('keydown', this.focusTrapEvent);
+                _getPrivateProp(this, _backdrop).close();
+                _removeFocusTrap(this);
             }
 
             /**     
@@ -203,7 +224,7 @@ export function Modal<
                 // let the popover class handle out of bounds and Esc closes
                 NATIVE_DIALOG.closedBy = 'none';
                 _initPrivateProp(this, _nativeDialog, NATIVE_DIALOG);
-                _initPrivateProp(this, _observer, new MutationObserver(() => this.reflectOpenDialog()));
+                _initPrivateProp(this, _observer, new MutationObserver(() => _reflectOpenDialog(this)));
             }
             /**
              * Wraps the element in a native dialog element to handle
@@ -221,9 +242,12 @@ export function Modal<
                     if (parent) parent.replaceChild(NATIVE_DIALOG, this);
                     else document.body.appendChild(NATIVE_DIALOG);
                     NATIVE_DIALOG.appendChild(this);
-                    // fallback in case the dialog wrapper is closed manually or through attribute 
-                    _getPrivateProp(this, _observer).observe(NATIVE_DIALOG, { attributeFilter: ['open'] });
                 }
+                // fallback in case the dialog wrapper is closed manually or through attribute 
+                _getPrivateProp(this, _observer).observe(NATIVE_DIALOG, { attributeFilter: ['open'] });
+            }
+            disconnectedCallback(): void {
+                _getPrivateProp(this, _observer).disconnect();
             }
             override[expandableOpenTransition](): void {
                 _getPrivateProp(this, _nativeDialog).showModal();
@@ -232,23 +256,6 @@ export function Modal<
             override[expandableOnTransitionEnd](): void {
                 super[expandableOnTransitionEnd]();
                 if (!this.isOpen) _getPrivateProp(this, _nativeDialog).close();
-            }
-
-            /** 
-             * Reflects the dialog's open state on the inner element
-             * if it has been set from the outside
-             * 
-             * @remarks
-             * The lock is released only on transition end, 
-             * meaning that, if it the attribute is changed immediately
-             * after the transition has ended, it is a valid change
-             * and triggers a transition
-            */
-            private reflectOpenDialog() {
-                if (this.isLocked) return;
-                _getPrivateProp(this, _nativeDialog).open
-                    ? this.show()
-                    : this.close();
             }
         }
     }
@@ -273,12 +280,12 @@ export namespace Modal {
     }
 }
 
-// PRIVATE INTERNAL IDENTIFICATION =====================================================
+// #INTERNAL IDENTIFICATION =====================================================
 /** Holds all branded instances of `Modal`. */
 const branded = new WeakSet();
 function _assertBranded(instance: Modal): true {
     if (branded.has(instance)) return true;
-    throw new TypeError("Cannot access private member");
+    throw new TypeError("Cannot access #member");
 }
 /** Brands an element as an instance of `Modal`. */
 function _brand(instance: Modal) {

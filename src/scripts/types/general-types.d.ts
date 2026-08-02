@@ -12,16 +12,16 @@ export interface Closeable {
     close(): void;
 }
 
-declare const PathSymbol: unique symbol;
-export type pathString = string & { [PathSymbol]: void };
 
-declare const HashSymbol: unique symbol;
-export type hashString = string & { [HashSymbol]: void };
+export type pathString = Brand<string, 'PathString'>;
 
-declare const DirectorySymbol: unique symbol;
-export type directoryString = string & { [DirectorySymbol]: void }
+export type Brand<T, B extends string> = T & {
+    readonly __brand: B;
+};
 
-declare const NameSymbol: unique symbol;
-export type nameString = string & { [NameSymbol]: void }
+export type hashString = Brand<string, "HashString">;
+export type directoryString = Brand<string, "DirectoryString">;
+
+export type nameString = Brand<string,'NameString'>;
 
 export type extType = keyof sharp.FormatEnum;

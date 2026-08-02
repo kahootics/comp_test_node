@@ -39,9 +39,9 @@ export class AssetsLibrary {
             throw new SingletonNotInitializedError("AssetsLibrary", { init: { method: 'build' } })
         return this.#instance
     };
-    readonly #directories: Map<directoryString & $stable, AssetsDirectory>;
+    readonly #directories: Map<directoryString /* & $stable */, AssetsDirectory>;
     /** Associates the directory paths to the corresponding `AssetDirectory` object. */
-    static get #library(): Map<directoryString & $stable, AssetsDirectory> {
+    static get #library(): Map<directoryString /* & $stable */, AssetsDirectory> {
         return this.#self.#directories;
     };
     /** @returns an iterator of all the `AssetDirectory` objects in the library. */
@@ -118,8 +118,8 @@ export class AssetsLibrary {
      * with each name matching an existing asset within
      * that same directory.
      */
-    static #groupByDir(assetsNamesList: string[]): Map<directoryString & $stable, string[]> {
-        const res = new Map<directoryString & $stable, string[]>();
+    static #groupByDir(assetsNamesList: string[]): Map<directoryString /* & $stable */, string[]> {
+        const res = new Map<directoryString /* & $stable */, string[]>();
         assetsNamesList.forEach(assetName => {
             const dir = this.#assertFindDir(assetName);
             if (!res.has(dir)) res.set(dir, []);
@@ -240,9 +240,9 @@ export class AssetsLibrary {
         assetsNamesList: string[],
         rulesetFileName: string,
         dest: directoryString
-    ): Promise<Map<directoryString & $stable, ExportOutput[]>> {
+    ): Promise<Map<directoryString /* & $stable */, ExportOutput[]>> {
         const groups = this.#groupByDir(assetsNamesList);
-        const output = new Map<directoryString & $stable, ExportOutput[]>();
+        const output = new Map<directoryString /* & $stable */, ExportOutput[]>();
         for (const [dir, names] of groups.entries()) {
             const part = await this.#library.get(dir)!.exportAssetsListTo(names, rulesetFileName, dest);
             output.set(dir, part);
@@ -259,8 +259,8 @@ export class AssetsLibrary {
     public static async exportLibraryTo(
         rulesetFileName: string,
         dest: directoryString
-    ): Promise<Map<directoryString & $stable, ExportOutput[]>> {
-        const output = new Map<directoryString & $stable, ExportOutput[]>();
+    ): Promise<Map<directoryString /* & $stable */, ExportOutput[]>> {
+        const output = new Map<directoryString /* & $stable */, ExportOutput[]>();
         for (const [dirName, dirObj] of this.#library.entries()) {
             const part = await dirObj.exportDirectoryTo(rulesetFileName, dest);
             output.set(dirName, part);

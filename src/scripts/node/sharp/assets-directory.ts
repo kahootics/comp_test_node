@@ -45,7 +45,7 @@ function _validateAssets(dir: directoryString, assetsList: Asset[]) {
 export class AssetsDirectory {
     /** Token needed to access constructor. */
     static readonly #constructionToken: unique symbol = Symbol();
-    readonly #path: directoryString & $stable;
+    readonly #path: directoryString /* & $stable */;
     /** Directory's own path. */
     get path() { return this.#path; }
     readonly #assets: Asset[];
