@@ -4,6 +4,9 @@
 import { describe, it, expect } from 'vitest';
 import { Asset } from '../../../src/scripts/node/sharp/asset.js';
 import { RenameRule } from '../../../src/scripts/node/sharp/rules/rename-rule.js';
+import appConfig from '../../../src/config/app-config.mjs';
+
+console.log(appConfig.paths.root)
 
 describe('RenameRule', () => {
     it('does nothing when given an empty asset list', () => {

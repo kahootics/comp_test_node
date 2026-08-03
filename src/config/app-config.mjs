@@ -2,15 +2,26 @@
 import tsconfig from '../../tsconfig.json' with {type: 'json'}
 import pkg from '../../package.json' with {type: 'json'}
 import path from 'path/posix'
+import { _stabilizePath } from '../tools/companion-util.js';
 
-const prefix = 'tx-cp'
+const prefix = 'tx-cp';
+const repoName = path.basename(pkg.repository.url, `.${pkg.repository.type}`);
+
+const toPkg = path.resolve(`./app-config.mjs`);
+console.log(toPkg)
+const repoRoot = toPkg.split(repoName)[0];
+console.log(repoRoot)
+if(!repoRoot) throw new Error()
+
+const projectRoot = _stabilizePath(path.join(repoRoot,repoName));
+
 
 export default {
     version: pkg.version,
-    repo: path.basename(pkg.repository.url, `.${pkg.repository.type}`),
+    repo: repoName,
     site: 'https://kahootics.github.io',
     paths: {
-        base: 'https://',
+        root: projectRoot,
         outDir: "dist",
         tsDir: tsconfig.compilerOptions.outDir,
 

@@ -8,8 +8,8 @@ import { AssetsHashRecords } from '../../src/scripts/node/sharp/assets-hash-reco
 import { rulesetSchema, allRuleClassesMap } from '../../src/scripts/node/sharp/rule-registry.js';
 import { dummy } from '../setup.js';
 import { createHashFromFile } from '../../src/scripts/node/writers/hash.js';
-import { _stabilizePath } from '../../src/scripts/node/sharp/rule.js';
 import { asDir, asHash } from '../utils.js';
+import { _stabilizePath } from '../../src/tools/companion-util.js';
 
 
 vi.mock('node:fs', () => {

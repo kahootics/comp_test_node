@@ -2,9 +2,8 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import config from '../config/app-config.mjs';
-import { _stabilizePath } from '../scripts/node/sharp/rule.js';
-import appConfig from '../config/app-config.mjs';
 import { IllegalAccessError } from '../errors/common-errors.mjs';
+
 
 
 const UNITS = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -31,9 +30,10 @@ export function toUnitBytes(bytes: number, decimals: number = 2): string {
 export function toPublicUrl(filePath: string): string {
     // take anything after dist/
     const full = path.resolve(filePath);
-    const chunk = full.split(config.repo)[1];
-    if (!chunk)
-        throw new IllegalAccessError("This file does not belong to the repository\n"+full);
+    let chunk = full.split(config.repo)[1];
+    if(!chunk) {
+        chunk = path.join(config.paths.root,filePath);
+    }
     
     const end = chunk.includes(config.paths.tsDir)
         ? chunk.split(config.paths.tsDir)[1]! :
@@ -46,7 +46,7 @@ export function toPublicUrl(filePath: string): string {
 
 export function toAbsolutePublicUrl(filePath: string): string {
     const publicChunk = toPublicUrl(filePath);
-    return _stabilizePath(path.join(appConfig.site, appConfig.repo, publicChunk));
+    return _stabilizePath(path.join(config.site, config.repo, publicChunk));
 }
 
 export function getDirname(filePath: string): string {
@@ -61,4 +61,13 @@ export function getFileBirthTime(filePath: string) {
     const res = fs.statSync(paths).birthtime;
     birthRegister.set(filePath, res);
     return res;
+}
+export type $stable = string & { __stable: 'StablePath'; };
+/**
+ * Normalizes a path and sets the separator to be `/`
+ * regardless of system.
+ */
+export function _stabilizePath<S extends string>(s: S): S & $stable {
+    console.log(s);
+    return path.normalize(s).split(path.sep).join('/') as S & $stable;
 }

@@ -7,7 +7,7 @@ import { DirectoryNotFoundError, NotFoundError, ValidationError } from "../../..
 import { PrivateConstructorError, SingletonDuplicateError, SingletonNotInitializedError } from "../../../errors/specialized-errors.mjs";
 import { duplicatesOfStringList, formatList } from "../../../tools/string-parsers.js";
 import fs from "node:fs";
-import { _stabilizePath, type $stable } from "./rule.js";
+import { _stabilizePath, type $stable } from "../../../tools/companion-util.js";
 
 // PRIVATE HELPERS ====================================================================
 

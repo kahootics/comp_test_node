@@ -1,5 +1,5 @@
-import { ValidationError } from "../../../../../errors/common-errors.js";
 // import { _getPrivateProp, _initPrivateProp, SetOnceWeakMap } from "../../../../../tools/encapsulation.js";
+import { ValidationError } from "../../../../../errors/common-errors.mjs";
 
 // !! Globally change MixinName, MixinClass and BaseClass before implementing !!
 
