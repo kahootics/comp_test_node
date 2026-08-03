@@ -34,14 +34,14 @@ export class Asset {
     #name: nameString;
     #outName: nameString;
 
-    #dir: directoryString /* & $stable */;
-    #outDir: directoryString /* & $stable */;
+    #dir: directoryString & $stable;
+    #outDir: directoryString & $stable;
 
     #ext: extType;
     #outExt: extType;
 
-    #path: string /* & $stable */;
-    #outPath: string /* & $stable */;
+    #path: string & $stable;
+    #outPath: string & $stable;
     #rebuildPath: boolean = false;
 
     readonly #queryParams: Map<string, string>;
@@ -74,7 +74,7 @@ export class Asset {
     /** Original name of the asset (before '$'). */
     public get name(): nameString { return this.#name; }
     /** Original directory where the asset is saved. */
-    public get dir(): directoryString /* & $stable */ { return this.#dir; }
+    public get dir(): directoryString & $stable { return this.#dir; }
     /** Asset's original extension. */
     public get ext(): extType { return this.#ext; }
     /** Full path to the original asset file. */
@@ -98,7 +98,7 @@ export class Asset {
         return this.#outName;
     }
     /** Directory where the edited asset will be saved. */
-    public get outDir(): directoryString /* & $stable */ {
+    public get outDir(): directoryString & $stable {
         return this.#outDir;
     }
     /** Extension with which the edited asset will be saved. */
@@ -106,7 +106,7 @@ export class Asset {
         return this.#outExt;
     }
     /** Full path at which the edited asset will be saved. */
-    public get outPath(): string /* & $stable */ {
+    public get outPath(): string & $stable {
         if (this.#rebuildPath) {
             const queryStr = this.#outQueryParams.size > 0
                 ? '$' + [...this.#outQueryParams]

@@ -22,6 +22,7 @@ function style(
 
 export namespace Log {
     export function file(outPath: string, size?: number) {
+        console.log(outPath)
         console.log(`${style('green')('▶')} ${toPublicUrl(outPath)} [${toUnitBytes(size ?? fs.statSync(outPath).size)}]`);
     }
     export function msg(message: string) {

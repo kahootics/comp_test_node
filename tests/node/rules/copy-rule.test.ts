@@ -53,11 +53,17 @@ beforeEach(() => {
 });
 
 describe('CopyRule', () => {
+    
+
     it('copies the asset to the destination, preserving format when none is configured', async () => {
+        const ass = new Asset('../../../src/assets/sprites/icons-generic.webp')
         const rule = new CopyRule({ hash: false });
+    await rule.enforce(ass, 'dist' as any)
+        
+        //const rule = new CopyRule({ hash: false });
         const asset = new Asset('assets/hero.jpg');
 
-        const result = await rule.enforce(asset, 'exports' as any);
+        //const result = await rule.enforce(asset, 'dist' as any);
 
         expect(destPathCorrected).toHaveBeenCalledWith('assets/hero.jpg', '/exports');
         expect(fs.mkdirSync).toHaveBeenCalledWith(path.join('/exports'), { recursive: true });

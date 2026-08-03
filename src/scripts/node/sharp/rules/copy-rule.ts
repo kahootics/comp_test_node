@@ -10,6 +10,7 @@ import sharp from "sharp";
 import { createHashFromBuffer } from "../../writers/hash.js";
 import { destPathCorrected } from "../../writers/copy-file-to.js";
 import { Log } from "../../../../tools/console.js";
+import appConfig from "../../../../config/app-config.mjs";
 
 const hashSchema = z.boolean().default(false);
 type hashType = z.infer<typeof hashSchema>;
@@ -43,7 +44,7 @@ export class CopyRule extends ExportRule<
 
         const { width, height } = await this.getAssetSize(asset);
 
-        asset.outDir = path.dirname(path.resolve(destPathCorrected(asset.path,dest))) as directoryString;
+        asset.outDir = path.relative(appConfig.paths.outDir, path.resolve(dest)) as directoryString;
         asset.outExt = this.format ? this.format : asset.ext;
 
         const sharpAsset = this.#getFormattedSharpAsset(asset);
@@ -56,6 +57,7 @@ export class CopyRule extends ExportRule<
 
         await sharpAsset.toFile(asset.outPath);
         asset.saveEdits();
+        console.log(asset.outPath)
         Log.file(asset.outPath);
 
         return new AssetOutput(asset.name,asset.outPath,width,height);

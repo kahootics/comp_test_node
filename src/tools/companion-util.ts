@@ -29,19 +29,10 @@ export function toUnitBytes(bytes: number, decimals: number = 2): string {
  */
 export function toPublicUrl(filePath: string): string {
     // take anything after dist/
-    const full = path.resolve(filePath);
-    let chunk = full.split(config.repo)[1];
-    if(!chunk) {
-        chunk = path.join(config.paths.root,filePath);
-    }
+    const resolved = path.resolve(filePath);
     
-    const end = chunk.includes(config.paths.tsDir)
-        ? chunk.split(config.paths.tsDir)[1]! :
-        chunk.includes(config.paths.outDir)
-            ? chunk.split(config.paths.outDir)[1]! :
-            chunk;
-    return _stabilizePath(end);
-    // return `${config.site + config.base}/${relative}`;
+    return _stabilizePath(path.resolve(filePath).split(config.paths.outDir)[1]!);
+   // return `${config.site + config.base}/${relative}`;
 }
 
 export function toAbsolutePublicUrl(filePath: string): string {

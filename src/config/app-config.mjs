@@ -8,10 +8,9 @@ const prefix = 'tx-cp';
 const repoName = path.basename(pkg.repository.url, `.${pkg.repository.type}`);
 
 const toPkg = path.resolve(`./app-config.mjs`);
-console.log(toPkg)
 const repoRoot = toPkg.split(repoName)[0];
-console.log(repoRoot)
-if(!repoRoot) throw new Error()
+if(!repoRoot) 
+    throw new Error("Cannot find position of repository")
 
 const projectRoot = _stabilizePath(path.join(repoRoot,repoName));
 
