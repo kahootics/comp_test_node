@@ -50,4 +50,4 @@ const stuff = await fetchSheetDataset('1tUbrxZ1PCwOPsIZcU4G2rrTxfTQ8T6-0027uUxla
 
 const blob = stuff.filter(thing => !thing?.overwritten && thing.playable);
 
-writeAsJsonAt(blob,'dist/test/a.json', {minify: false})
+await writeAsJsonAt(blob,'dist/test/a.json', {minify: false})
