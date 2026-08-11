@@ -82,6 +82,3 @@ export async function buildRuleRegistry(rulesDir: string) {
     });
     return { allRuleClassesMap, rulesetSchema };
 }
-
-const { allRuleClassesMap, rulesetSchema } = await buildRuleRegistry(path.resolve("./rules"));
-export { allRuleClassesMap, rulesetSchema };

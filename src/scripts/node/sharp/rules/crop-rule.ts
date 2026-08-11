@@ -1,13 +1,13 @@
-import sharp from "sharp";
+import sharp, { type Sharp } from "sharp";
 import z from "zod";
-import { IllegalArgumentError } from "../../../../errors/common-errors.mjs";
+import { IllegalArgumentError, ValidationError } from "../../../../errors/common-errors.mjs";
 import { AssetRule } from "../rule.js";
 import { Asset } from "../asset.js";
 
-export enum Use {
-    PERCENTAGE = "percentage",
-    FLAT = "flat",
-}
+export const Use = {
+    PERCENTAGE: "percentage",
+    FLAT: "flat",
+} as const;
 const useSchema = z.enum(Use);
 type useType = z.infer<typeof useSchema>;
 const extractSchema = z.object({
@@ -15,14 +15,16 @@ const extractSchema = z.object({
     left: z.number(),
     width: z.number(),
     height: z.number()
-}).refine(
-    extract => Object.values(extract).every(param => (0 <= param && param <= 1)),
-    {
-        error: 'If using percentage values for extracting sub-image, values of '
-            + 'extraction parameters must be within [0;1]'
-    }
-);
+});
 type extractType = z.infer<typeof extractSchema>;
+function _validateExtract(use: useType, extract: extractType) {
+    if (use === Use.PERCENTAGE) {
+        if (!Object.values(extract).every(param => (0 <= param && param <= 1)))
+            throw new ValidationError('If using percentage values for extracting sub-image, values of '
+                + 'extraction parameters must be within [0;1]');
+    }
+
+}
 const ruleSchema = z.object({
     use: useSchema,
     extract: extractSchema
@@ -32,7 +34,7 @@ type ruleType = z.infer<typeof ruleSchema>;
 
 // ================================================================================
 export class CropRule extends AssetRule<ruleType> {
-    
+
     public static override readonly ownName = 'CropRule';
 
     private readonly use: useType;
@@ -42,14 +44,16 @@ export class CropRule extends AssetRule<ruleType> {
 
     constructor(data: ruleType) {
         super(data);
-        this.use = data.use;
-        this.extract = data.extract;
+        const { use, extract } = data;
+        _validateExtract(use, extract);
+        this.use = use;
+        this.extract = extract;
     }
 
     async enforce(
         asset: Asset,
-        sharpAsset: sharp.Sharp
-    ): Promise<sharp.Sharp> {
+        sharpAsset: Sharp
+    ): Promise<Sharp> {
 
         const cropHash = asset.getParam('crop');
         // If alredy cropped according to current rule, exit
@@ -59,7 +63,7 @@ export class CropRule extends AssetRule<ruleType> {
 
         const { width, height } = await sharpAsset.clone().metadata();
 
-        let result: sharp.Sharp;
+        let result: Sharp;
         switch (this.use) {
 
             case Use.FLAT:
@@ -78,7 +82,7 @@ export class CropRule extends AssetRule<ruleType> {
             default:
                 throw new IllegalArgumentError('A type for extraction parameters must be passed in the rule');
         }
-        asset.setOutParam('crop',this.hash);
+        asset.setOutParam('crop', this.hash);
         return result;
     }
 }

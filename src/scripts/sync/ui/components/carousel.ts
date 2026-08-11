@@ -1,3 +1,4 @@
+import appConfig from "../../../../config/app-config.mjs";
 import { IllegalArgumentError, IllegalStateError, NotFoundError } from "../../../../errors/common-errors.mjs";
 import { Lock } from "../../shared/lock.js";
 import { requestTransitionFrame } from "../../shared/utilities.js";
@@ -535,4 +536,12 @@ export class Carousel extends HTMLElement {
         // variables have been removed)
     }
 
+}
+export const CAROUSEL_TAG = appConfig.css.customElements.CAROUSEL_TAG
+customElements.define(CAROUSEL_TAG, Carousel);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    [CAROUSEL_TAG]: Carousel;
+  }
 }

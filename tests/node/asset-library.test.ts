@@ -2,11 +2,14 @@ import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { asDir } from '../utils.js';
 import { AssetsDirectory } from '../../src/scripts/node/sharp/assets-directory.js';
 import { AssetsLibrary } from '../../src/scripts/node/sharp/assets-library.js';
+import { AssetBin } from '../../src/scripts/node/sharp/assets-bin.js';
 
 vi.mock('../../src/scripts/node/sharp/assets-directory.js', () => ({
     AssetsDirectory: { buildAll: vi.fn() },
 }));
-
+vi.mock('../../src/scripts/node/sharp/assets-bin.js', () => ({
+    AssetBin: { empty: vi.fn(), add: vi.fn() }
+}));
 
 function makeFakeDirectory(dirPath: string, assetNames: string[]) {
     return {
@@ -44,6 +47,7 @@ describe('AssetsLibrary - singleton lifecycle', () => {
 
         const result = await AssetsLibrary.build('root', ['jpg'] as any);
 
+        expect(AssetBin.empty).toHaveBeenCalledOnce();
         expect(result).toBe(AssetsLibrary);
         expect(AssetsLibrary.has('a')).toBe(true);
     });

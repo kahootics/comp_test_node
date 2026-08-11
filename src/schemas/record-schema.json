@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1
+    },
+    "id": {
+      "type": "string"
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "inv": {
+            "type": "string",
+            "pattern": "(?:[A-Za-z0-9]{3})"
+          },
+          "versions": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "data": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "editables": {
+            "default": {},
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "inv",
+          "versions",
+          "data",
+          "editables"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": {
+      "type": "string",
+      "pattern": "^(?:[a-zA-Z0-9_.-\\/]).+schema\\.json$"
+    }
+  },
+  "required": [
+    "type",
+    "id",
+    "records",
+    "$schema"
+  ],
+  "additionalProperties": false
+}

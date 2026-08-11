@@ -1,18 +1,12 @@
 // @ts-check
 import tsconfig from '../../tsconfig.json' with {type: 'json'}
 import pkg from '../../package.json' with {type: 'json'}
-import path from 'path/posix'
 import { _stabilizePath } from '../tools/companion-util.js';
 
 const prefix = 'tx-cp';
-const repoName = path.basename(pkg.repository.url, `.${pkg.repository.type}`);
+const repoName = pkg.repository.url.replace(`.${pkg.repository.type}`,'');
 
-const toPkg = path.resolve(`./app-config.mjs`);
-const repoRoot = toPkg.split(repoName)[0];
-if(!repoRoot) 
-    throw new Error("Cannot find position of repository")
-
-const projectRoot = _stabilizePath(path.join(repoRoot,repoName));
+const projectRoot = "C:/Github/Repositories/kahootics/comp_test_node";
 
 
 export default {
@@ -23,9 +17,11 @@ export default {
         root: projectRoot,
         outDir: "dist",
         tsDir: tsconfig.compilerOptions.outDir,
+        srcDir: 'src',
 
         /** Location of the hash records of the assets in src directory. */
         assetsHashLibrary: "src/data/assets/assets-hash-records-library.json",
+        assetsToDelete: "src/data/assets/assets-to-delete.json"
     },
     prefixes: {
         classes: 'tx-cp-',
@@ -41,6 +37,10 @@ export default {
         attributes: {},
         vars: {
             
+        },
+        customElements: {
+            /** @type {'AA-AA'} */
+            CAROUSEL_TAG: 'AA-AA'
         }
     },
     dd: {

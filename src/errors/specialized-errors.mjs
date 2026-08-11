@@ -63,3 +63,17 @@ export class PrivateConstructorError extends IllegalAccessError {
         Object.setPrototypeOf(this, PrivateConstructorError.prototype);
     }
 }
+
+export class OperationFailedError extends Error {
+    /** @override @type {string} */
+    name = "OperationFailedError";
+    /**
+     * @param {string} message - Error message.
+     * @param {ErrorOptions} [options] - Optional fields:
+     * * `cause` - A cause for the error.
+     */
+    constructor(message, options) {
+        super(message, options);
+        Object.setPrototypeOf(this, OperationFailedError.prototype);
+    }
+}

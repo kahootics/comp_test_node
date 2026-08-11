@@ -23,6 +23,8 @@ import { formatList } from "../tools/string-parsers.js";
  *      when an expected field is missing.
  *   * {@link UnsupportedOperationError} - 
  *      when an operation is not supported or not available.
+ *   * {@link OperationFailedError} - 
+ *      when an operation fails to execute correctly.
  *   * {@link ValidationError} -
  *      when data in a process is rejected by a validation protocol.
  *   * {@link ConfigurationError} -
@@ -216,6 +218,20 @@ export class DirectoryNotFoundError extends Error {
         const message = `Cannot find directory at ${dirPath}`;
         super(message, options);
         Object.setPrototypeOf(this, DirectoryNotFoundError.prototype);
+    }
+}
+
+export class DuplicateKeyError extends Error {
+    /** @override @type {string} */
+    name = "DuplicateKeyError";
+    /**
+     * @param {string} message - Error message.
+     * @param {ErrorOptions} [options] - Optional fields:
+     * * `cause` - A cause for the error.
+     */
+    constructor(message, options) {
+        super(message, options);
+        Object.setPrototypeOf(this, DuplicateKeyError.prototype);
     }
 }
 /**

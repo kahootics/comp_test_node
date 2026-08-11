@@ -111,3 +111,7 @@ function sortKeysDeep(value: unknown): unknown {
 export function stableStringify(obj: unknown): string {
     return JSON.stringify(sortKeysDeep(obj));
 }
+
+export function deepEquals(a: object, b: object) {
+    return stableStringify(a) === stableStringify(b);
+}

@@ -1,11 +1,14 @@
-// Assumes this file is co-located with copy-rule.ts.
-
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, test, expect, vi, beforeEach } from 'vitest';
 import fs from 'node:fs';
-import path from 'node:path';
+import path from 'node:path/posix';
 import { Asset } from '../../../src/scripts/node/sharp/asset.js';
-import { destPathCorrected } from '../../../src/scripts/node/writers/copy-file-to.js';
 import { CopyRule } from '../../../src/scripts/node/sharp/rules/copy-rule.js';
+import { Log } from '../../../src/tools/console.js';
+import { stableHash } from '../../../src/scripts/node/writers/hash.js';
+
+vi.mock('../../../src/tools/console.js', () => ({
+    Log: { msg: vi.fn(), file: vi.fn() },
+}));
 
 vi.mock('node:fs', () => {
     const mkdirSync = vi.fn();
@@ -18,6 +21,7 @@ vi.mock('../../../src/scripts/node/writers/copy-file-to.js', () => ({
 
 vi.mock('../../../src/scripts/node/writers/hash.js', () => ({
     createHashFromBuffer: vi.fn(() => 'copyhash1'),
+    stableHash: vi.fn(() => 'copyhash1'),
 }));
 
 vi.mock('../../../src/scripts/shared/assets-export-classes.js', () => ({
@@ -55,43 +59,40 @@ beforeEach(() => {
 describe('CopyRule', () => {
     
 
-    it('copies the asset to the destination, preserving format when none is configured', async () => {
-        const ass = new Asset('../../../src/assets/sprites/icons-generic.webp')
-        const rule = new CopyRule({ hash: false });
-    await rule.enforce(ass, 'dist' as any)
+    test('copies the asset to the destination, preserving format when none is configured', async () => {
         
-        //const rule = new CopyRule({ hash: false });
-        const asset = new Asset('assets/hero.jpg');
+        
+        const rule = new CopyRule({ hash: false });
+        const asset = new Asset('src/assets/hero.jpg');
 
-        //const result = await rule.enforce(asset, 'dist' as any);
+        const result = await rule.enforce(asset, 'dist' as any);
 
-        expect(destPathCorrected).toHaveBeenCalledWith('assets/hero.jpg', '/exports');
-        expect(fs.mkdirSync).toHaveBeenCalledWith(path.join('/exports'), { recursive: true });
+        expect(fs.mkdirSync).toHaveBeenCalledWith('dist', { recursive: true });
         expect(sharpToFormat).not.toHaveBeenCalled();
-        expect(result).toEqual({ name: 'hero', src: path.join('/exports', 'hero.jpg'), width: 200, height: 100 });
+        expect(result).toEqual({ name: 'hero', src: path.join('dist', 'hero.jpg'), width: 200, height: 100 });
     });
 
-    it('converts to the configured format, updates outExt, and reflects it in the final path/output', async () => {
+    test('converts to the configured format, updates outExt, and reflects it in the final path/output', async () => {
         const rule = new CopyRule({ hash: false, format: 'webp', formatOptions: { quality: 70 } });
         const asset = new Asset('assets/hero.jpg');
 
         await rule.enforce(asset, '/exports' as any);
 
-        expect(sharpToFormat).toHaveBeenCalledWith('assets/hero.jpg', 'webp', { quality: 70 });
+        expect(sharpToFormat).toHaveBeenCalledWith(path.win32.resolve('assets/hero.jpg'), 'webp', { quality: 70 });
         expect(asset.ext).toBe('webp'); // saved after enforce
         expect(asset.path).toBe(path.join('/exports', 'hero.webp'));
     });
 
-    it('sets a "copy" out param with a content hash when hash is enabled', async () => {
+    test('sets a "copy" out param with a content hash when hash is enabled', async () => {
         const rule = new CopyRule({ hash: true });
         const asset = new Asset('assets/hero.jpg');
 
         await rule.enforce(asset, '/exports' as any);
 
-        expect(asset.getParam('copy')).toBe('copyhash1'); // promoted by saveEdits()
+        expect(asset.getParam('hash')).toBe('copyhash1'); // promoted by saveEdits()
     });
 
-    it('does not set a hash out param when hash is disabled', async () => {
+    test('does not set a hash out param when hash is disabled', async () => {
         const rule = new CopyRule({ hash: false });
         const asset = new Asset('assets/hero.jpg');
 
@@ -100,7 +101,7 @@ describe('CopyRule', () => {
         expect(asset.hasParam('copy')).toBe(false);
     });
 
-    it('creates the destination directory before writing', async () => {
+    test('creates the destination directory before writing', async () => {
         const rule = new CopyRule({ hash: false });
         const asset = new Asset('assets/hero.jpg');
 
@@ -109,7 +110,7 @@ describe('CopyRule', () => {
         expect(fs.mkdirSync).toHaveBeenCalledWith(path.join('/exports/nested'), { recursive: true });
     });
 
-    it('saves the edits onto the asset after writing (path/dir/ext reflect the copy destination)', async () => {
+    test('saves the edits onto the asset after writing (path/dir/ext reflect the copy destination)', async () => {
         const rule = new CopyRule({ hash: false });
         const asset = new Asset('assets/hero.jpg');
         const originalPath = asset.path;

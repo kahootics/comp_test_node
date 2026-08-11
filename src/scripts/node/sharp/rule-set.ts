@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import sharp from "sharp";
-import z, { json } from "zod";
+import sharp, { type Sharp } from "sharp";
+import z from "zod";
 import { Log } from "../../../tools/console.js";
 import type { directoryString, hashString } from "../../types/general-types.js";
 import { createHashFromBuffer, createHashFromFile } from "../writers/hash.js";
@@ -9,11 +9,21 @@ import type { Asset } from "./asset.js";
 import { AssetsHashRecords } from "./assets-hash-records.js";
 import { AssetRule, BatchRule, Rule, ExportRule, type RuleConstructor } from "./rule.js";
 import { _stabilizePath } from "../../../tools/companion-util.js";
-import { FileNotFoundError, NullPointerError } from "../../../errors/common-errors.mjs";
-import { rulesetSchema, allRuleClassesMap } from "./rule-registry.js";
+import { FileNotFoundError, IllegalAccessError, NotFoundError, NullPointerError } from "../../../errors/common-errors.mjs";
+import { buildRuleRegistry } from "./rule-registry.js";
 import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
+import { AssetBin } from "./assets-bin.js";
+import { writeZodAsSchema } from "../writers/write-zod-as-schema.js";
+
+const { rulesetSchema, allRuleClassesMap, } = await buildRuleRegistry('build/scripts/node/sharp/rules');
+
+await writeZodAsSchema('rules', z.object(rulesetSchema));
 
 // Class =================================================================================
+    /** Sorts the rules by priority. */
+const _sorter = (a: Rule, b: Rule) =>
+        (a.constructor as RuleConstructor).priority - (b.constructor as RuleConstructor).priority;
+
 /**
  * Stores a set of rules of a certain category and allows to enforce 
  * all of them at once on a group of assets
@@ -23,10 +33,7 @@ export class RuleSet {
     static readonly #constructionToken: unique symbol = Symbol();
     /** Cache register of rulesets associated with their paths. */
     static readonly #cache = new Map<string, RuleSet>();
-    /** Sorts the rules by priority. */
-    static readonly #sorter = (a: Rule, b: Rule) =>
-        (a.constructor as RuleConstructor).priority - (b.constructor as RuleConstructor).priority;
-
+    
     readonly #rules: AssetRule<any>[] = [];
     readonly #batchRules: BatchRule<any>[] = [];
     readonly #exportRule?: ExportRule<any>;
@@ -78,8 +85,8 @@ export class RuleSet {
         this.#exportRule = exportRule;
 
         // Create hash for ruleset
-        this.#rules.sort(RuleSet.#sorter);
-        this.#batchRules.sort(RuleSet.#sorter);
+        this.#rules.sort(_sorter);
+        this.#batchRules.sort(_sorter);
 
         this.#hash = createHashFromBuffer(this.#buildRulesetHashString());
 
@@ -117,7 +124,7 @@ export class RuleSet {
     #enforceBatchRules(assetsList: Asset[]): void {
         this.#batchRules.forEach(batchRule => batchRule.enforce(assetsList));
     }
-    async #enforceAssetRules(asset: Asset): Promise<{ asset: Asset; sharp: sharp.Sharp; }> {
+    async #enforceAssetRules(asset: Asset): Promise<{ asset: Asset; sharp: Sharp; }> {
 
         let sharpAsset = sharp(asset.path);
 
@@ -136,9 +143,11 @@ export class RuleSet {
      * @param sharpAssetObj - contains an asset's data structure and corresponding `sharp` instance.
      * @returns the path where the file was written
      */
-    async #assetToFile(sharpAssetObj: { asset: Asset; sharp: sharp.Sharp; }) {
+    async #assetToFile(sharpAssetObj: { asset: Asset; sharp: Sharp; }) {
 
         const { asset, sharp } = sharpAssetObj;
+        if (asset.outPath === asset.path) return asset.path;
+
         const outPath = path.resolve(asset.outPath);
         fs.mkdirSync(path.resolve(asset.outDir), { recursive: true });
 
@@ -147,8 +156,7 @@ export class RuleSet {
         // Delete old file (if it hasn't been overwritten already)
         // Won't delete file if it has been moved to new location
         if (path.resolve(asset.path) !== outPath && asset.dir === asset.outDir) {
-            fs.unlinkSync(asset.path);
-            Log.msg(`Removed asset at ${asset.path}`);
+            AssetBin.add(asset.path);
         }
 
         Log.file(outPath, res.size);
@@ -162,7 +170,7 @@ export class RuleSet {
      * @param sharpAssestList - Contains a list of assets' data structures and their corresponding `sharp` instances.
      * @returns a promi
      */
-    async #allAssetsToFile(sharpAssetsList: { asset: Asset; sharp: sharp.Sharp; }[]) {
+    async #allAssetsToFile(sharpAssetsList: { asset: Asset; sharp: Sharp; }[]) {
         // FINAL STEPS TO REWRITE
         return Promise.all(sharpAssetsList.map(asset => this.#assetToFile(asset)));
     }
@@ -188,7 +196,7 @@ export class RuleSet {
         // Validate directories
         nonConformingAssets.forEach(asset => {
             if (asset.dir !== this.directory)
-                throw new Error(`${asset.name} is at ${asset.dir} but should be at ${this.directory}`);
+                throw new IllegalAccessError(`${asset.name} is at ${asset.dir} but should be at ${this.directory}`);
         });
 
         // Enforce Batch rules
@@ -213,6 +221,9 @@ export class RuleSet {
         AssetsHashRecords
             .setHashRecord(this.directory, this.hash, Array.from(this.#localHashSet))
         if (writeHashes) AssetsHashRecords.write();
+
+        // Delete files in the queue
+        AssetBin.empty();
     }
     /**
      * Exports an asset to a given directory and enforces a rule on such asset;
@@ -221,15 +232,17 @@ export class RuleSet {
      * @param asset - Asset to enforce the ruleset's ExportRule on.
      * @param dest - Directory where the asset should be exported to.
      * @returns an `ExportOutput` object, containing metadata on the exported asset.
-     * @throws {Error} If the ruleset does not have an export rule.
+     * @throws {NotFoundError} If the ruleset does not have an export rule.
      */
     async export(asset: Asset, dest: directoryString) {
         if (this.#exportRule) {
+
             // make a fresh copy of the asset
             const clone = asset.clone();
             clone.discardEdits();
             return this.#exportRule.enforce(clone, dest);
-        } else throw new Error("No export rule is available for this ruleset")
+
+        } else throw new NotFoundError("export rule");
     }
 }
 

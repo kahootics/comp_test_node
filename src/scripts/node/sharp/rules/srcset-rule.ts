@@ -12,8 +12,12 @@ import type { directoryString } from '../../../types/general-types.js';
 const widthsSchema = z.array(z.int().min(100)).nonempty();
 type widthsType = z.infer<typeof widthsSchema>;
 
+const behavSchema = z.enum(['skip', 'throw', 'full']);
+type behaviorType = z.infer<typeof behavSchema>;
+
+
 const ruleSchema = CopyRule.schema.extend({
-    widths: widthsSchema
+    widths: widthsSchema, behavior: behavSchema
 });
 type ruleType = z.infer<typeof ruleSchema>;
 
@@ -24,12 +28,14 @@ export class SrcsetRule extends CopyRule implements ExportRule<
     public static override readonly schema = ruleSchema;
 
     private readonly widths: widthsType;
+    private readonly behavior: behaviorType;
     private readonly maxWidth: number;
 
     constructor(data: ruleType) {
-        const { widths, hash, format, formatOptions } = data;
+        const { widths, hash, format, formatOptions, behavior } = data;
         super({ hash, format, formatOptions });
         this.widths = widths;
+        this.behavior = behavior;
 
         this.maxWidth = Math.max(...widths);
     }
@@ -39,9 +45,10 @@ export class SrcsetRule extends CopyRule implements ExportRule<
         const subRes = await super.enforce(exportableAsset, dest);
 
         const output = SrcsetOutput.from(subRes);
-        this.#validateWidth(exportableAsset, output.width);
+        const usableWidths = this.#validateWidth(exportableAsset, output.width);
+        if (usableWidths.length === 0) return output;
 
-        for (const width of this.widths) {
+        for (const width of usableWidths) {
             const asset = exportableAsset.clone();
             const srcsetSharp = sharp(asset.path).resize({ width });
             asset.setOutParam('w', width + 'px');
@@ -59,9 +66,18 @@ export class SrcsetRule extends CopyRule implements ExportRule<
 
     #validateWidth(asset: Asset, assetWidth: number) {
         if (this.maxWidth > assetWidth)
-            throw new ValidationError(
-                "Cannot upscale images:\n"
-                + `${asset.name} at ${asset.path} is too small; must have width greater than ${this.maxWidth}px`
-            );
+            switch (this.behavior) {
+                case 'skip': {
+                    return this.widths.filter(width => width < assetWidth)
+                }
+                case 'throw': throw new ValidationError(
+                    "Cannot upscale images:\n"
+                    + `${asset.name} at ${asset.path} is too small (${assetWidth}); must have width greater than ${this.maxWidth}px`
+                );
+                case 'full': {
+                    return this.widths.map(width => width > assetWidth ? assetWidth : width)
+                }
+            }
+        return this.widths;
     }
 }

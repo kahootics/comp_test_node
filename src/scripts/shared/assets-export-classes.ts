@@ -1,4 +1,4 @@
-import { toPublicUrl } from "../../tools/companion-util.js";
+import { toAbsolutePublicUrl, toPublicUrl } from "../../tools/companion-util.js";
 import type { nameString } from "../types/general-types.js";
 
 
@@ -10,6 +10,7 @@ export interface ExportOutput {
 }
 
 export class AssetOutput implements ExportOutput {
+    readonly #path: string;
     constructor(
         readonly name: nameString,
         readonly src: string,
@@ -17,20 +18,26 @@ export class AssetOutput implements ExportOutput {
         readonly height: number
     ) {
         this.name = name;
-        this.src = toPublicUrl(src);
+        this.#path = src;
+        this.src = toAbsolutePublicUrl(src);
         this.width = width;
         this.height = height;
+    }
+    get path() {
+        return this.#path;
     }
 }
 
 export class SrcsetOutput extends AssetOutput {
+    readonly #srcsetPaths: { [width_w: string]: string; } = {};
     readonly srcset: { [width_w: string]: string; } = {};
     add(width: number, assetPath: string) {
-        this.srcset[`${width}w`] = toPublicUrl(assetPath);
+        this.srcset[`${width}w`] = toAbsolutePublicUrl(assetPath);
+        this.#srcsetPaths[`${width}w`] = assetPath;
     }
     public static from(output: AssetOutput) {
-        const { name, src, width, height } = output;
-        return new this(name, src, width, height);
+        const { name, width, height } = output;
+        return new this(name, output.path, width, height);
     }
 }
 

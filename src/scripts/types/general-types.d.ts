@@ -1,4 +1,4 @@
-import type sharp from "sharp";
+import type { FormatEnum } from "sharp";
 export interface Openable {
     open(): void;
 }
@@ -23,5 +23,5 @@ export type hashString = Brand<string, "HashString">;
 export type directoryString = Brand<string, "DirectoryString">;
 
 export type nameString = Brand<string,'NameString'>;
-
-export type extType = keyof sharp.FormatEnum;
+/** {@link FormatEnum} */
+export type extType = keyof FormatEnum;

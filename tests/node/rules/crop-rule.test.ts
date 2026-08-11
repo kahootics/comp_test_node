@@ -1,6 +1,4 @@
-// Assumes this file is co-located with crop-rule.ts.
-
-import { describe, it, expect, vi } from 'vitest';
+import { describe, test, expect, vi } from 'vitest';
 import { CropRule, Use } from '../../../src/scripts/node/sharp/rules/crop-rule.js';
 import { Asset } from '../../../src/scripts/node/sharp/asset.js';
 
@@ -15,7 +13,7 @@ function fakeSharp(metadata: { width: number; height: number }) {
 }
 
 describe('CropRule', () => {
-    it('extracts using flat pixel coordinates and marks the asset as cropped', async () => {
+    test('extracts using flat pixel coordinates and marks the asset as cropped', async () => {
         const rule = new CropRule({ use: Use.FLAT, extract: { top: 10, left: 5, width: 100, height: 50 } });
         const asset = new Asset('assets/hero.jpg');
         const sharpAsset = fakeSharp({ width: 800, height: 600 });
@@ -27,7 +25,7 @@ describe('CropRule', () => {
         expect(result).toEqual({ marker: 'extracted' });
     });
 
-    it('computes pixel coordinates from percentages and floors them', async () => {
+    test('computes pixel coordinates from percentages and floors them', async () => {
         const rule = new CropRule({ use: Use.PERCENTAGE, extract: { top: 0.1, left: 0.2, width: 0.5, height: 0.5 } });
         const asset = new Asset('assets/hero.jpg');
         const sharpAsset = fakeSharp({ width: 801, height: 601 }); // odd numbers to exercise flooring
@@ -42,7 +40,7 @@ describe('CropRule', () => {
         });
     });
 
-    it('is a no-op when the asset was already cropped according to this exact rule', async () => {
+    test('is a no-op when the asset was already cropped according to this exact rule', async () => {
         const rule = new CropRule({ use: Use.FLAT, extract: { top: 0, left: 0, width: 10, height: 10 } });
         const asset = new Asset('assets/hero.jpg');
         // Simulate a file that was already processed: the crop marker lives in the *current*
@@ -57,7 +55,7 @@ describe('CropRule', () => {
         expect(result).toBe(sharpAsset);
     });
 
-    it('throws when the asset was already cropped according to a different rule', async () => {
+    test('throws when the asset was already cropped according to a different rule', async () => {
         const rule = new CropRule({ use: Use.FLAT, extract: { top: 0, left: 0, width: 10, height: 10 } });
         const asset = new Asset('assets/hero.jpg');
         asset.setOutParam('crop', 'aaaaaaaa');

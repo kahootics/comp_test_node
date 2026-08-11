@@ -12,29 +12,20 @@ Documenting Node setup steps for WordPress integration
  **csv-parse** | help build structured data from csv
  **zod** | enforce type validation on parsed csv before turning to JSON
  **esbuild** | bundle & minify scripts
+ **vitest** | local testing
+ **express** | local server
+
+## Assets Library
+
+The assets have a `rules.json` file in each directory; said file is used to determine the required state of each asset and exporting mechanism.
+
+The `AssetsLibrary` interface allows to navigate among the assets by name and enforce rules.
 
 ## ToDo
 
-- [x] port and document node-csv functions (**csv-parse**)
-- [x] port and document independent utilities
-- [ ] port and document enchantments filters
-- [ ] port, polish and document mods-compendium filters
-- [x] implement expandables structures
-- [x] build expandables of dropdown, modal and popover
-- [ ] build trigger component hook
-- [x] implement writers copy and json functions
-- [ ] adjust shared constants json
-- [x] srcset maker function with **sharp**
-- [ ] implement popup message non-intrusive window structure
-- [ ] standardize data collections structure on spreadsheets
-- [ ] document types for spreadsheet with **zod**
-- [ ] export zod inferred types to safe use at runtime
-- [ ] implement sitemap function with **glob**
-- [x] implement hashing function
-- [x] implement formatting, renaming and cropping of gallery images with **sharp** and **glob** using rules.json header file of gallery sections
-- [ ] polyfill inert
-- [ ] build carousel
-- [ ] build routed carousel
+- [ ] create generic components for rendering
+- [ ] create renders modules (only render as factory method)
+- [ ] create full page articles (dynamic import of render module)
 
 
 ## Schemas

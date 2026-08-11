@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Log } from '../../../tools/console.js';
 import hashFile from './hash.js';
+import { IllegalArgumentError } from '../../../errors/common-errors.mjs';
 
 /**
  * Options list for writing JSON document.
@@ -37,6 +38,9 @@ export default async function writeAsJsonAt(
 	const hash    = options?.hash;
   	const outPath = path.resolve(dest);
 	try {
+		if(path.extname(outPath) !== '.json')
+			throw new IllegalArgumentError('Can only write to JSON');
+
   		fs.mkdirSync(path.dirname(outPath), { recursive: true });
 
     	if(minify) {
@@ -54,7 +58,8 @@ export default async function writeAsJsonAt(
   		}
 
 	} catch(err) {
-		console.error(`File writing failed at: ${dest}:`, err);
+		if(err instanceof Error)
+		Log.err(err,`File writing failed at: ${dest}:`);
 	} finally {
 		
 		const finalPath = hash ? hashFile(outPath) : outPath;

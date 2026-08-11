@@ -1,21 +1,9 @@
-import type sharp from "sharp";
 import z from "zod";
-import type { Brand, directoryString, hashString } from "../../types/general-types.js";
+import type { directoryString, hashString } from "../../types/general-types.js";
 import type { Asset } from "./asset.js";
-import { createHashFromBuffer } from "../writers/hash.js";
+import { stableHash } from "../writers/hash.js";
 import type { ExportOutput } from "../../shared/assets-export-classes.js";
-import { stableStringify } from "../../../tools/string-parsers.js";
-
-
-
-/**
- * @param rule - Rule to hash.
- * @returns a stable hash from a rule's raw data; does not depend on the rule's keys order.
- */
-function hashFromRule<R extends object>(rule: R): hashString {
-    const buffer = stableStringify(rule);
-    return createHashFromBuffer(buffer) as hashString;
-}
+import type { Sharp } from "sharp";
 
 type from1to10 = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
@@ -49,7 +37,7 @@ export abstract class Rule<T extends object = object> {
     /** A unique per-instance hash generated from the rule's data. */
     public readonly hash: hashString;
     constructor(data: T) {
-        this.hash = hashFromRule<T>(data);
+        this.hash = stableHash<T>(data);
     }
     abstract enforce(...args: any[]): any;
 }
@@ -58,7 +46,7 @@ export abstract class Rule<T extends object = object> {
  * and return the edited instance correcting the asset 'out' properties.
  */
 export abstract class AssetRule<T extends object> extends Rule<T> {
-    abstract override enforce(asset: Asset, sharpAsset: sharp.Sharp): sharp.Sharp | Promise<sharp.Sharp>;
+    abstract override enforce(asset: Asset, sharpAsset: Sharp): Sharp | Promise<Sharp>;
 }
 /**
  * Batch rules edit a group of assets in place;

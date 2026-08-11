@@ -9,12 +9,28 @@ import fs from "node:fs";
 import { AssetsHashRecords } from "./assets-hash-records.js";
 import { _stabilizePath, type $stable } from "../../../tools/companion-util.js";
 import type { ExportOutput } from "../../shared/assets-export-classes.js";
-import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
+import { OperationFailedError, PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
+import { Log } from "../../../tools/console.js";
 
 
 // PRIVATE HELPERS =======================================================
-function _batchExport(assetsList: Asset[], ruleset: RuleSet, dest: directoryString) {
-    return Promise.all(assetsList.map(asset => _singleExport(asset, ruleset, dest)))
+async function _batchExport(assetsList: Asset[], ruleset: RuleSet, dest: directoryString) {
+    let thereIsError: boolean = false;
+    const result: ExportOutput[] = [];
+    for (const asset of assetsList) {
+        try {
+            const exp = await _singleExport(asset, ruleset, dest);
+            if (exp) result.push(exp);
+        } catch (e) {
+            if (e instanceof Error) {
+                thereIsError ||= true;
+                Log.err(e);
+            }
+        }
+    }
+    if (thereIsError)
+        throw new OperationFailedError(`Failed to execute "export assets"`);
+    return result;
 }
 function _singleExport(asset: Asset, ruleset: RuleSet, dest: directoryString) {
     return ruleset.export(asset, dest);
@@ -105,7 +121,7 @@ export class AssetsDirectory {
         assetsRootDirectory: string,
         assetsExtensions: extType[]
     ): Promise<AssetsDirectory[]> {
-        const assetsGlob = path.join(assetsRootDirectory, '**', `*.{${assetsExtensions.join(',')}}`);
+        const assetsGlob = path.posix.join(assetsRootDirectory, '**', `*.{${assetsExtensions.join(',')}}`);
         const allAssetsPathsRaw = await glob(assetsGlob);
 
         const AssetsByDir: Map<directoryString, Asset[]> = new Map();

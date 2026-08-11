@@ -30,7 +30,9 @@ function sDate(a: Date, b: Date) {
     return a > b ? 1 : a < b ? -1 : 0
 }
 
-const sortby = {
+
+
+const sortby/* : {[x: string]: (a: Asset, b: Asset) => number}  */ = {
     name(a: Asset, b: Asset) {
         return sString(a.name, b.name);
     },
@@ -46,10 +48,16 @@ const sortby = {
     },
     none(a: Asset, b: Asset) { return 0; }
 };
-const sortKeys = Object.keys(sortby) as [keyof typeof sortby, ...(keyof typeof sortby)[]];
+type SortKey = keyof typeof sortby;
 
-const includeSchema = z.instanceof(RegExp).default(/.*/s);
-type includeType = z.infer<typeof includeSchema>;
+// z.enum vuole una tupla non vuota, non un semplice string[]
+const sortKeys = Object.keys(sortby) as [SortKey, ...SortKey[]];
+
+const includeSchema = z
+    .string()
+    .default(".*")
+    .refine((s) => new RegExp(s, "s"));
+type includeType = RegExp;
 const sortSchema = z.enum(sortKeys);
 type sortType = z.infer<typeof sortSchema>;
 const renameSchema = z.array(z.string().trim().nonempty()).nonempty();
@@ -73,7 +81,7 @@ export class RenameRule extends BatchRule<ruleType> {
 
     constructor(data: ruleType) {
         super(data);
-        this.include = data.include;
+        this.include = new RegExp(data.include);
         this.sort = data.sort;
         this.names = data.names as nameString[];
     }

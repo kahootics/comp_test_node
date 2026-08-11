@@ -8,6 +8,8 @@ import { PrivateConstructorError, SingletonDuplicateError, SingletonNotInitializ
 import { duplicatesOfStringList, formatList } from "../../../tools/string-parsers.js";
 import fs from "node:fs";
 import { _stabilizePath, type $stable } from "../../../tools/companion-util.js";
+import { AssetBin } from "./assets-bin.js";
+import type { FormatEnum, Sharp, SharpConstructor } from "sharp";
 
 // PRIVATE HELPERS ====================================================================
 
@@ -62,6 +64,8 @@ export class AssetsLibrary {
         dirs.forEach(aDir =>
             this.#directories.set(aDir.path, aDir)
         );
+
+
     }
     /**
      * Builder function to initialize the singleton.
@@ -72,8 +76,13 @@ export class AssetsLibrary {
      * @param assetsExt - Allowed asset extensions.
      * @returns itself.
      */
-    public static async build(rootDir: string, assetsExt: (keyof sharp.FormatEnum)[]) {
+    public static async build(rootDir: string, assetsExt: (keyof FormatEnum)[]) {
         if (!this.#instance) {
+
+            // Flush residuals from bin
+            AssetBin.empty();
+
+            // build directories
             const dirs = await AssetsDirectory.buildAll(rootDir, assetsExt);
             this.#instance = new AssetsLibrary(AssetsLibrary.#constructionToken, dirs);
             return this;

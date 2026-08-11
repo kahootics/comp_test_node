@@ -2,6 +2,7 @@ import { createHash, type BinaryLike } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { hashString, pathString } from '../../types/general-types.js';
+import { stableStringify } from '../../../tools/string-parsers.js';
 
 /** 
  * @param algorithm - Hashing algorithm (defaults to `md5`)
@@ -69,4 +70,9 @@ export default function hashFile(
     const hashedPath = path.join(dir, `${name}.${hash}${ext}`);
     fs.renameSync(filePath,hashedPath);
     return hashedPath as pathString;
+}
+
+export function stableHash<R extends object>(rule: R): hashString {
+    const buffer = stableStringify(rule);
+    return createHashFromBuffer(buffer);
 }

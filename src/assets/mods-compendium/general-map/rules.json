@@ -1,3 +1,13 @@
 {
-    "format": "webp"
+    "$schema": "../../../schemas/rules-schema.json",
+    "FormatRule": {
+        "format": "webp",
+        "formatOptions": {
+            "quality": 82
+        }
+    },
+    "CopyRule": {
+        "format": "webp",
+        "hash": true
+    }
 }

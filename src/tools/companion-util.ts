@@ -2,7 +2,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import config from '../config/app-config.mjs';
-import { IllegalAccessError } from '../errors/common-errors.mjs';
+import { IllegalAccessError, IllegalArgumentError } from '../errors/common-errors.mjs';
 
 
 
@@ -28,11 +28,20 @@ export function toUnitBytes(bytes: number, decimals: number = 2): string {
  * @returns
  */
 export function toPublicUrl(filePath: string): string {
-    // take anything after dist/
     const resolved = path.resolve(filePath);
-    
-    return _stabilizePath(path.resolve(filePath).split(config.paths.outDir)[1]!);
-   // return `${config.site + config.base}/${relative}`;
+    const part = toPublicUrlRaw(resolved);
+
+    return _stabilizePath(part);
+}
+
+function toPublicUrlRaw(path: string): string {
+    if(path.includes(config.paths.outDir))
+        return path.split(config.paths.outDir)[1]!
+    if(path.includes(config.paths.srcDir))
+        return path.split(config.paths.srcDir)[1]!
+    if(path.includes(config.paths.tsDir))
+        return path.split(config.paths.outDir)[1]!
+    throw new IllegalAccessError(`${path} is in none of the three project directories`)
 }
 
 export function toAbsolutePublicUrl(filePath: string): string {
@@ -53,12 +62,15 @@ export function getFileBirthTime(filePath: string) {
     birthRegister.set(filePath, res);
     return res;
 }
+
+
+
 export type $stable = string & { __stable: 'StablePath'; };
 /**
  * Normalizes a path and sets the separator to be `/`
  * regardless of system.
  */
 export function _stabilizePath<S extends string>(s: S): S & $stable {
-    console.log(s);
+    s ?? console.log(s)
     return path.normalize(s).split(path.sep).join('/') as S & $stable;
 }

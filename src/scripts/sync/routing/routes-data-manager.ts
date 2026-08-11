@@ -2,14 +2,26 @@ import { IllegalArgumentError, NullPointerError } from "../../../errors/common-e
 import { type bundleID, type route, type routeData } from "../../types/router-types.js";
 import { Request, Response } from "./routes-data-enums.js";
 import type { RequestMessage, ResponseMessage } from "../../types/router-types.js";
-import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
+import { PrivateConstructorError, SingletonDuplicateError } from "../../../errors/specialized-errors.mjs";
 
 
 function extractbundleID(route: route) {
     return route.charAt(0) as bundleID;
 }
 export class RoutesDataManager {
-    readonly #pendingRequests = new Map<bundleID, { routeDataResolves: Map<route, { resolve: (value: routeData | PromiseLike<routeData>) => void, reject: (reason?: any) => void }[]>, timer: number }>();
+    readonly #pendingRequests: Map<
+        bundleID,
+        {
+            routeDataResolves: Map<
+                route,
+                {
+                    resolve: (value: routeData | PromiseLike<routeData>) => void,
+                    reject: (reason?: any) => void
+                }[]
+            >,
+            timer: number
+        }
+    > = new Map();
     readonly #bundleCache = new Map<bundleID, Map<route, routeData>>();
     readonly #worker: Worker;
     readonly #THRESHOLD: number;
@@ -26,7 +38,7 @@ export class RoutesDataManager {
     private constructor(token: symbol, threshold: number, dataWorkerPath: string) {
         // Privacy of constructor
         if (token !== RoutesDataManager.#constructionToken)
-            throw new PrivateConstructorError("RoutesDataManager");
+            throw new PrivateConstructorError("RoutesDataManager", { init: { type: 'singleton', method: 'build' } });
         if (threshold % 1 !== 0)
             throw new IllegalArgumentError("Threshold must be an integer");
         this.#THRESHOLD = threshold;
@@ -40,7 +52,7 @@ export class RoutesDataManager {
                 RoutesDataManager.#constructionToken,
                 threshold, dataWorkerPath
             );
-        else throw new Error("Cannot initialize singleton twice");
+        else throw new SingletonDuplicateError("RoutesDataManager");
         return this;
     }
 

@@ -5,12 +5,22 @@ import sharp from 'sharp';
 import { Asset } from '../../src/scripts/node/sharp/asset.js';
 import { RuleSet } from '../../src/scripts/node/sharp/rule-set.js';
 import { AssetsHashRecords } from '../../src/scripts/node/sharp/assets-hash-records.js';
-import { rulesetSchema, allRuleClassesMap } from '../../src/scripts/node/sharp/rule-registry.js';
+import { buildRuleRegistry } from '../../src/scripts/node/sharp/rule-registry.js';
 import { dummy } from '../setup.js';
 import { createHashFromFile } from '../../src/scripts/node/writers/hash.js';
 import { asDir, asHash } from '../utils.js';
 import { _stabilizePath } from '../../src/tools/companion-util.js';
+import { Log } from '../../src/tools/console.js';
+import { AssetBin } from '../../src/scripts/node/sharp/assets-bin.js';
 
+
+vi.mock('../../src/tools/console.js', () => ({
+    Log: { msg: vi.fn(), file: vi.fn() },
+}));
+
+vi.mock('../../src/scripts/node/sharp/assets-bin.js', () => ({
+    AssetBin: { empty: vi.fn(), add: vi.fn()}
+}));
 
 vi.mock('node:fs', () => {
     const existsSync = vi.fn();
@@ -40,6 +50,7 @@ vi.mock('../../src/scripts/node/sharp/assets-hash-records.js', () => ({
 
 vi.mock('../../src/scripts/node/writers/hash.js', () => ({
     createHashFromBuffer: vi.fn((buf: any) => 'rsh-' + String(buf).length),
+    stableHash: vi.fn((buf: any) => 'rsh-' + String(buf).length),
     createHashFromFile: vi.fn((p: string) => `filehash:${p}`),
 }));
 
@@ -110,13 +121,12 @@ vi.mock('../../src/scripts/node/sharp/rule-registry.js', async () => {
         ['TestExportRule', TestExportRule],
         ['SecondExportRule', SecondExportRule],
     ]);
+    const buildRuleRegistry = vi.fn(() => { return { rulesetSchema, allRuleClassesMap } })
 
-    return {
-        rulesetSchema,
-        allRuleClassesMap,
-    };
+    return { buildRuleRegistry };
 });
 var __fixtures: any = {};
+const { allRuleClassesMap, rulesetSchema } = await buildRuleRegistry('');
 allRuleClassesMap.forEach(rule => __fixtures[rule.ownName] = rule);
 
 // RuleSet caches instances by directory + filename in a static, module-lifetime cache.
@@ -215,9 +225,11 @@ describe('RuleSet.enforce', () => {
         expect(__fixtures.TestBatchRule.enforceCalls).toHaveLength(1);
         expect(__fixtures.TestBatchRule.enforceCalls[0]).toEqual([asset1, asset2]);
         expect(__fixtures.TestAssetRule.enforceCalls).toHaveLength(2);
+        expect(AssetBin.add).toHaveBeenCalledTimes(2);
         expect(sharpToFile).toHaveBeenCalledTimes(2);
         expect(saveSpy1).toHaveBeenCalledOnce();
         expect(saveSpy2).toHaveBeenCalledOnce();
+        expect(AssetBin.empty).toHaveBeenCalledTimes(1);
     });
 
     test('skips assets whose current file hash is already recorded as conforming', async () => {
@@ -266,7 +278,8 @@ describe('RuleSet.enforce', () => {
 
         await ruleset.enforce([asset]);
 
-        expect(fs.unlinkSync).toHaveBeenCalledWith(_stabilizePath(path.join(dir, 'original.jpg')));
+        expect(AssetBin.add).toHaveBeenCalledWith(path.posix.join(dir, 'original.jpg'));
+        expect(AssetBin.empty).toHaveBeenCalledOnce();
     });
 
     test('updates the hash record after enforcing, and only persists it to disk when writeHashes is true', async () => {
@@ -291,7 +304,7 @@ describe('RuleSet.export', () => {
         const ruleset = RuleSet.build(dir, 'rules');
 
         await expect(ruleset.export(makeAsset(dir, 'a.jpg'), asDir('/exports')))
-            .rejects.toThrow(/No export rule/);
+            .rejects.toThrowWithName('NotFoundError');
     });
 
     test('exports via a clone with edits discarded, leaving the original asset untouched', async () => {

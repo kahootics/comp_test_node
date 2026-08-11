@@ -6,11 +6,12 @@ import { formatSchema, optionsSchema } from './format-rule.js';
 import { ExportRule } from "../rule.js";
 import { AssetOutput } from "../../../shared/assets-export-classes.js";
 import { Asset } from "../asset.js";
-import sharp from "sharp";
+import sharp, { type Sharp } from "sharp";
 import { createHashFromBuffer } from "../../writers/hash.js";
 import { destPathCorrected } from "../../writers/copy-file-to.js";
 import { Log } from "../../../../tools/console.js";
 import appConfig from "../../../../config/app-config.mjs";
+import { _stabilizePath } from "../../../../tools/companion-util.js";
 
 const hashSchema = z.boolean().default(false);
 type hashType = z.infer<typeof hashSchema>;
@@ -44,23 +45,22 @@ export class CopyRule extends ExportRule<
 
         const { width, height } = await this.getAssetSize(asset);
 
-        asset.outDir = path.relative(appConfig.paths.outDir, path.resolve(dest)) as directoryString;
+        asset.outDir = dest;
         asset.outExt = this.format ? this.format : asset.ext;
 
         const sharpAsset = this.#getFormattedSharpAsset(asset);
 
         if (this.createHash) {
             const hash = await this.createHashFromSharp(sharpAsset);
-            asset.setOutParam('copy',hash);
+            asset.setOutParam('hash', hash);
         }
         fs.mkdirSync(asset.outDir, { recursive: true });
 
         await sharpAsset.toFile(asset.outPath);
         asset.saveEdits();
-        console.log(asset.outPath)
         Log.file(asset.outPath);
 
-        return new AssetOutput(asset.name,asset.outPath,width,height);
+        return new AssetOutput(asset.name, asset.outPath, width, height);
     }
 
     #getFormattedSharpAsset(asset: Asset) {
@@ -80,8 +80,12 @@ export class CopyRule extends ExportRule<
     /**
      * Returns a hash created from the bufferized clone of the sharp asset
      */
-    protected async createHashFromSharp(sharpAsset: sharp.Sharp) {
+    protected async createHashFromSharp(sharpAsset: Sharp) {
         const buffer = await sharpAsset.clone().toBuffer();
-        return createHashFromBuffer(buffer);
+        console.log(buffer)
+        const h = createHashFromBuffer(buffer);
+        console.log(h)
+
+        return h
     }
 }

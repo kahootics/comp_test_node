@@ -1,3 +1,15 @@
 {
-    "format": "webp"
+    "$schema": "../../../schemas/rules-schema.json",
+    "FormatRule": {
+        "format": "webp",
+        "formatOptions": {
+            "quality": 82
+        }
+    },
+    "SrcsetRule": {
+        "format": "webp",
+        "hash": true,
+        "widths": [1080,720,540],
+        "behavior": "skip"
+    }
 }

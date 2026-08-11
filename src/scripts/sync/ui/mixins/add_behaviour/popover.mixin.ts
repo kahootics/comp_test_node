@@ -1,4 +1,3 @@
-import { assert } from "node:console";
 import { ValidationError } from "../../../../../errors/common-errors.mjs";
 import { _getPrivateProp, _initPrivateProp } from "../../../../../tools/encapsulation.js";
 import { Expandable, expandableCloseTransition, expandableOpenTransition, expandableOnTransitionEnd } from "./expandable.mixin.js";
