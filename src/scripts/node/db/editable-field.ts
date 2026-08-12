@@ -1,5 +1,5 @@
 import z from "zod";
-import { writeFile } from 'node:fs/promises'
+import { writeFile, rename } from 'node:fs/promises'
 import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
 import { DuplicateKeyError, IllegalAccessError, IllegalArgumentError, IllegalStateError, NotFoundError } from "../../../errors/common-errors.mjs";
 import { dbTypeSchema, root, type dbType } from "./data-base.js";
@@ -35,16 +35,16 @@ const editableInputs: Record<editableType, (name: string, initValue: string, ...
 };
 
 const editableEntrySchema = z.object({
-                label: z.string(),
-                type: editableTypeSchema,
-                defVal: z.any(),
-                deprecated: z.boolean().optional()
-            });
+    label: z.string(),
+    type: editableTypeSchema,
+    defVal: z.any(),
+    deprecated: z.boolean().optional()
+});
 
 const allEditablesSchema = z.array(
     z.tuple([
         dbTypeSchema,
-        z.array(editableEntrySchema        )
+        z.array(editableEntrySchema)
     ])
 );
 
@@ -53,6 +53,15 @@ type editableEntry = z.infer<typeof editableEntrySchema>
 export class EditableFieldDescriptor {
     /** Token needed to access constructor. */
     static readonly #constructionToken: unique symbol = Symbol();
+    /** 
+     * Await before starting any writing operation.   
+     * If a writing operation starts, a promise should be 
+     * stored here to ensure no concurrent writing operation starts.
+     */
+    static #writePermission: Promise<void> = Promise.resolve();
+    static async #onWriteAllowed(callback: () => Promise<void>) {
+        return this.#writePermission = this.#writePermission.then(callback);
+    }
 
     static #register: Map<dbType, EditableFieldDescriptor[]> | null = null;
 
@@ -100,21 +109,34 @@ export class EditableFieldDescriptor {
 
     static async #ensureRegister(): Promise<Map<dbType, EditableFieldDescriptor[]>> {
         if (this.#register) return this.#register;
-        const mod = await import(editablesPath, { with: { type: 'json' } });
-        return allEditablesSchema.parseAsync(mod.default)
-            .then(edtbls =>
-                this.#register = new Map(
-                    edtbls.map(([db, desc]) =>
-                        [db, desc.map(d => this.#of(d))]
+        try {
+            const mod = await import(editablesPath, { with: { type: 'json' } });
+            return allEditablesSchema.parseAsync(mod.default)
+                .then(edtbls =>
+                    this.#register = new Map(
+                        edtbls.map(([db, desc]) =>
+                            [db, desc.map(d => this.#of(d))]
+                        )
                     )
-                )
-            );
+                );
+        } catch (e: any) {
+            if (e.code === 'ERR_MODULE_NOT_FOUND' || e.code === 'ENOENT') {
+                return this.#register = new Map();
+            }
+            throw e;
+        }
     }
+
     static async #updateRegister(): Promise<void> {
         if (!this.#register)
             throw new IllegalStateError("Cannot update register without it having been loaded first");
         const data = JSON.stringify(Array.from(this.#register));
-        return writeFile(editablesPath, data, 'utf-8');
+        const tmpPath = editablesPath + '.tmp';
+
+        this.#onWriteAllowed(async () => {
+            await writeFile(tmpPath, data, 'utf-8');
+            await rename(tmpPath, editablesPath);
+        });
     }
 
     static async getAllOrInit(db: dbType) {
@@ -179,8 +201,6 @@ export class EditableFieldDescriptor {
         }
         throw new IllegalAccessError(`Descriptor ${JSON.stringify(desc)} does not belong to db of type ${db}`);
     }
-
-
 }
 
 

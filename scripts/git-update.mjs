@@ -1,8 +1,7 @@
 // @ts-check
 
 import readline from 'node:readline/promises';
-import { execSync } from 'node:child_process';
-import execGitSync from './exec-cmd-sync.mjs';
+import execCmdSync from './exec-cmd-sync.mjs';
 
 const LN_INPUT = '$' + ' ';
 
@@ -66,21 +65,19 @@ if (commitMsg === '') {
 // Images first processing
 
 // Clean dist folder
-console.log('Emptying dist folder...');
-execSync('npm run clear:dist');
+execCmdSync('npm run clear:dist','Emptying dist folder...')
 
 // Update Version
-console.log(`> Version updated: ${bump}`);
-execSync(`npm version ${bump} --no-git-tag-version`, { stdio: 'inherit' });
+execCmdSync(`npm version ${bump} --no-git-tag-version`,`Updated version to ${bump}`)
 
 // Git add
-execGitSync('git add .');
+execCmdSync('git add .');
 
 // Git commit
 const commitCommand = commitDesc
     ? `git commit -m "${commitMsg}" -m "${commitDesc}"`
     : `git commit -m "${commitMsg}"`;
-execGitSync(commitCommand);
+execCmdSync(commitCommand);
 
 // Git push
-execGitSync('git push');
+execCmdSync('git push');
