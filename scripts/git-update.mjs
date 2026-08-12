@@ -1,7 +1,7 @@
 // @ts-check
 
 import readline from 'node:readline/promises';
-import execCmdSync from './exec-cmd-sync.mjs';
+import {execCmdSync} from './exec-cmd-sync.mjs';
 
 const LN_INPUT = '$' + ' ';
 
@@ -13,11 +13,11 @@ const updatesMap = {
     '2': 'minor',
     '3': 'major',
 };
-
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-});
+/**
+ * 
+ * @param {readline.Interface} rl 
+ */
+export async function pushCurrentBranch(rl) {
 
 // TAKING INPUTS ============================================================
 
@@ -81,3 +81,4 @@ execCmdSync(commitCommand);
 
 // Git push
 execCmdSync('git push');
+}

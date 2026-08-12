@@ -24,15 +24,15 @@ import fetchSheetDataset from './scripts/node/csv/fetch-sheet-as-dataset.js';
 
 export const isDev = process.env.BUILD !== 'true';
 
-//Log.hdr('building script bundles');
+Log.hdr('building script bundles');
 //const scripts = await buildScripts();
+Log.msg('mammt')
+//const js = await json();
 
-/* const js = await json();
+//writeAsJsonAt(js,'dist/assets/sprites/jennyk.json'); 
 
-writeAsJsonAt(js,'dist/assets/sprites/jennyk.json'); */
-
-//Log.hdr('building data documents');
-//await buildDatasets();
+Log.hdr('building data documents');
+await buildDatasets();
 
 Log.hdr('test');
 

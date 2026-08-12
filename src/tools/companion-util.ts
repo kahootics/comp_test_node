@@ -71,6 +71,5 @@ export type $stable = string & { __stable: 'StablePath'; };
  * regardless of system.
  */
 export function _stabilizePath<S extends string>(s: S): S & $stable {
-    s ?? console.log(s)
     return path.normalize(s).split(path.sep).join('/') as S & $stable;
 }
