@@ -1,7 +1,7 @@
 import {execCmdSync} from "./exec-cmd-sync.mjs";
 
 execCmdSync("rm -rf build");
-console.log("\nbuild folder deleted\n");
+console.log("build folder deleted\n");
 
 execCmdSync("rm -rf dist");
-console.log("\ndist folder deleted\n");
+console.log("dist folder deleted\n");

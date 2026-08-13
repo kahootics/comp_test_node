@@ -1,9 +1,12 @@
-import { IllegalArgumentError, NotFoundError, ValidationError } from "../../../errors/common-errors.mjs";
-import { deepEquals } from "../../../tools/string-parsers.js";
+import { DuplicateKeyError, IllegalArgumentError, NotFoundError, ValidationError } from "../../../errors/common-errors.mjs";
+import type { hashString } from "../../types/general-types.js";
+import { stableHash } from "../writers/hash.js";
 import type { dbRecordsStore } from "./data-base.js";
 import { type dbRecord, DBRecord } from "./record.js";
 
-export class DBRecordsStore {
+export class DBRecordsStore implements dbRecordsStore {
+    static getNewInv() { return _randomAlNum(3); }
+
     readonly #records: Map<dbRecord['inv'], DBRecord>;
     readonly #id: dbRecordsStore['id'];
     readonly #type: dbRecordsStore['type'];
@@ -12,8 +15,11 @@ export class DBRecordsStore {
     /** A symbol to identify the store from the record's interface. */
     readonly #symbolIdentifier: symbol;
 
+    readonly #recordsDataHashes: Map<hashString, dbRecord['inv']>;
+
     get id(): string { return this.#id; };
     get type() { return this.#type; };
+    get records() { return Array.from(this.#records.values()) }
 
     /** All the versions for which a record is available in the store. */
     get allVersions(): Set<dbRecord['versions'][number]> {
@@ -57,7 +63,18 @@ export class DBRecordsStore {
         this.#id = store.id;
         this.#type = store.type;
         this.#symbolIdentifier = Symbol(this.#id);
-        this.#records = new Map(store.records.map(r => [r.inv, new DBRecord(r, this.#symbolIdentifier)]));
+
+        this.#recordsDataHashes = new Map();
+        this.#records = new Map();
+
+        for (const record of store.records) {
+            const inv = record.inv;
+            if (this.#records.has(inv))
+                throw new DuplicateKeyError(`Duplicate inv ${inv} in records store ${this.#id}`);
+            const recordObj = new DBRecord(record, this.#symbolIdentifier);
+            this.#recordsDataHashes.set(stableHash(record.data), inv);
+            this.#records.set(inv, recordObj);
+        }
         this.#validateRecordsVersions();
     }
 
@@ -97,16 +114,16 @@ export class DBRecordsStore {
         // Invalidate allVersions list
         this.#allVersions = null;
 
+        const newDataHash = stableHash(newData);
+
         // If the record holds the same data as another,
         // then its version will be added to that record's
         // versions list
-        for (const [, record] of this.#records) {
-            if (deepEquals(record.data, newData)) {
-                if (!record.versions.includes(newVersion)) {
-                    record.addVersion(newVersion,this.#symbolIdentifier);
-                }
-                return { new: false, inv: record.inv };
-            }
+        if (this.#recordsDataHashes.has(newDataHash)) {
+            const sharedInv = this.#recordsDataHashes.get(newDataHash)!;
+            const record = this.#records.get(sharedInv)!;
+            record.addVersion(newVersion, this.#symbolIdentifier);
+            return { new: false, inv: record.inv };
         }
 
         // If the record is new, add a new entry 
@@ -119,6 +136,7 @@ export class DBRecordsStore {
             editables: defaultEditables,
         }, this.#symbolIdentifier);
         this.#records.set(newInv, newRecord);
+        this.#recordsDataHashes.set(newDataHash, newInv);
         return { new: true, inv: newInv };
     }
 
@@ -137,8 +155,8 @@ export class DBRecordsStore {
     toJSON(): dbRecordsStore {
         return {
             id: this.#id,
-            type: this.#type, 
-            records: Array.from(this.#records.values())
+            type: this.#type,
+            records: this.records
         }
     }
 

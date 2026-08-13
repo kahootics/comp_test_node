@@ -72,7 +72,7 @@ export default function hashFile(
     return hashedPath as pathString;
 }
 
-export function stableHash<R extends object>(rule: R): hashString {
-    const buffer = stableStringify(rule);
+export function stableHash<R extends object>(object: R): hashString {
+    const buffer = stableStringify(object);
     return createHashFromBuffer(buffer);
 }

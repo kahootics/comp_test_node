@@ -65,6 +65,7 @@ export class EditableFieldDescriptor {
     }
 
     static #register: Map<dbType, EditableFieldDescriptor[]> | null = null;
+    static #defaultObjects = new Map<dbType,Record<editableEntry['label'],editableValue>>();
 
     readonly #label: string;
     readonly #type: editableType;
@@ -165,6 +166,22 @@ export class EditableFieldDescriptor {
         return found
     }
 
+    static async getDefaultObject(dbType: dbType) {
+        const register = await this.#ensureRegister();
+        if (!register.has(dbType)) 
+        throw new NotFoundError(dbType, { type: 'database entry in editable fields descriptors register with db type' })
+    
+        if( this.#defaultObjects.has(dbType)) 
+            return this.#defaultObjects.get(dbType)!
+
+        const result: Record<editableEntry['label'],editableValue> = {}
+        register.get(dbType)!.forEach(ed => {
+            result[ed.#label] = ed.#defaultVal;
+        });
+        this.#defaultObjects.set(dbType,result);
+        return result;
+    }
+
     static async create(db: dbType, desc: { label: string, type: editableType, defVal: any }) {
         const validDesc = this.#of(desc);
         const register = await this.#ensureRegister();
@@ -182,6 +199,7 @@ export class EditableFieldDescriptor {
             register.set(db, [validDesc]);
         }
 
+        this.#defaultObjects.delete(db);
         await this.#updateRegister();
         return validDesc;
     }

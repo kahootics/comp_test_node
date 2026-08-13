@@ -62,14 +62,5 @@ export class DBRecord implements dbRecord {
             editables: this.#editables
         };
     }
-
-    getFlat() {
-        return {
-            inv: this.#inv,
-            versions: this.versions,
-            ...this.data,
-            ...this.editables
-        }
-    }
 }
 

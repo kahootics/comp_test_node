@@ -5,6 +5,8 @@ import { EditableFieldDescriptor, type editableSchema, type editableType } from 
 import { DBDataInitSchemas } from "./data-base-init.js";
 import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
 import { DBRecordsStore } from "./records-store.js";
+import type { dbRecord } from "./record.js";
+import { rename, writeFile } from "fs/promises";
 
 export const root = 'src/data/db/';
 const main = root + 'main/';
@@ -40,12 +42,23 @@ export class DataBase {
     /** An empty promise; the database will be accessible only after it's resolved. */
     get ready() { return this.#ready; }
 
-    #recordsStores: Map<dbRecordsStore['id'],DBRecordsStore> | null = null;
+    #recordsStores: Map<dbRecordsStore['id'], DBRecordsStore> | null = null;
     /** Database of records stores; only access once `ready` is fulfilled. */
     get recordsStores() {
         if (this.#recordsStores) return this.#recordsStores;
         throw new IllegalStateError('Cannot access database before fully loading it');
     }
+
+    /** 
+     * Await before starting any writing operation.   
+     * If a writing operation starts, a promise should be 
+     * stored here to ensure no concurrent writing operation starts.
+     */
+    #writePermission: Promise<void> = Promise.resolve();
+    async #onWriteAllowed(callback: () => Promise<void>) {
+        return this.#writePermission = this.#writePermission.then(callback);
+    }
+
 
     private constructor(
         token: symbol,
@@ -100,22 +113,27 @@ export class DataBase {
             .then(parsed => new Map(parsed.recordsStores
                 .map(store => {
                     const rStore = new DBRecordsStore(store);
-                    return [rStore.id ,rStore];
-                }))
-            );
+                    return [rStore.id, rStore];
+                })
+            ));
     }
+    async #updateDB() {
+        await this.#ready;
+
+        const data = JSON.stringify(this);
+        const tmpPath = this.#path + '.tmp';
+
+        this.#onWriteAllowed(async () => {
+            await writeFile(tmpPath, data, 'utf-8');
+            await rename(tmpPath, this.#path);
+        });
+    }
+
     toJSON(): z.infer<ReturnType<typeof _buildDBSchema>> {
         return {
             type: this.#type,
-            recordsStores: this.#getAllRecordStoresJSON()
+            recordsStores: Array.from(this.recordsStores.values())
         }
-    }
-    #getAllRecordStoresJSON(): dbRecordsStore[] {
-        const res: dbRecordsStore[] = [];
-        for (const store of this.recordsStores.values()) {
-            res.push(store.toJSON())
-        }
-        return res;
     }
 
     #schemaCache: ReturnType<typeof _buildDBSchema> | null = null;
@@ -129,18 +147,105 @@ export class DataBase {
         return this.#editablesSchemaCache ??= _buildEditablesSchema(this.#editableFields.values());
     }
 
+    #updateOnAddRecord: boolean = true;
+    /**
+     * 
+     * @param storeId - Identifier of the store where the new record belongs (can be a new store).
+     * @param newData - Unmodifiable data for the new record (will be parsed).
+     * @param newVersion - Version for the new record.
+     * @returns an object indicating the result of the operation (`ok`), 
+     * with the error message in case it failed,
+     * a boolean indicating whether the record was added
+     * to an existing store or a new one was made.
+     */
+    async addRecord(
+        storeId: dbRecordsStore['id'],
+        newData: dbRecord['data'],
+        newVersion: dbRecord['versions'][number]
+    ): Promise<{
+        ok: boolean;
+        error: string;
+    } | {
+        ok: boolean;
+        newStore: boolean;
+    }> {
+        const result = await z.object(this.#dataSchema).safeParseAsync(newData);
+        if (!result.success) {
+            return { ok: false, error: result.error.message }
+        }
+
+        const defaultEditables = await EditableFieldDescriptor.getDefaultObject(this.#type);
+
+        if (this.recordsStores.has(storeId)) {
+            // The record must be added to a store
+            const targetStore = this.recordsStores.get(storeId)!;
+            targetStore.addRecord(newData, newVersion, defaultEditables)
+
+            if (this.#updateOnAddRecord)
+                await this.#updateDB();
+            return { ok: true, newStore: false };
+        } else {
+            // must make a new store
+            const newStore = new DBRecordsStore({
+                type: this.#type,
+                id: storeId,
+                records: [{
+                    inv: DBRecordsStore.getNewInv(),
+                    versions: [newVersion],
+                    data: newData,
+                    editables: defaultEditables
+                }]
+            });
+            if (this.#updateOnAddRecord)
+                await this.#updateDB();
+            return { ok: true, newStore: true };
+        }
+    }
+
+    async addRecordsBatch(
+        newVersion: dbRecord['versions'][number],
+        newRecords: {
+            storeId: dbRecordsStore['id'],
+            newData: dbRecord['data']
+        }[]
+    ) {
+        let noErrors: boolean = true;
+        this.#updateOnAddRecord = false;
+        const resultsBuffer = new Map<
+            dbRecordsStore['id'], ({
+                ok: boolean;
+                error: string;
+            } | {
+                ok: boolean;
+                newStore: boolean;
+            })[]>();
+        for (const { storeId, newData } of newRecords) {
+            if (!resultsBuffer.has(storeId)) resultsBuffer.set(storeId, []);
+            const buffer = resultsBuffer.get(storeId)!
+            const result = await this.addRecord(storeId, newData, newVersion);
+            noErrors &&= result.ok;
+            buffer.push(result);
+        }
+        if (noErrors) await this.#updateDB();
+        this.#updateOnAddRecord = true;
+        return resultsBuffer;
+    }
+
     async addEditableField(label: string, type: editableType, defVal: any) {
-        if(this.#editableFields.has(label))
+        if (this.#editableFields.has(label))
             throw new DuplicateKeyError(`Editable field ${label} already exists for this db (${this.#type})`);
+        if(Object.keys(this.#dataSchema).includes(label))
+            throw new DuplicateKeyError(`Editable field ${label} cannot have the same name as an immutable field in db ${this.#type}`);
+
         const res = await EditableFieldDescriptor.create(this.#type, { label, type, defVal })
         this.#schemaCache = this.#editablesSchemaCache = null; // invalidate
         return res;
     }
 
     async deprecateEditableField(label: string) {
-        if(!this.#editableFields.has(label))
-            throw new NotFoundError(label, {type: 'editable field'});
-        return EditableFieldDescriptor.deprecate(this.#type,await EditableFieldDescriptor.getByLabel(this.#type,label))
+        if (!this.#editableFields.has(label))
+            throw new NotFoundError(label, { type: 'editable field' });
+        return EditableFieldDescriptor.deprecate(this.#type, await EditableFieldDescriptor.getByLabel(this.#type, label))
     }
 
     /* #findEditableFieldValues(label: string) {
@@ -150,10 +255,10 @@ export class DataBase {
         for(const store of this.recordsStores.values()) {}
     } */
     async deleteEditableField(label: string) {
-        if(!this.#editableFields.has(label))
-            throw new NotFoundError(label, {type: 'editable field'});
+        if (!this.#editableFields.has(label))
+            throw new NotFoundError(label, { type: 'editable field' });
         this.#schemaCache = this.#editablesSchemaCache = null; // invalidate
-        return EditableFieldDescriptor.delete(this.#type,await EditableFieldDescriptor.getByLabel(this.#type,label))
+        return EditableFieldDescriptor.delete(this.#type, await EditableFieldDescriptor.getByLabel(this.#type, label))
     }
 }
 
