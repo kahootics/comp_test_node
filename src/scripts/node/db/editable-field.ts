@@ -3,6 +3,7 @@ import { writeFile, rename } from 'node:fs/promises'
 import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
 import { DuplicateKeyError, IllegalAccessError, IllegalArgumentError, IllegalStateError, NotFoundError } from "../../../errors/common-errors.mjs";
 import { dbTypeSchema, root, type dbType } from "./data-base.js";
+import { Log } from "../../../tools/console.js";
 
 declare const DATA_OG_ATT: string // temp
 const editablesPath = root + 'editdb/editables.json';
@@ -121,6 +122,11 @@ export class EditableFieldDescriptor {
                 );
         } catch (e: any) {
             if (e.code === 'ERR_MODULE_NOT_FOUND' || e.code === 'ENOENT') {
+                Log.wrn(
+                    'Cannot find editable fields register at ' + editablesPath 
+                    + '\nA new register has been initialized'
+                    + '\nIf this is not expected outcome, please exit and verify paths'
+                )
                 return this.#register = new Map();
             }
             throw e;

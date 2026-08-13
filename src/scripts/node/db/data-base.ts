@@ -40,7 +40,7 @@ export class DataBase {
     /** An empty promise; the database will be accessible only after it's resolved. */
     get ready() { return this.#ready; }
 
-    #recordsStores: DBRecordsStore[] | null = null;
+    #recordsStores: Map<dbRecordsStore['id'],DBRecordsStore> | null = null;
     /** Database of records stores; only access once `ready` is fulfilled. */
     get recordsStores() {
         if (this.#recordsStores) return this.#recordsStores;
@@ -97,13 +97,25 @@ export class DataBase {
         if (this.#recordsStores) return;
         this.#recordsStores = await import(this.#path, { with: { type: 'json' } })
             .then(data => this.schema.parseAsync(data.default))
-            .then(parsed => parsed.recordsStores.map(store => new DBRecordsStore(store)));
+            .then(parsed => new Map(parsed.recordsStores
+                .map(store => {
+                    const rStore = new DBRecordsStore(store);
+                    return [rStore.id ,rStore];
+                }))
+            );
     }
     toJSON(): z.infer<ReturnType<typeof _buildDBSchema>> {
         return {
             type: this.#type,
-            recordsStores: this.recordsStores.map(store => store.toJSON())
+            recordsStores: this.#getAllRecordStoresJSON()
         }
+    }
+    #getAllRecordStoresJSON(): dbRecordsStore[] {
+        const res: dbRecordsStore[] = [];
+        for (const store of this.recordsStores.values()) {
+            res.push(store.toJSON())
+        }
+        return res;
     }
 
     #schemaCache: ReturnType<typeof _buildDBSchema> | null = null;
@@ -118,16 +130,28 @@ export class DataBase {
     }
 
     async addEditableField(label: string, type: editableType, defVal: any) {
+        if(this.#editableFields.has(label))
+            throw new DuplicateKeyError(`Editable field ${label} already exists for this db (${this.#type})`);
         const res = await EditableFieldDescriptor.create(this.#type, { label, type, defVal })
         this.#schemaCache = this.#editablesSchemaCache = null; // invalidate
         return res;
     }
 
     async deprecateEditableField(label: string) {
+        if(!this.#editableFields.has(label))
+            throw new NotFoundError(label, {type: 'editable field'});
         return EditableFieldDescriptor.deprecate(this.#type,await EditableFieldDescriptor.getByLabel(this.#type,label))
     }
 
+    /* #findEditableFieldValues(label: string) {
+        if(!this.#editableFields.has(label))
+            throw new NotFoundError(label, {type: 'editable field'});
+        const wouldDelete = [];
+        for(const store of this.recordsStores.values()) {}
+    } */
     async deleteEditableField(label: string) {
+        if(!this.#editableFields.has(label))
+            throw new NotFoundError(label, {type: 'editable field'});
         this.#schemaCache = this.#editablesSchemaCache = null; // invalidate
         return EditableFieldDescriptor.delete(this.#type,await EditableFieldDescriptor.getByLabel(this.#type,label))
     }

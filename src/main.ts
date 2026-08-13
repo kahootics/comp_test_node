@@ -20,6 +20,8 @@ import z, { object, regex } from 'zod';
 import { writeZodAsSchema } from './scripts/node/writers/write-zod-as-schema.js';
 import { csvIntoDataset } from './scripts/node/csv/csv-to-dataset.js';
 import fetchSheetDataset from './scripts/node/csv/fetch-sheet-as-dataset.js';
+import fetchSheetAsCSV from './scripts/node/csv/fetch-sheet-as-csv.js';
+import { writeFile } from 'node:fs/promises';
 
 
 export const isDev = process.env.BUILD !== 'true';
@@ -46,8 +48,22 @@ Log.hdr('test');
 
 //await writeZodAsSchema('record',recordStoreSchema)
 
-const stuff = await fetchSheetDataset('1tUbrxZ1PCwOPsIZcU4G2rrTxfTQ8T6-0027uUxlaJNs','304819383');
+const armo = await fetchSheetDataset('1tUbrxZ1PCwOPsIZcU4G2rrTxfTQ8T6-0027uUxlaJNs','304819383');
+const spel = await fetchSheetDataset('1tUbrxZ1PCwOPsIZcU4G2rrTxfTQ8T6-0027uUxlaJNs','1353866329');
+const mgef = await fetchSheetDataset('1tUbrxZ1PCwOPsIZcU4G2rrTxfTQ8T6-0027uUxlaJNs','555361896');
+const ingr = await fetchSheetDataset('1tUbrxZ1PCwOPsIZcU4G2rrTxfTQ8T6-0027uUxlaJNs','185898759');
 
-const blob = stuff.filter(thing => !thing?.overwritten && thing.playable);
+const blob = armo.filter(thing => !thing?.overwritten && thing.playable);
+const spelBlob = spel.filter(thing => !thing?.overwritten);
+const mgefBlob = mgef.filter(thing => !thing?.overwritten);
+const ingrBlob = ingr.filter(thing => !thing?.overwritten);
 
-await writeAsJsonAt(blob,'dist/test/a.json', {minify: false})
+const r = await fetchSheetAsCSV('1tUbrxZ1PCwOPsIZcU4G2rrTxfTQ8T6-0027uUxlaJNs','304819383');
+
+await writeFile('dist/armo.txt',r, 'utf-8');
+await writeAsJsonAt(blob,'dist/test/armo.json', {minify: false})
+await writeAsJsonAt(spelBlob,'dist/test/spel.json', {minify: false})
+await writeAsJsonAt(mgefBlob,'dist/test/mgef.json', {minify: false})
+await writeAsJsonAt(ingrBlob,'dist/test/ingr.json', {minify: false})
+
+writeAsJsonAt(await csvIntoDataset(r),'dist/armor.json', {minify:false});

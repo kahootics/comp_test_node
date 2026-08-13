@@ -120,7 +120,7 @@ function _reflectOpenDialog(self: Modal) {
 }
 
 // HELPERS =============================================================================
-const BrowserSupportsDialog = document.createElement('dialog') instanceof HTMLUnknownElement;
+const BrowserSupportsDialog = !(document.createElement('dialog') instanceof HTMLUnknownElement);
 
 // MIXIN FUNCTION ======================================================================
 /**
