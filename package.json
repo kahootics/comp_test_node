@@ -1,6 +1,6 @@
 {
   "name": "tuxborn-companion",
-  "version": "0.7.7",
+  "version": "0.7.8",
   "author": "kahootics",
   "description": "",
   "main": "dist/main.js",
@@ -25,6 +25,7 @@
   "license": "ISC",
   "type": "module",
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/node": "^25.9.1",
     "@vitest/browser": "^4.1.9",
     "csv-parse": "^6.2.1",

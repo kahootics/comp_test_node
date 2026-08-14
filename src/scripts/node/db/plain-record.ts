@@ -2,7 +2,12 @@ import type { dbRecordsStore, dbType } from "./data-base.js";
 import type { DBRecord } from "./record.js";
 
 
-class PlainRecord {
+export class PlainRecord {
+    static #reservedKeywords = new Set(['type','id','versions','storeId','inv']);
+    static isReservedKeyword(key: string) {
+        return this.#reservedKeywords.has(key);
+    }
+
     readonly #baseRecord: DBRecord;
     readonly #storeId: dbRecordsStore['id'];
     readonly #type: dbRecordsStore['type'];

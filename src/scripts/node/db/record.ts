@@ -1,9 +1,7 @@
 import z from "zod";
-import type { editableSchema } from "./editable-field.js";
-import type { dbRecordsStore } from "./data-base.js";
 import { IllegalAccessError, IllegalArgumentError } from "../../../errors/common-errors.mjs";
-
-export type dbRecord = dbRecordsStore['records'][number];
+import type { editableSchema } from "./editable-field.js";
+import type { dbRecord } from "./data-base.js";
 
 export class DBRecord implements dbRecord {
     readonly #inv: dbRecord['inv'];
@@ -26,14 +24,14 @@ export class DBRecord implements dbRecord {
         // A clone for safety
         this.#data = Object.freeze(structuredClone(record.data));
         // original
-        this.#editables = record.editables;
+        this.#editables = structuredClone(record.editables);
 
     }
 
     addVersion(ver: string, accessToken: symbol) {
-        if(this.#accessToken !== accessToken) 
+        if (this.#accessToken !== accessToken)
             throw new IllegalAccessError("Only the record store can add versions to a record");
-        if(this.#versions.includes(ver)) 
+        if (this.#versions.includes(ver))
             throw new IllegalArgumentError(`Duplicate version ${ver} for record ${this.#inv}`);
         this.#versions.push(ver);
     }
@@ -44,7 +42,10 @@ export class DBRecord implements dbRecord {
      * @param schema
      * @returns
      */
-    saveEdits(delta: Partial<dbRecord['editables']>, editablesSchemas: { [label: string]: editableSchema; }): { ok: true; } | { ok: false; error: string; } {
+    saveEdits(
+        delta: Partial<dbRecord['editables']>,
+        editablesSchemas: { [label: string]: editableSchema; }
+    ): { ok: true; } | { ok: false; error: string; } {
         const safeSchema = z.object(editablesSchemas).partial();
         const result = safeSchema.safeParse(delta);
         if (!result.success) {

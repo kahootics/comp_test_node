@@ -27,7 +27,10 @@ export type editableValue = z.infer<editableSchema>;
 
 const inputInit = (name: string, initValue: string) => `name="${name}" ${DATA_OG_ATT}="${initValue}"`; // add html escape
 const editableInputs: Record<editableType, (name: string, initValue: string, ...args: any[]) => string> = {
-    list: (name, initValue, ...options) => `<select ${inputInit(name, initValue)} value="${initValue}" >${options}</select>`, // ignore
+    list: (name, initValue, options: string[]) =>
+    `<select ${inputInit(name, initValue)}>${
+        options.map(o => `<option value="${escapeHtml(o)}" ${o === initValue ? 'selected' : ''}>${escapeHtml(o)}</option>`).join('')
+    }</select>`,
     paragraph: (name, initValue) => 'textarea',
     line: (name, initValue) => `text`, // ignore
     value: (name, initValue) => `<input ${inputInit(name, initValue)} type="number" value="${initValue}" />`,
@@ -60,6 +63,10 @@ export class EditableFieldDescriptor {
      * stored here to ensure no concurrent writing operation starts.
      */
     static #writePermission: Promise<void> = Promise.resolve();
+    /**
+     * @param callback - A function that will be called once write permission has fulfilled.
+     * @returns an empty promise that should be awaited to ensure completion of the operation.
+     */
     static async #onWriteAllowed(callback: () => Promise<void>) {
         return this.#writePermission = this.#writePermission.then(callback);
     }
@@ -140,7 +147,7 @@ export class EditableFieldDescriptor {
         const data = JSON.stringify(Array.from(this.#register));
         const tmpPath = editablesPath + '.tmp';
 
-        this.#onWriteAllowed(async () => {
+        return this.#onWriteAllowed(async () => {
             await writeFile(tmpPath, data, 'utf-8');
             await rename(tmpPath, editablesPath);
         });
@@ -227,4 +234,8 @@ export class EditableFieldDescriptor {
     }
 }
 
+
+function escapeHtml(o: string) {
+    throw new Error("Function not implemented.");
+}
 

@@ -1,8 +1,8 @@
 import { DuplicateKeyError, IllegalArgumentError, NotFoundError, ValidationError } from "../../../errors/common-errors.mjs";
-import type { hashString } from "../../types/general-types.js";
 import { stableHash } from "../writers/hash.js";
-import type { dbRecordsStore } from "./data-base.js";
-import { type dbRecord, DBRecord } from "./record.js";
+import { DBRecord } from "./record.js";
+import type { hashString } from "../../types/general-types.js";
+import type { dbRecord, dbRecordsStore } from "./data-base.js";
 
 export class DBRecordsStore implements dbRecordsStore {
     static getNewInv() { return _randomAlNum(3); }
@@ -17,7 +17,7 @@ export class DBRecordsStore implements dbRecordsStore {
 
     readonly #recordsDataHashes: Map<hashString, dbRecord['inv']>;
 
-    get id(): string { return this.#id; };
+    get id() { return this.#id; };
     get type() { return this.#type; };
     get records() { return Array.from(this.#records.values()) }
 
@@ -143,8 +143,8 @@ export class DBRecordsStore implements dbRecordsStore {
     /**
      * @returns a three alphanumeric characters sequence unique among the other `inv`
      */
-    #newUniqueInv(): string {
-        let inv: string;
+    #newUniqueInv(): dbRecord['inv'] {
+        let inv: dbRecord['inv'];
         do {
             inv = _randomAlNum(3);
         } while (this.#records.has(inv));
@@ -164,14 +164,15 @@ export class DBRecordsStore implements dbRecordsStore {
 }
 
 
+// PRIVATE HELPERS =====================================================================
 const ALPHANUMERICS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-function _randomAlNum(quantity?: number): string {
+function _randomAlNum(quantity?: number): dbRecord['inv'] {
     const targetLength = Math.floor(Math.abs(quantity ?? 1));
     let result = '';
     while (result.length < targetLength) {
         const i = Math.floor(Math.random() * ALPHANUMERICS.length);;
         result += ALPHANUMERICS.charAt(i);
     }
-    return result;
+    return result as dbRecord['inv'];
 }
