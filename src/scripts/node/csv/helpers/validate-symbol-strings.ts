@@ -1,4 +1,4 @@
-import { ValidationError } from '../../../errors/common-errors.mjs';
+import { ValidationError } from "../../../../errors/common-errors.mjs";
 
 /**
  * Validate any amount of strings to be a symbol
