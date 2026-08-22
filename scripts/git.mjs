@@ -20,7 +20,7 @@ async function mainMenu() {
 
     Log.msg(`Current branch: ${getCurrentBranch()}`);
     Log.hdr('Choose action:')
-    Log.msg('  1) Switch branch\n' +
+    Log.msg('1) Switch branch\n' +
         '  2) Create new branch\n' +
         '  3) Push (bump + commit + push)\n' +
         '  4) Merge with other branch\n' +

@@ -1,4 +1,5 @@
 
+import { isNull } from "./is-null.js";
 import normalizeCellValue from "./normalize-cell-value.js";
 
 /**
@@ -9,10 +10,10 @@ import normalizeCellValue from "./normalize-cell-value.js";
  * If omitted, no replacement is performed.
  * @returns an array containing the elements of the string array
  */
-export default function normalizeCellArray(array: string, separator: string, newLineReplacer?: string): any[] | null {
+export default function normalizeCellArray(array: string, separator: string, newLineReplacer?: string) {
 
-    if(array.length <= 2 || array === 'null') return null;
+    if (isNull(array)) return null;
 
-    return array.split(separator).map( value => normalizeCellValue(value, newLineReplacer) );
-    
+    return array.split(separator).map(value => normalizeCellValue(value, newLineReplacer));
+
 }

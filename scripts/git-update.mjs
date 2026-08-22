@@ -1,7 +1,7 @@
 // @ts-check
 
-import readline from 'node:readline/promises';
 import { execCmdSync } from './exec-cmd-sync.mjs';
+/** @typedef {import('node:readline/promises').Interface} readlineInterface */
 
 const LN_INPUT = '$' + ' ';
 
@@ -16,7 +16,7 @@ const updatesMap = {
 };
 /**
  * 
- * @param {readline.Interface} rl 
+ * @param {readlineInterface} rl 
  */
 export async function pushCurrentBranch(rl) {
 

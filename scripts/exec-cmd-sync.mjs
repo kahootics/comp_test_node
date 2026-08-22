@@ -33,12 +33,12 @@ export function execSyncQuiet(command) {
     return execSync(command, { encoding: 'utf-8' });
 }
 
-import readline from 'node:readline/promises';
+/** @typedef {import('node:readline/promises').Interface} readlineInterface */
 
 const LN_INPUT = '$ ';
 /**
  * 
- * @param {readline.Interface} rl 
+ * @param {readlineInterface} rl 
  * @returns 
  */
 export async function switchBranch(rl) {
@@ -52,7 +52,7 @@ export async function switchBranch(rl) {
 
 /**
  * 
- * @param {readline.Interface} rl 
+ * @param {readlineInterface} rl 
  * @returns 
  */
 export async function createBranch(rl) {
