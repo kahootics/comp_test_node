@@ -1,6 +1,6 @@
 
 import path from 'node:path';
-import fs from 'node:fs';
+import fs, { type PathLike } from 'node:fs';
 import config from '../config/app-config.mjs';
 import { IllegalAccessError, IllegalArgumentError } from '../errors/common-errors.mjs';
 
@@ -35,11 +35,11 @@ export function toPublicUrl(filePath: string): string {
 }
 
 function toPublicUrlRaw(path: string): string {
-    if(path.includes(config.paths.outDir))
+    if (path.includes(config.paths.outDir))
         return path.split(config.paths.outDir)[1]!
-    if(path.includes(config.paths.srcDir))
+    if (path.includes(config.paths.srcDir))
         return path.split(config.paths.srcDir)[1]!
-    if(path.includes(config.paths.tsDir))
+    if (path.includes(config.paths.tsDir))
         return path.split(config.paths.outDir)[1]!
     throw new IllegalAccessError(`${path} is in none of the three project directories`)
 }
@@ -72,4 +72,17 @@ export type $stable = string & { __stable: 'StablePath'; };
  */
 export function _stabilizePath<S extends string>(s: S): S & $stable {
     return path.normalize(s).split(path.sep).join('/') as S & $stable;
+}
+
+import { Readable } from 'stream';
+import { pipeline } from 'stream/promises';
+import { createWriteStream } from 'fs';
+
+export async function writeNdjsonPipeline(path: PathLike, asyncIterable: AsyncIterable<object>) {
+    const lines = async function* () {
+        for await (const obj of asyncIterable) {
+            yield JSON.stringify(obj) + '\n';
+        }
+    };
+    return pipeline(Readable.from(lines()), createWriteStream(path));
 }

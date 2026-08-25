@@ -1,35 +1,95 @@
 import z from "zod";
-import { DuplicateKeyError, IllegalArgumentError, IllegalStateError, NotFoundError, ValidationError } from "../../../errors/common-errors.mjs";
+import { DuplicateKeyError, IllegalStateError, NotFoundError, ValidationError } from "../../../errors/common-errors.mjs";
 import { DBDataInitSchemas } from "./data-base-init.js";
 import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
 import { DBRecordsStore } from "./records-store.js";
-import { rename, writeFile } from "fs/promises";
+import { rename } from "fs/promises";
 import { Log } from "../../../tools/console.js";
 import { PlainRecord } from "./plain-record.js";
 import type { Brand } from "../../types/general-types.js";
 import { EditableFieldDescriptor, type editableSchema, type editableType } from "./editable-field.js";
+import { createReadStream } from "fs";
+import { readLines } from "../../../tools/read-lines.mjs";
+import { writeNdjsonPipeline } from "../../../tools/companion-util.js";
 
+// PATH CONSTANTS ================================================================
 export const root = 'src/data/db/';
 const main = root + 'main/';
 const db_suffix = '_db';
 
-const dbTypeRegEx = /^(?:[A-Z_]{4})$/;
+// DATABASE TYPE =================================================================
 
+const dbTypeRegEx = /^(?:[A-Z_]{4})$/;
 export const dbTypeSchema = z.string().regex(dbTypeRegEx).transform(it => it as dbType);
+
+// PRIVATE HELPERS =====================================================================
+
+function _validateType(type: string): asserts type is dbType {
+    if (type.length !== 4)
+        throw new ValidationError("A database type must have 4 characters: " + type);
+    if (type.toUpperCase() !== type)
+        throw new ValidationError("A database type must compose of only upper case characters: " + type);
+    if (!type.match(dbTypeRegEx))
+        throw new ValidationError("A database type cannot contain special characters: " + type);
+}
+
+function _buildEditablesSchema(editables: Iterable<EditableFieldDescriptor>) {
+    const result: { [label: string]: editableSchema; } = {};
+    for (const editable of editables) {
+        result[editable.label] = editable.getSchema();
+    }
+    return result;
+}
+
+const _buildRecordsStoreSchema = (
+    type: dbType,
+    dataScheme: { [field: string]: z.ZodTypeAny; },
+    editablesSchemas: { [key: string]: editableSchema; }
+) => z.object({
+    // 4 characters to identify the database the record belongs to (case-sensitive!)
+    type: z.literal(type),
+    // A unique identifier among records in the same db 
+    id: z.string().regex(/^(?:[A-Z0-9]{5,6})$/).brand('storeId'),
+    // Array of records under the same ID; they differ in version and are therefore separated for contextual use
+    records: z.array(z.object({
+        // 3 characters to distinguish among records
+        inv: z.string().regex(/^(?:[A-Z0-9]{3})$/).brand('inv'),
+        // A list of versions the data in this record is compatible for
+        versions: z.array(z.string().nonempty()).nonempty(),
+        // bundle-dependent data
+        data: z.object(/* Static Non-modifiable data goes in here */ dataScheme),
+        // bundle-dependent editable data
+        editables: z.object(/* Editable data goes in here */ editablesSchemas)
+    }))
+});
+/* ============================= *
+ * The combo type + inv + id
+ * ensures that every set of data
+ * is identifiable by a single string,
+ * ============================= */
+
+
+// TYPES ======================================================================
 export type dbType = Brand<string, 'database type'>;
 
 export interface DataBaseInit {
-    readonly [type: string]: { [field: string extends 'id' ? never : string ]: z.ZodTypeAny; };
+    readonly [type: string]: {
+        [field: string]: z.ZodTypeAny;
+    }
 }
-export type dbRecordsStore = z.infer<ReturnType<typeof _buildRecordsStoreSchema>>
+export type dbRecordsStore = z.infer<ReturnType<typeof _buildRecordsStoreSchema>>;
 export type dbRecord = dbRecordsStore['records'][number];
 
+// CLASS IMPLEMENTATION ================================================================
+
 export class DataBase {
+    // CLASS PRIVACY AND CACHING ===============================================
     /** Token needed to access constructor. */
     static readonly #constructionToken: unique symbol = Symbol();
     /** Maps each db type to its corresponding database. */
     static readonly #register = new Map<dbType, DataBase>();
 
+    // FINAL PROPERTIES =========================================================
     /** Type of the database (unique). */
     readonly #type: dbType;
     /** Path to the database from the project root. */
@@ -39,19 +99,16 @@ export class DataBase {
     /** Object listing each editable field, with associated editable type, of the db's records. */
     readonly #editableFields: Map<string, EditableFieldDescriptor>;
 
-    readonly #ready: Promise<void>;
+    // STATE DESCRIPTORS ========================================================
+    readonly #ready: Promise<void> | null = null;
     /** An empty promise; *the database will be accessible only after it's resolved*. */
-    get ready() { return this.#ready; }
-
-    #recordsStores: Map<dbRecordsStore['id'], DBRecordsStore> | null = null;
-    /** Database of records stores; only access once `ready` is fulfilled. */
-    get recordsStores() {
-        if (this.#recordsStores) return this.#recordsStores;
-        throw new IllegalStateError('Cannot access database before fully loading it');
+    get ready(): Promise<void> {
+        if (this.#ready) return this.#ready;
+        throw new IllegalStateError('Cannot read state of database');
     }
 
     /** 
-     * Await before starting any writing operation.   
+     * *Await before starting any writing operation*.   
      * If a writing operation starts, the resulting promise should be 
      * stored here to ensure no concurrent writing operation starts.
      */
@@ -64,6 +121,13 @@ export class DataBase {
         return this.#writePermission = this.#writePermission.then(callback);
     }
 
+    // INTERNAL DATA ============================================================
+    #recordsStores: Map<dbRecordsStore['id'], DBRecordsStore> | null = null;
+    /** Database of records stores; only access once `ready` is fulfilled. */
+    get recordsStores() {
+        if (this.#recordsStores) return this.#recordsStores;
+        throw new IllegalStateError('Cannot access database before fully loading it');
+    }
 
     // STARTUP =========================================================================
     private constructor(
@@ -79,16 +143,21 @@ export class DataBase {
         // Build and load the database
         this.#type = type;
         const lcType = type.toLowerCase();
-        this.#path = main + lcType + db_suffix + '.json';
+        this.#path = main + lcType + db_suffix + '.ndjson';
         this.#dataSchema = dataSchema;
         this.#editableFields = new Map(allEditables.map(e => [e.label, e]));
 
+        // Each key must be unique across editable and readonly fields 
+        // (also reserved keywords are filtered out)
         this.#verifyUniquenessOfKeys();
 
+        // Load the database; client must await the `ready`.
         this.#ready = this.#loadDB();
     }
+
     /**
      * Private factory constructor.
+     * 
      * @param type - Database unique 4 characters identifier.
      * @param dataSchema - A zod schema to enforce a specific shape on the database's records immutable data.
      * @returns an empty promise; the database data will be safe to access once such promise has resolved.
@@ -100,9 +169,12 @@ export class DataBase {
         }
         // Request the editable fields known for the database.
         const allEditables = await EditableFieldDescriptor.getAllOrInit(type);
-        const database = new this(this.#constructionToken, type, dataSchema, allEditables)
+        // Make the database instance
+        const database = new this(this.#constructionToken, type, dataSchema, allEditables);
+        // Register it
         this.#register.set(type, database);
-        return database.#ready;
+        // Return state of data loading
+        return database.ready;
     }
     /**
      * Initializes all the databases in the project.
@@ -116,7 +188,6 @@ export class DataBase {
         return Promise.all(buffer);
     }
 
-
     // PERSISTENCE =====================================================================
     /**
      * Loads the entire database with its records stores, validates and builds all
@@ -124,26 +195,31 @@ export class DataBase {
      * @returns an empty promise indicating wheter the database has fully loaded.
      */
     async #loadDB() {
-        if (this.#recordsStores) return;
+        if (this.#recordsStores || this.#ready) return;
         try {
-            this.#recordsStores = await import(this.#path, { with: { type: 'json' } })
-                .then(data => this.#schema.parseAsync(data.default))
-                .then(parsed => new Map(parsed.recordsStores
-                    .map(store => {
-                        const rStore = new DBRecordsStore(store);
-                        return [rStore.id, rStore];
-                    })
-                ));
+            const dataStream = createReadStream(this.#path);
+            const reader = readLines(dataStream);
+
+            const temp = new Map();
+
+            for await (const rawJsonLine of reader) {
+                const rawData = JSON.parse(rawJsonLine);
+                const parsed = await this.#storesSchema.parseAsync(rawData);
+                const recordsStore = new DBRecordsStore(parsed);
+                temp.set(recordsStore.id, recordsStore);
+            }
+
+            this.#recordsStores = temp;
 
         } catch (e: any) {
-            if (e.code === 'ERR_MODULE_NOT_FOUND' || e.code === 'ENOENT') {
+            if ('code' in e && e.code === 'ENOENT') {
                 this.#recordsStores = new Map();
                 Log.wrn(
                     'Cannot find database at ' + this.#path
                     + '\nA new empty database has been initialized'
                     + '\nIf this is not the expected outcome, '
                     + 'please exit and verify the data is at the correct path.'
-                )
+                );
             } else throw e;
         }
         return;
@@ -153,24 +229,21 @@ export class DataBase {
      * @returns a promise that fulfills once writing operation has completed.
      */
     async #updateDB() {
-        await this.#ready;
+        await this.ready;
 
-        const data = JSON.stringify(this);
         const tmpPath = this.#path + '.tmp';
 
         return this.#onWriteAllowed(async () => {
-            await writeFile(tmpPath, data, 'utf-8');
+            await writeNdjsonPipeline(tmpPath, this.#toIterableJSONs());
             await rename(tmpPath, this.#path);
         });
     }
-    /** Returns the database to the shape it was stored. */
-    public toJSON(): z.infer<ReturnType<typeof _buildDBSchema>> {
-        return {
-            type: this.#type,
-            recordsStores: Array.from(this.recordsStores.values())
+
+    async* #toIterableJSONs() {
+        for (const store of this.recordsStores.values()) {
+            yield store;
         }
     }
-
 
     // ACCESSORS =======================================================================
     public static get(type: string): DataBase {
@@ -190,13 +263,20 @@ export class DataBase {
         return result;
     }
 
+    // INTERFACE =======================================================================
+
+    /* #getHTMLByType()
+
+    public getHTMLFlatRecord(record: PlainRecord) {
+        record
+    } */
 
     // SCHEMAS OF THE DATABASE =========================================================
-    #schemaCache: ReturnType<typeof _buildDBSchema> | null = null;
+    #schemaCache: ReturnType<typeof _buildRecordsStoreSchema> | null = null;
     /** Zod schema of the entire database. */
-    get #schema() {
+    get #storesSchema() {
         return this.#schemaCache ??=
-            _buildDBSchema(this.#type, this.#dataSchema, this.#editablesSchema);
+            _buildRecordsStoreSchema(this.#type, this.#dataSchema, this.#editablesSchema);
     }
     #editablesSchemaCache: ReturnType<typeof _buildEditablesSchema> | null = null;
     /** Zod schema for the editable fields of the database. */
@@ -346,7 +426,7 @@ export class DataBase {
                 duplicates.add(
                     new DuplicateKeyError(`Immutable field ${field} of db ${this.#type} cannot use a reserved keyword`)
                 )
-            immutableFields.delete(field);
+                immutableFields.delete(field);
             }
         })
 
@@ -377,7 +457,7 @@ export class DataBase {
             throw new DuplicateKeyError(`Editable field ${label} already exists for this db (${this.#type})`);
         if (Object.keys(this.#dataSchema).includes(label))
             throw new DuplicateKeyError(`Editable field ${label} cannot have the same name as an immutable field in db ${this.#type}`);
-        if (PlainRecord.isReservedKeyword(label)) 
+        if (PlainRecord.isReservedKeyword(label))
             throw new DuplicateKeyError(`Editable field ${label} cannot use a reserved keyword in db ${this.#type}`);
 
         const res = await EditableFieldDescriptor.create(this.#type, { label, type, defVal })
@@ -403,61 +483,4 @@ export class DataBase {
         this.#resetSchemasCaches();
         return EditableFieldDescriptor.delete(this.#type, await EditableFieldDescriptor.getByLabel(this.#type, label))
     }
-}
-
-// PRIVATE HELPERS =====================================================================
-
-function _validateType(type: string): asserts type is dbType {
-    if (type.length !== 4)
-        throw new ValidationError("A database type must have 4 characters: " + type);
-    if (type.toUpperCase() !== type)
-        throw new ValidationError("A database type must compose of only upper case characters: " + type);
-    if (!type.match(dbTypeRegEx))
-        throw new ValidationError("A database type cannot contain special characters: " + type);
-}
-
-function _buildEditablesSchema(editables: Iterable<EditableFieldDescriptor>) {
-    const result: { [label: string]: editableSchema; } = {};
-    for (const editable of editables) {
-        result[editable.label] = editable.getSchema();
-    }
-    return result;
-}
-
-
-const _buildRecordsStoreSchema = (
-    type: dbType,
-    dataScheme: { [field: string]: z.ZodTypeAny; },
-    editablesSchemas: { [key: string]: editableSchema; }
-) => z.object({
-    // 4 characters to identify the database the record belongs to (case-sensitive!)
-    type: z.literal(type),
-    // A unique identifier among records in the same db 
-    id: z.string().regex(/^(?:[A-Z0-9]{5,6})$/).brand('storeId'),
-    // Array of records under the same ID; they differ in version and are therefore separated for contextual use
-    records: z.array(z.object({
-        // 3 characters to distinguish among records
-        inv: z.string().regex(/^(?:[A-Z0-9]{3})$/).brand('inv'),
-        // A list of versions the data in this record is compatible for
-        versions: z.array(z.string().nonempty()).nonempty(),
-        // bundle-dependent data
-        data: z.object(/* Static Non-modifiable data goes in here */ dataScheme),
-        // bundle-dependent editable data
-        editables: z.object(/* Editable data goes in here */ editablesSchemas)
-    }))
-});
-/* ============================= *
- * The combo type + inv + id
- * ensures that every set of data
- * is identifiable by a single string,
- * ============================= */
-function _buildDBSchema(
-    type: dbType,
-    dataScheme: { [field: string]: z.ZodTypeAny; },
-    editablesSchemas: { [key: string]: editableSchema; }
-) {
-    return z.object({
-        type: z.literal(type),
-        recordsStores: z.array(_buildRecordsStoreSchema(type, dataScheme, editablesSchemas))
-    });
 }
