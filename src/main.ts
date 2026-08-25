@@ -19,6 +19,7 @@ import z, { object, regex } from 'zod';
 import { writeZodAsSchema } from './scripts/node/writers/write-zod-as-schema.js';
 import fetchSheetAsCSV from './scripts/node/csv/fetch-sheet-as-csv.js';
 import { writeFile } from 'node:fs/promises';
+import { mkdirSync } from 'node:fs';
 
 
 export const isDev = process.env.BUILD !== 'true';
@@ -57,6 +58,7 @@ const ingrBlob = ingr.filter(thing => !thing?.overwritten); */
 
 const r = await fetchSheetAsCSV('1tUbrxZ1PCwOPsIZcU4G2rrTxfTQ8T6-0027uUxlaJNs','185898759');
 
+mkdirSync('dist/', {recursive: true});
 await writeFile('dist/ingr.txt',r, 'utf-8');/* 
 await writeAsJsonAt(blob,'dist/test/armo.json', {minify: false})
 await writeAsJsonAt(spelBlob,'dist/test/spel.json', {minify: false})
