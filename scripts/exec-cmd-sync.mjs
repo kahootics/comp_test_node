@@ -72,7 +72,7 @@ export async function createBranch(rl) {
  * @param {readlineInterface} rl 
  * @returns 
  */
-async function mergeBranch(rl) {
+export async function mergeBranch(rl) {
     const branches = getLocalBranches().filter(b => b !== getCurrentBranch());
     const menu = branches.map((b, i) => `  ${i + 1}) ${b}`).join('\n');
     const choice = await rl.question(`Which branch to merge into ${getCurrentBranch()}?\n${menu}\n${LN_INPUT}`);
