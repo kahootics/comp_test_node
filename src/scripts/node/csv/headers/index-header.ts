@@ -3,12 +3,8 @@ import { NestableHeader } from './nestable-header.js';
 import { assertInteger } from '../helpers/assert-integer.js';
 import { NestedHeader } from './nested-header.js';
 import { ensurePath } from "../helpers/ensure-path.js";
-import type { HeaderTypes } from '../rr.js';
 
 export class IndexHeader extends NestableHeader {
-    override get type(): keyof HeaderTypes {
-        return 'index';
-    }
 
     readonly indexChildren: IndexHeader[] = [];
     readonly nestedChildren: NestedHeader[] = [];
@@ -31,10 +27,11 @@ export class IndexHeader extends NestableHeader {
         return ensurePath(target, this.localKeys, []);
     }
 
-    readIndex(row: string[]): number {
+    readIndex(row: string[]): number | null {
         const i = this.getMatchingColumnParsedValue(row);
+        if (i === null) return null;
         if (typeof i !== 'number')
-            throw new IllegalArgumentError(`An index header can only contain numbers, but ${i} is not`);
+            throw new IllegalArgumentError(`An index header cannot contain a value that is not 'null' or a 'number', but ${i} is neither`)
         return assertInteger(i);
     }
 

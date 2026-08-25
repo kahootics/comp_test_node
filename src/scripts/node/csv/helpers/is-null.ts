@@ -1,4 +1,6 @@
 
-export function isNull(value: string | number | null) {
-    return value === null || value === 'null' || value === "";
+const nuller = /^(?:[\s]*|.*(?<![\w&^.])null(?![\w&^.]).*)$/i
+
+export function isNull(value: string): boolean {
+    return nuller.test(value);
 }

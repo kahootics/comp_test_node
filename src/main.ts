@@ -18,8 +18,6 @@ import { AssetsLibrary } from './scripts/node/sharp/assets-library.js';
 import { buildRuleRegistry } from './scripts/node/sharp/rule-registry.js';
 import z, { object, regex } from 'zod';
 import { writeZodAsSchema } from './scripts/node/writers/write-zod-as-schema.js';
-import { csvIntoDataset } from './scripts/node/csv/csv-to-dataset.js';
-import fetchSheetDataset from './scripts/node/csv/fetch-sheet-as-dataset.js';
 import fetchSheetAsCSV from './scripts/node/csv/fetch-sheet-as-csv.js';
 import { writeFile } from 'node:fs/promises';
 

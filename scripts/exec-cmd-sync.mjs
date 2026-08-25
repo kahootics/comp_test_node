@@ -63,6 +63,42 @@ export async function createBranch(rl) {
 
     const pushRemote = await rl.question('Push to remote? (y/n)\n' + LN_INPUT);
     if (pushRemote.toLowerCase() === 'y') {
-        execCmdSync(`git push -u origin ${name}`, `Push iniziale di ${name}`);
+        execCmdSync(`git push -u origin ${name}`, `Initial push for ${name}`);
+    }
+}
+
+/**
+ * 
+ * @param {readlineInterface} rl 
+ * @returns 
+ */
+async function mergeBranch(rl) {
+    const branches = getLocalBranches().filter(b => b !== getCurrentBranch());
+    const menu = branches.map((b, i) => `  ${i + 1}) ${b}`).join('\n');
+    const choice = await rl.question(`Which branch to merge into ${getCurrentBranch()}?\n${menu}\n${LN_INPUT}`);
+    const source = branches[Number(choice) - 1];
+    if (!source) { console.error('Choice is not valid.'); return; }
+
+    console.log(`> Merging ${source}...`);
+    try {
+        execSyncQuiet(`git merge ${source} --no-edit`);
+        console.log('Merge successful; no conflicts detected.');
+    } catch (err) {
+        // git merge failure
+        const conflicted = execSyncQuiet('git diff --name-only --diff-filter=U')
+            .trim()
+            .split('\n')
+            .filter(Boolean);
+
+        if (conflicted.length > 0) {
+            console.error('\nFound conflicts in the following files:');
+            conflicted.forEach(f => console.error('  - ' + f));
+                execCmdSync('git merge --abort', 'Merge failed; terminating operation');
+                return;
+        } else {
+            // errore diverso dal conflitto (es. branch inesistente, working tree sporco)
+            console.error('\nMerge failed, but no conflict was found:');
+            console.error(/** @type {Error} */(err).message);
+        }
     }
 }

@@ -1,3 +1,4 @@
+import type { CsvOptionalSymbols } from "../csv-optional-symbols.js";
 import { isNull } from "./is-null.js";
 
 /**
@@ -7,9 +8,9 @@ import { isNull } from "./is-null.js";
  * If omitted, no replacement is performed.
  * @returns normalized content inputted
  */
-export default function normalizeCellValue(value: string | number | null, newLineReplacer?: string) {
+export default function normalizeCellValue(value: string | number | null, options: CsvOptionalSymbols) {
 
-	if (isNull(value)) return null;
+	if (value === null || isNull(String(value))) return null;
 	if (value === 'TRUE') return true;
 	if (value === 'FALSE') return false;
 	if (!isNaN(
@@ -17,7 +18,7 @@ export default function normalizeCellValue(value: string | number | null, newLin
 			? value
 			: Number(value.replace(',','.'))
 	)) return Number(value);
-	if (typeof value === 'string') return (newLineReplacer ? value.replaceAll(newLineReplacer, '\n').trim() : value.trim());
+	if (typeof value === 'string') return (options.newLineReplacer ? value.replaceAll(options.newLineReplacer, '\n').trim() : value.trim());
 	return value;
 
 }

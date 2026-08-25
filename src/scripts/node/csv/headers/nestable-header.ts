@@ -1,10 +1,7 @@
 import { IllegalArgumentError } from '../../../../errors/common-errors.mjs';
-import type { IndexHeader } from './index-header.js';
-import type { HeaderKeys } from '../rr.js';
 import { HeaderEntry } from './header-entry.js';
-
-
-
+import type { IndexHeader } from './index-header.js';
+import type { HeaderKeys } from '../headers-types.js';
 
 export abstract class NestableHeader extends HeaderEntry {
     #ancestor: IndexHeader | undefined;

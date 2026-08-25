@@ -82,10 +82,7 @@ export class CopyRule extends ExportRule<
      */
     protected async createHashFromSharp(sharpAsset: Sharp) {
         const buffer = await sharpAsset.clone().toBuffer();
-        console.log(buffer)
         const h = createHashFromBuffer(buffer);
-        console.log(h)
-
         return h
     }
 }

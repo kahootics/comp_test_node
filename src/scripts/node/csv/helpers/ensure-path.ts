@@ -1,4 +1,4 @@
-import type { HeaderKeys } from "../rr.js";
+import type { HeaderKeys } from "../headers-types.js";
 
 export function ensurePath<T>(target: Record<string, any>, keys: HeaderKeys, defaultValue: T) {
     let current: any = target;

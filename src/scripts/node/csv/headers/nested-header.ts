@@ -1,16 +1,9 @@
 import { IllegalAccessError } from '../../../../errors/common-errors.mjs';
-import type { IndexHeader } from './index-header.js';
 import { NestableHeader } from './nestable-header.js';
-import type { HeaderTypes } from '../rr.js';
 import { setPath } from '../helpers/set-path.js';
-
-
-
+import type { IndexHeader } from './index-header.js';
 
 export class NestedHeader extends NestableHeader {
-    override get type(): keyof HeaderTypes {
-        return 'nested';
-    }
 
     override get ancestor(): IndexHeader {
         if (super.ancestor) return super.ancestor;

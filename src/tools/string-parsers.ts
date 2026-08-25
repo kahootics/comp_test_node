@@ -63,6 +63,10 @@ export function formatList(joiners: string[], and?: string): string {
     return joiners.join(', ').replace(/, ([^,]+)$/g, ` ${and} $1`);
 }
 
+/**
+ * @param list - list of strings among which to find duplicates.
+ * @returns a set containing all duplicate strings from the list.
+ */
 export function duplicatesOfStringList(list: string[]) {
     const buffer = new Set<string>();
     const duplicates = new Set<string>();
