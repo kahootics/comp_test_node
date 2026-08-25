@@ -11,7 +11,6 @@
 import writeAsJsonAt from './scripts/node/writers/write-as-json-at.js';
 import buildScripts from './scripts/node/main/build-scripts.js';
 import { Log } from './tools/console.js';
-import { buildDatasets } from './scripts/node/main/build-datasets.js';
 import { CopyRule } from './scripts/node/sharp/rules/copy-rule.js';
 import { Asset } from './scripts/node/sharp/asset.js';
 import { AssetsLibrary } from './scripts/node/sharp/assets-library.js';
