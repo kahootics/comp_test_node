@@ -7,7 +7,7 @@ const LN_INPUT = '$ ';
 
 
 import readline from 'node:readline/promises';
-import { createBranch, getCurrentBranch, switchBranch } from './exec-cmd-sync.mjs';
+import { createBranch, getCurrentBranch, mergeBranch, switchBranch } from './exec-cmd-sync.mjs';
 import { Log } from '../src/tools/logger.mjs';
 import { pushCurrentBranch } from './git-update.mjs';
 
@@ -20,7 +20,7 @@ async function mainMenu() {
 
     Log.msg(`Current branch: ${getCurrentBranch()}`);
     Log.hdr('Choose action:')
-    Log.msg('  1) Switch branch\n' +
+    Log.msg('1) Switch branch\n' +
         '  2) Create new branch\n' +
         '  3) Push (bump + commit + push)\n' +
         '  4) Merge with other branch\n' +
@@ -39,7 +39,7 @@ async function mainMenu() {
         case '1': await switchBranch(rl); break;
         case '2': await createBranch(rl); break;
         case '3': await pushCurrentBranch(rl); break;
-        case '4': rl.close(); process.exit(0);//await mergeBranch(); break;
+        case '4': await mergeBranch(rl); break;
         case '0': Log.msg("Exiting process."); rl.close(); process.exit(0);
         default: console.error('Invalid choice.');
     }

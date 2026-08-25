@@ -1,6 +1,5 @@
 import { expect, type MatcherResult } from 'vitest';
 import type { MatcherState } from '@vitest/expect';
-import { IllegalArgumentError } from '../src/errors/common-errors.mjs';
 
 export type dummy = never;
 
