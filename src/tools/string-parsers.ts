@@ -33,6 +33,23 @@ export function escapeRegExp(s: string) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+const escapes: Record<string, string> = {
+    ['&']: '&amp;',
+    ['<']: '&lt;',
+    ['>']: '&gt;',
+    ['"']: '&quot;',
+    ["'"]: '&#39;',
+};
+
+const matcher = new RegExp(
+    Object.keys(escapes)
+        .map(k => escapeRegExp(k))
+        .join('|'), 'g'
+);
+
+export function escapeHtml(o: string) {
+    return o.replace(matcher, (matched: string) => escapes[matched]!);
+}
 
 /**
  * Extracts a portion of string between two provided substrings

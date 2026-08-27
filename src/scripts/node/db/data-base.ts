@@ -6,16 +6,16 @@ import { DBRecordsStore } from "./records-store.js";
 import { rename } from "fs/promises";
 import { Log } from "../../../tools/console.js";
 import { PlainRecord } from "./plain-record.js";
-import type { Brand } from "../../types/general-types.js";
-import { EditableFieldDescriptor, type editableSchema, type editableType } from "./editable-field.js";
+import { EditableFieldDescriptor } from "./editable-field.js";
 import { createReadStream } from "fs";
 import { readLines } from "../../../tools/read-lines.mjs";
 import { writeNdjsonPipeline } from "../../../tools/companion-util.js";
+import type { Brand } from "../../types/general-types.js";
+import type { editableConfig, editableSchema, editableType } from "./editable-field.js";
+import dbConfig from "../../../config/db-config.mjs";
 
 // PATH CONSTANTS ================================================================
-export const root = 'src/data/db/';
-const main = root + 'main/';
-const db_suffix = '_db';
+const {main , db_suffix} = dbConfig;
 
 // DATABASE TYPE =================================================================
 
@@ -29,7 +29,7 @@ function _validateType(type: string): asserts type is dbType {
         throw new ValidationError("A database type must have 4 characters: " + type);
     if (type.toUpperCase() !== type)
         throw new ValidationError("A database type must compose of only upper case characters: " + type);
-    if (!type.match(dbTypeRegEx))
+    if (!(dbTypeRegEx.test(type)))
         throw new ValidationError("A database type cannot contain special characters: " + type);
 }
 
@@ -106,7 +106,6 @@ export class DataBase {
         if (this.#ready) return this.#ready;
         throw new IllegalStateError('Cannot read state of database');
     }
-
     /** 
      * *Await before starting any writing operation*.   
      * If a writing operation starts, the resulting promise should be 
@@ -452,7 +451,7 @@ export class DataBase {
      * @param defVal - Default value to assign uninitialized fields.
      * @returns the instance of the new editable field descriptor.
      */
-    public async addEditableField(label: string, type: editableType, defVal: any) {
+    public async addEditableField(label: string, type: editableType, defVal: any, config: editableConfig) {
         if (this.#editableFields.has(label))
             throw new DuplicateKeyError(`Editable field ${label} already exists for this db (${this.#type})`);
         if (Object.keys(this.#dataSchema).includes(label))
@@ -460,7 +459,7 @@ export class DataBase {
         if (PlainRecord.isReservedKeyword(label))
             throw new DuplicateKeyError(`Editable field ${label} cannot use a reserved keyword in db ${this.#type}`);
 
-        const res = await EditableFieldDescriptor.create(this.#type, { label, type, defVal })
+        const res = await EditableFieldDescriptor.create(this.#type, { label, type, defVal, config })
         this.#resetSchemasCaches();
         return res;
     }

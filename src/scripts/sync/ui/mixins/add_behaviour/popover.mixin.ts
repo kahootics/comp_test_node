@@ -1,5 +1,5 @@
 import { ValidationError } from "../../../../../errors/common-errors.mjs";
-import { _getPrivateProp, _initPrivateProp } from "../../../../../tools/encapsulation.js";
+import { _getPrivateProp, _initPrivateProp, _setPrivateProp } from "../../../../../tools/encapsulation.js";
 import { Expandable, expandableCloseTransition, expandableOpenTransition, expandableOnTransitionEnd } from "./expandable.mixin.js";
 
 // EXTENDED CONSTRUCTOR ================================================================
@@ -24,6 +24,9 @@ function _closeOnEscape(self: Popover, e: KeyboardEvent) {
     if (e.key === 'Escape') self.close();
 }
 
+/** Last focused element before focus trap activation. */
+const _lastFocus = new WeakMap<Popover, HTMLElement | null>();
+
 // MIXIN FUNCTION ======================================================================
 /**
  * Generic popover element.
@@ -42,11 +45,21 @@ export function Popover<
         constructor(...args: any[]) {
             super(...args);
             _brand(this);
+
+            this.tabIndex = -1;
             _initPrivateProp(this, _controller, new AbortController());
+            _initPrivateProp(this, _lastFocus, null);
         }
 
         override[expandableOpenTransition](): void {
             super[expandableOpenTransition]();
+            // Register focus
+            const element = document.activeElement;
+            _setPrivateProp(this, _lastFocus,
+                element instanceof HTMLElement
+                    ? element : null);
+
+            // Setup listeners
             const signal = _getPrivateProp(this, _controller).signal;
             document.addEventListener(
                 'keydown',
@@ -60,7 +73,12 @@ export function Popover<
         }
         override[expandableCloseTransition](): void {
             super[expandableCloseTransition]();
+            // Stop listeners
             _getPrivateProp(this, _controller).abort();
+            // Give back focus
+            const last = _getPrivateProp(this, _lastFocus);
+            if (last) last.focus();
+            _setPrivateProp(this, _lastFocus, null);
         }
     }
 }

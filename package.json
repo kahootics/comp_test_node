@@ -1,6 +1,6 @@
 {
   "name": "tuxborn-companion",
-  "version": "0.7.10",
+  "version": "0.7.11",
   "author": "kahootics",
   "description": "",
   "main": "dist/main.js",

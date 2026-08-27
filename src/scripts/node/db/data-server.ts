@@ -9,4 +9,4 @@ app.get('/api/views/:name', () => { });
 // edit a record
 app.patch('/api/db/:type/records', () => { });
 // import csv
-app.post('/api/db/:type/import?version=', () => { })
+app.post('/api/db/:type/import', () => { })

@@ -1,5 +1,5 @@
 import { IllegalArgumentError, ValidationError } from "../../../../../errors/common-errors.mjs";
-import type { Closeable, Showable } from "../../../../types/general-types.js";
+import type { Brand, Closeable, Showable } from "../../../../types/general-types.js";
 import type { ExtendibleElement } from "../../components/extendible-element.js";
 import { requestTransitionFrame } from "../../../shared/utilities.js";
 import { Lock } from "../../../shared/lock.js";
@@ -18,37 +18,37 @@ export const expandableCloseTransition: unique symbol = Symbol('expandableCloseT
 export const expandableOnTransitionEnd: unique symbol = Symbol('expandableOnTransitionEnd');
 
 // MIXIN PUBLIC INTERFACE ==============================================================
-/** Methods `show` and `close` */
+/** Methods `show` and `close`. */
 export interface ExpandableToggles extends Closeable, Showable {
     /** 
-     * - Element exits `hidden` state
-     * - Adds `OPEN` constant class
-     * - schedules callbacks for execution
-     * - Applies lock to the transition playing on the element
+     * - Element exits `hidden` state,
+     * - Adds `OPEN` constant class,
+     * - schedules callbacks for execution,
+     * - Applies lock to the transition playing on the element.
      * 
      * @param callbacks - Allows scheduling any amount of callback functions
-     * that will be called at end of transition
+     * that will be called at end of transition.
      * 
-     * @throws {DOMException} If called while another opening/closing transition is in progress    
-     * @throws {DOMException} If called with arguments while the element is already open
+     * @throws {DOMException} If called while another opening/closing transition is in progress.
+     * @throws {DOMException} If called with arguments while the element is already open.
      * 
-     * @remarks quietly fails if called with no arguments while the element is already open
+     * @remarks quietly fails if called with no arguments while the element is already open.
      * 
      */
     show(...callback: (() => void)[]): void;
     /**  
-     * - Removes `OPEN` constant class
-     * - schedules callbacks for execution
-     * - Element enters `hidden` state at end of transition
-     * - Applies lock to the transition playing on the element
+     * - Removes `OPEN` constant class,
+     * - schedules callbacks for execution,
+     * - Element enters `hidden` state at end of transition,
+     * - Applies lock to the transition playing on the element.
      * 
      * @param callbacks - Allows scheduling any amount of callback functions
-     * that will be called at end of transition
+     * that will be called at end of transition.
      * 
-     * @throws {DOMException} If called while another opening/closing transition is in progress    
-     * @throws {DOMException} If called with arguments while the element is already closed
+     * @throws {DOMException} If called while another opening/closing transition is in progress. 
+     * @throws {DOMException} If called with arguments while the element is already closed.
      * 
-     * @remarks quietly fails if called with no arguments while the element is already closed
+     * @remarks quietly fails if called with no arguments while the element is already closed.
      */
     close(...callback: (() => void)[]): void;
 }
@@ -65,12 +65,23 @@ export interface Expandable extends ExpandableToggles, ExtendibleElement {
 
     /** 
      * Calls opening/closing method of element
-     * but safely returns `false` instead of throwing `Error` 
+     * but safely returns `false` instead of throwing `Error`.
      */
     safeCall(
         call: keyof Expandable,
         ...callbacks: (() => void)[]
     ): boolean;
+
+    /**
+     * Calls either `show` or `close` on the element
+     * depending on its current state.
+     * 
+     * @throws {DOMException} If called while another opening/closing transition is in progress.
+     * 
+     * @remarks 
+     * This is an arrow function, so it can be safely used in place of a callback.
+     */
+    toggle: () => void;
 
     /** 
      * Handles attribute changes. 
@@ -78,9 +89,9 @@ export interface Expandable extends ExpandableToggles, ExtendibleElement {
      * On change of `open`, 
      * if the attribute
      *  
-     * @param name - name of the attribute
-     * @param oldValue - pre-change value
-     * @param newValue - after-change value
+     * @param name - Name of the attribute.
+     * @param oldValue - Pre-change value.
+     * @param newValue - After-change value.
      */
     attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void;
     /** On injection in DOM, align `hidden` and `open` attributes and class. */
@@ -110,7 +121,8 @@ function _scheduleCallbacks(self: Expandable, callbacks: (() => void)[]) {
 /** 
  * Adds `OPEN` class in an AnimationFrame requested after setting `hidden` to `false`.
  * 
- * Extra behaviour can be added by using the symbol public method `expandableOpenTransition`
+ * @remarks
+ * Extra behaviour can be added by using the symbol public method keyed with `expandableOpenTransition`.
  */
 function _handleOpening(self: Expandable, OpenClass: string): void {
     _assertBranded(self);
@@ -123,7 +135,8 @@ function _handleOpening(self: Expandable, OpenClass: string): void {
 /** 
  * Removes `OPEN` class. 
  * 
- * Extra behaviour can be added by using the symbol public method `expandableCloseTransition`
+ * @remarks
+ * Extra behaviour can be added by using the symbol public method keyed with `expandableCloseTransition`.
  */
 function _handleClosing(self: Expandable, OpenClass: string): void {
     _assertBranded(self);
@@ -136,10 +149,10 @@ const _pendingOnTransitionEnd = new WeakMap<Expandable, boolean>();
 /**
  * @unchecked
  * Handles *end of transition* cleanup:
- * - hides the element if it doesn't have `open` attribute
- * - calls all pending callbacks safely
- * - empties pending callbacks
- * - releases transition lock
+ * - hides the element if it doesn't have `open` attribute,
+ * - calls all pending callbacks safely,
+ * - empties pending callbacks,
+ * - releases transition lock.
  */
 function _onTransitionEnd(self: Expandable) {
     self.hidden = !self.isOpen; // only hide at end of transition
@@ -160,9 +173,25 @@ function _onTransitionEnd(self: Expandable) {
 /** Activates a one-time listener for the end of transition operations. */
 function _setupOnTransitionEnd(self: Expandable) {
     _assertBranded(self);
+    _updateControllers(self);
     if (_getPrivateProp(self, _pendingOnTransitionEnd)) return;
     _setPrivateProp(self, _pendingOnTransitionEnd, true);
     self.addEventListener('transitionend', () => _onTransitionEnd(self), { once: true });
+}
+
+type isListening = Brand<boolean, 'is-listening'>;
+const _controllers = new WeakMap<Expandable, Map<HTMLElement, isListening>>();
+
+/**
+ * @unchecked
+ * Updates all the registered controllers'
+ * `aria-expanded` attribute to the element's
+ * `isOpen` state
+ */
+function _updateControllers(self: Expandable) {
+    const controllers = _getPrivateProp(self, _controllers);
+    const expanded = String(self.isOpen);
+    controllers.forEach((_, c) => c.setAttribute('aria-expanded', expanded));
 }
 
 // MIXIN FUNCTION ======================================================================
@@ -207,6 +236,7 @@ export function Expandable<
             _initPrivateProp(this, _lock, new Lock());
             _initPrivateProp(this, _scheduledCallbacks, new Set());
             _initPrivateProp(this, _pendingOnTransitionEnd, false);
+            _initPrivateProp(this, _controllers, new Map());
         }
         public get isLocked(): boolean { return _getPrivateProp(this, _lock).isLocked; };
 
@@ -236,8 +266,8 @@ export function Expandable<
 
         // Attribute related callbacks ==================================================
         connectedCallback(): void {
-            this[OpenAttribute] ? this.classList.add(OpenClass) : this.classList.remove(OpenClass);
-            this.hidden = !this[OpenAttribute];
+            this.isOpen ? this.classList.add(OpenClass) : this.classList.remove(OpenClass);
+            this.hidden = !this.isOpen;
         }
         attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
             if (
@@ -258,7 +288,7 @@ export function Expandable<
             } else if (
                 name === 'hidden'
                 && typeof oldValue !== typeof newValue
-                && this[OpenAttribute] === this.hidden
+                && this.isOpen === this.hidden
             ) {
                 this[OpenAttribute] = !this.hidden
             }
@@ -268,23 +298,30 @@ export function Expandable<
         public show(...callbacks: (() => void)[]): void {
             if (_getPrivateProp(this, _lock).isLocked)
                 throwDOMException("Cannot open the element while a transition is in progress");
-            if (this[OpenAttribute]) {
+            if (this.isOpen) {
                 if (callbacks.length === 0) return; // second request without extra arguments quietly fails
                 throwDOMException("Cannot schedule callbacks without a state change");
             };
             _scheduleCallbacks(this, callbacks);
             this[OpenAttribute] = true;
         }
+
         // CLOSE ========================================================================
         public close(...callbacks: (() => void)[]): void {
             if (_getPrivateProp(this, _lock).isLocked)
                 throwDOMException("Cannot close the element while a transition is in progress");
-            if (!this[OpenAttribute]) {
+            if (!this.isOpen) {
                 if (callbacks.length === 0) return; // second request without extra arguments quietly fails
                 throwDOMException("Cannot schedule callbacks without a state change");
             };
             _scheduleCallbacks(this, callbacks);
             this[OpenAttribute] = false;
+        }
+
+        // TOGGLE =======================================================================
+        public toggle = (): void => {
+            if (this.isOpen) this.close();
+            else this.show();
         }
 
         // SAFE CALL ====================================================================
@@ -297,6 +334,24 @@ export function Expandable<
             } catch (e) {
                 return false;
             } return true;
+        }
+
+        // CONTROLLER SETUP ==============================================================
+        public addController(newController: HTMLElement, addListener?: boolean): void {
+            const controllers = _getPrivateProp(this, _controllers)
+            const isListening = (addListener ?? false) as isListening;
+            if (!controllers.has(newController))
+                controllers.set(newController, isListening);
+
+            newController.setAttribute('aria-controls', this.id);
+            newController.setAttribute('aria-expanded', String(this.isOpen));
+            if (isListening) newController.addEventListener('click', this.toggle);
+        }
+        public removeController(controller: HTMLElement): boolean {
+            const controllers = _getPrivateProp(this, _controllers);
+            const isListening = controllers.get(controller);
+            if (isListening) controller.removeEventListener('click', this.toggle);
+            return controllers.delete(controller);
         }
     }
 }

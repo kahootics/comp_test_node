@@ -26,8 +26,6 @@ const _backdrop = new SetOnceWeakMap<Modal, Backdrop>();
 const _firstFocusable = new WeakMap<Modal, HTMLElement>();
 /** Last focusable element within the modal. */
 const _lastFocusable = new WeakMap<Modal, HTMLElement>();
-/** Last focused element before focus trap activation. */
-const _lastFocus = new WeakMap<Modal, HTMLElement | null>();
 /** Controls the event listener for the focus trap. */
 const _controller = new SetOnceWeakMap<Modal, AbortController>();
 
@@ -71,7 +69,6 @@ function _focusTrapEvent(this: Modal, e: KeyboardEvent): void {
 /**
  * - Start observing for changes to focusable elements
  * - Disables document scrolling
- * - Stores currently focused element
  * - Gives focus to modal
  * - Sets Focus Trap within the modal
  */
@@ -79,25 +76,17 @@ function _activateFocusTrap(self: Modal) {
     const signal = _getPrivateProp(self, _controller).signal;
     _beginObserveFocusables(self);
     document.documentElement.style.overflow = 'hidden';
-    const element = document.activeElement;
-    _setPrivateProp(self, _lastFocus, element instanceof HTMLElement
-        ? element : null)
     _getPrivateProp(self, _firstFocusable).focus();
     self.addEventListener('keydown', _focusTrapEvent.bind(self), { signal });
 }
 /**
  * - Stop observing for changes to focusable elements
  * - Re-enables document scrolling
- * - Gives focus back to stored focused element
- * - Gives focus to modal
  * - Removes Focus Trap
  */
 function _removeFocusTrap(self: Modal) {
     _stopObserveFocusables(self);
     document.documentElement.style.removeProperty('overflow');
-    const last = _getPrivateProp(self, _lastFocus);
-    if (last) last.focus();
-    _setPrivateProp(self, _lastFocus, null);
     _getPrivateProp(self, _controller).abort();
 }
 
@@ -152,7 +141,6 @@ export function Modal<
                 _initPrivateProp(this, _backdrop, new Backdrop('placeholder'));
                 _initPrivateProp(this, _firstFocusable, placeholder);
                 _initPrivateProp(this, _lastFocusable, placeholder);
-                _initPrivateProp(this, _lastFocus, null);
                 _initPrivateProp(this, _controller, new AbortController());
 
                 this.setAttribute('role', 'dialog');
