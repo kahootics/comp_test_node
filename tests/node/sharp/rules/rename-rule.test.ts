@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
-import { Asset } from '../../../src/scripts/node/sharp/asset.js';
-import { RenameRule } from '../../../src/scripts/node/sharp/rules/rename-rule.js';
+import { Asset } from '../../../../src/scripts/node/sharp/asset.js';
+import { RenameRule } from '../../../../src/scripts/node/sharp/rules/rename-rule.js';
 
 describe('RenameRule', () => {
     test('does nothing when given an empty asset list', () => {

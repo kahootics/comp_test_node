@@ -1,7 +1,7 @@
 
 import path from 'node:path';
-import fs, { type PathLike } from 'node:fs';
-import config from '../config/app-config.mjs';
+import fs from 'node:fs';
+import config from '../config/ui-config.mjs';
 import { IllegalAccessError, IllegalArgumentError } from '../errors/common-errors.mjs';
 
 
@@ -74,15 +74,4 @@ export function _stabilizePath<S extends string>(s: S): S & $stable {
     return path.normalize(s).split(path.sep).join('/') as S & $stable;
 }
 
-import { Readable } from 'stream';
-import { pipeline } from 'stream/promises';
-import { createWriteStream } from 'fs';
 
-export async function writeNdjsonPipeline(path: PathLike, asyncIterable: AsyncIterable<object>) {
-    const lines = async function* () {
-        for await (const obj of asyncIterable) {
-            yield JSON.stringify(obj) + '\n';
-        }
-    };
-    return pipeline(Readable.from(lines()), createWriteStream(path));
-}

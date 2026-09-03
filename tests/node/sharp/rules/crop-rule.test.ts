@@ -1,6 +1,6 @@
 import { describe, test, expect, vi } from 'vitest';
-import { CropRule, Use } from '../../../src/scripts/node/sharp/rules/crop-rule.js';
-import { Asset } from '../../../src/scripts/node/sharp/asset.js';
+import { CropRule, Use } from '../../../../src/scripts/node/sharp/rules/crop-rule.js';
+import { Asset } from '../../../../src/scripts/node/sharp/asset.js';
 
 function fakeSharp(metadata: { width: number; height: number }) {
     const extracted = { marker: 'extracted' };

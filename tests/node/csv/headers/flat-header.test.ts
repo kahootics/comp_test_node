@@ -2,7 +2,7 @@ import { describe, test, expect, vi } from 'vitest';
 import { HeaderEntry } from '../../../../src/scripts/node/csv/headers/header-entry.js';
 import { FlatHeader } from '../../../../src/scripts/node/csv/headers/flat-header.js';
 import { CsvOptionalSymbols } from '../../../../src/scripts/node/csv/csv-optional-symbols.js';
-import { dummy } from '../../../setup.js';
+import type { dummy } from '../../../setup.js';
 
 vi.mock('../../../../src/scripts/node/csv/csv-optional-symbols.js', () => ({
     CsvOptionalSymbols: {

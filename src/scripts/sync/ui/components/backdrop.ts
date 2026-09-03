@@ -1,4 +1,4 @@
-import config from "../../../../config/app-config.mjs";
+import config from "../../../../config/ui-config.mjs";
 import { Expandable, expandableOnTransitionEnd, expandableCloseTransition, expandableOpenTransition, type ExpandableToggles } from "../mixins/add_behaviour/expandable.mixin.js";
 import { ExtendibleElement } from "./extendible-element.js";
 

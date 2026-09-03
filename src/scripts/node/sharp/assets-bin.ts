@@ -1,5 +1,5 @@
 import path from "node:path";
-import appConfig from "../../../config/app-config.mjs";
+import appConfig from "../../../config/ui-config.mjs";
 import fs from 'node:fs'
 import z from "zod";
 import { Log } from "../../../tools/console.js";

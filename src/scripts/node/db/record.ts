@@ -3,6 +3,11 @@ import { IllegalAccessError, IllegalArgumentError } from "../../../errors/common
 import type { editableSchema } from "./editable-field.js";
 import type { dbRecord } from "./data-base.js";
 
+
+/**
+ * 
+ * This class only allows acces to clones of the original data, so that no inproper edit is transmitted to the database.
+ */
 export class DBRecord implements dbRecord {
     readonly #inv: dbRecord['inv'];
     readonly #versions: dbRecord['versions'];
@@ -38,6 +43,7 @@ export class DBRecord implements dbRecord {
 
     /**
      * Saves edits made to an *editable* field.
+     * 
      * @param delta
      * @param schema
      * @returns

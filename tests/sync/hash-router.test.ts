@@ -3,7 +3,7 @@
 import { describe, expect, beforeEach, afterEach, vi, test } from "vitest";
 import { HashRouter } from '../../src/scripts/sync/routing/hash-router.js';
 import { hashRouterRequestEvent, route, hashRouterEvent, title } from "../../src/scripts/types/router-types.js";
-import { dummy } from '../setup.js';
+import type { dummy } from '../setup.js';
 import { HashRouterRequestEvent } from "../../src/scripts/sync/routing/hash-router-request-event.js";
 import { HashRouterEvent } from "../../src/scripts/sync/routing/hash-router-event.js";
 

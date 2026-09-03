@@ -1,13 +1,14 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-import { asDir } from '../utils.js';
-import { AssetsDirectory } from '../../src/scripts/node/sharp/assets-directory.js';
-import { AssetsLibrary } from '../../src/scripts/node/sharp/assets-library.js';
-import { AssetBin } from '../../src/scripts/node/sharp/assets-bin.js';
+import { asDir } from '../../utils.js';
+import { AssetsDirectory } from '../../../src/scripts/node/sharp/assets-directory.js';
+import { AssetsLibrary } from '../../../src/scripts/node/sharp/assets-library.js';
+import { AssetBin } from '../../../src/scripts/node/sharp/assets-bin.js';
+import type { dummy } from "../../setup.js";
 
-vi.mock('../../src/scripts/node/sharp/assets-directory.js', () => ({
+vi.mock('../../../src/scripts/node/sharp/assets-directory.js', () => ({
     AssetsDirectory: { buildAll: vi.fn() },
 }));
-vi.mock('../../src/scripts/node/sharp/assets-bin.js', () => ({
+vi.mock('../../../src/scripts/node/sharp/assets-bin.js', () => ({
     AssetBin: { empty: vi.fn(), add: vi.fn() }
 }));
 

@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { AssetRule, BatchRule, ExportRule, Rule } from '../../src/scripts/node/sharp/rule.js';
+import { AssetRule, BatchRule, ExportRule, Rule } from '../../../src/scripts/node/sharp/rule.js';
 
 
 class TestRule extends Rule<any> {

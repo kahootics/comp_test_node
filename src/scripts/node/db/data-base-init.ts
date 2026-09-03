@@ -3,10 +3,10 @@ import type { DataBaseInit } from "./data-base.js";
 
 
 
-export const DBDataInitSchemas: DataBaseInit = {
+export const DBDataInitSchemas = {
 
     MOD_: {
         name: z.string().nullable()
     }
 
-} as const;
+} satisfies DataBaseInit;

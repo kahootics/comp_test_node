@@ -7,7 +7,7 @@ import { Log } from '../../../tools/console.js';
 import { createHashFromBuffer } from '../writers/hash.js';
 import * as esbuild from 'esbuild';
 import { isDev } from '../../../main.js';
-import config from '../../../config/app-config.mjs'
+import config from '../../../config/ui-config.mjs'
 
 
 const TARGET_BASELINE = 'ES2020';

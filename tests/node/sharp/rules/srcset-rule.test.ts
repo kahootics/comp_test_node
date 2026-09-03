@@ -1,9 +1,9 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import path from 'node:path/posix';
-import { Asset } from '../../../src/scripts/node/sharp/asset.js';
-import { dummy } from '../../setup.js'
-import { SrcsetRule } from '../../../src/scripts/node/sharp/rules/srcset-rule.js';
-import { stableHash } from '../../../src/scripts/node/writers/hash.js';
+import { Asset } from '../../../../src/scripts/node/sharp/asset.js';
+import type { dummy } from '../../../setup.js'
+import { SrcsetRule } from '../../../../src/scripts/node/sharp/rules/srcset-rule.js';
+import { stableHash } from '../../../../src/scripts/node/writers/hash.js';
 
 vi.mock('node:fs', () => {
     const mkdirSync = vi.fn();
@@ -11,16 +11,16 @@ vi.mock('node:fs', () => {
 });
 
 
-vi.mock('../../../src/tools/console.js', () => ({
+vi.mock('../../../../src/tools/console.js', () => ({
     Log: { msg: vi.fn(), file: vi.fn() },
 }));
 
-vi.mock('../../../src/scripts/node/writers/hash.js', () => ({
+vi.mock('../../../../src/scripts/node/writers/hash.js', () => ({
     createHashFromBuffer: vi.fn(() => 'srcsethash1'),
     stableHash: vi.fn(() => 'srcsethash1'),
 }));
 
-vi.mock('../../../src/scripts/shared/assets-export-classes.js', () => ({
+vi.mock('../../../../src/scripts/shared/assets-export-classes.js', () => ({
     AssetOutput: class {
         constructor(public name: string, public src: string, public width: number, public height: number) { }
     },

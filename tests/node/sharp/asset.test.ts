@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import { Asset } from '../../src/scripts/node/sharp/asset.js';
-import { IllegalArgumentError } from '../../src/errors/common-errors.mjs';
+import { Asset } from '../../../src/scripts/node/sharp/asset.js';
+import { IllegalArgumentError } from '../../../src/errors/common-errors.mjs';
 import path from 'path';
-import { asName, asDir, asExt } from '../utils.js';
+import { asName, asDir, asExt } from '../../utils.js';
 
 
 describe('Asset - constructor & initial state', () => {

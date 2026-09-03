@@ -1,4 +1,4 @@
-import appConfig from "../../../../config/app-config.mjs";
+import appConfig from "../../../../config/ui-config.mjs";
 import { IllegalArgumentError, IllegalStateError, NotFoundError } from "../../../../errors/common-errors.mjs";
 import { Lock } from "../../shared/lock.js";
 import { requestTransitionFrame } from "../../shared/utilities.js";

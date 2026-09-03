@@ -3,7 +3,7 @@ import { HeaderEntry } from '../../../../src/scripts/node/csv/headers/header-ent
 import { IndexHeader } from '../../../../src/scripts/node/csv/headers/index-header.js';
 import { NestedHeader } from '../../../../src/scripts/node/csv/headers/nested-header.js';
 import { CsvOptionalSymbols } from '../../../../src/scripts/node/csv/csv-optional-symbols.js';
-import { dummy } from '../../../setup.js';
+import type { dummy } from '../../../setup.js';
 
 vi.mock('../../../../src/scripts/node/csv/csv-optional-symbols.js', () => ({
     CsvOptionalSymbols: {

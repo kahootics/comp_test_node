@@ -1,4 +1,4 @@
-
+// @ts-check
 const root = 'src/data/db/';
 export default {
     root,

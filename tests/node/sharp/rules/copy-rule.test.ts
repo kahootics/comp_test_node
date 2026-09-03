@@ -1,12 +1,12 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path/posix';
-import { Asset } from '../../../src/scripts/node/sharp/asset.js';
-import { CopyRule } from '../../../src/scripts/node/sharp/rules/copy-rule.js';
-import { Log } from '../../../src/tools/console.js';
-import { stableHash } from '../../../src/scripts/node/writers/hash.js';
+import { Asset } from '../../../../src/scripts/node/sharp/asset.js';
+import { CopyRule } from '../../../../src/scripts/node/sharp/rules/copy-rule.js';
+import { Log } from '../../../../src/tools/console.js';
+import { stableHash } from '../../../../src/scripts/node/writers/hash.js';
 
-vi.mock('../../../src/tools/console.js', () => ({
+vi.mock('../../../../src/tools/console.js', () => ({
     Log: { msg: vi.fn(), file: vi.fn() },
 }));
 
@@ -15,16 +15,16 @@ vi.mock('node:fs', () => {
     return { default: { mkdirSync }, mkdirSync };
 });
 
-vi.mock('../../../src/scripts/node/writers/copy-file-to.js', () => ({
+vi.mock('../../../../src/scripts/node/writers/copy-file-to.js', () => ({
     destPathCorrected: vi.fn((assetPath: string, dest: string) => path.join(dest, path.basename(assetPath))),
 }));
 
-vi.mock('../../../src/scripts/node/writers/hash.js', () => ({
+vi.mock('../../../../src/scripts/node/writers/hash.js', () => ({
     createHashFromBuffer: vi.fn(() => 'copyhash1'),
     stableHash: vi.fn(() => 'copyhash1'),
 }));
 
-vi.mock('../../../src/scripts/shared/assets-export-classes.js', () => ({
+vi.mock('../../../../src/scripts/shared/assets-export-classes.js', () => ({
     AssetOutput: class {
         constructor(public name: string, public src: string, public width: number, public height: number) { }
     },

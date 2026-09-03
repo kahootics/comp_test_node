@@ -1,12 +1,8 @@
-import type { dbRecordsStore, dbType } from "./data-base.js";
-import type { DBRecord } from "./record.js";
+import type { dbRecord, dbRecordsStore, dbType } from "../data-base.js";
+import type { DBRecord } from "../record.js";
 
 
-export class PlainRecord {
-    static #reservedKeywords = new Set(['type','id','versions','storeId','inv']);
-    static isReservedKeyword(key: string) {
-        return this.#reservedKeywords.has(key);
-    }
+export class FlatRecord {
 
     readonly #baseRecord: DBRecord;
     readonly #storeId: dbRecordsStore['id'];
@@ -30,16 +26,26 @@ export class PlainRecord {
         this.#baseRecord = baseRecord;
         this.#storeId = storeId;
         this.#type = dbType;
-        this.#id = this.#baseRecord.inv + '-' + storeId;
+        this.#id = [dbType, this.#baseRecord.inv, storeId].join('-');
     }
 
-    toJSON() {
+    public toJSON() {
         const result = {
             id: this.id,
+            inv: this.#baseRecord.inv,
             type: this.type,
             versions: this.versions,
         }
         Object.assign(result, this.data, this.editables);
-        return result;
+        return result as {
+            id: string,
+            inv: dbRecord['inv'],
+            type: dbType,
+            versions: string[]
+        } & typeof this.data & typeof this.editables;
+    }
+
+    public supportsVersion(version: string): boolean {
+        return this.#baseRecord.versions.includes(version);
     }
 }

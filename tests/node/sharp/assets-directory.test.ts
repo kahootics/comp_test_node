@@ -1,11 +1,11 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import fs from 'node:fs';
 import { glob } from 'glob';
-import { Asset } from '../../src/scripts/node/sharp/asset.js';
-import { AssetsHashRecords } from '../../src/scripts/node/sharp/assets-hash-records.js';
-import { AssetsDirectory } from '../../src/scripts/node/sharp/assets-directory.js';
-import { RuleSet } from '../../src/scripts/node/sharp/rule-set.js';
-import { asDir } from '../utils';
+import { Asset } from '../../../src/scripts/node/sharp/asset.js';
+import { AssetsHashRecords } from '../../../src/scripts/node/sharp/assets-hash-records.js';
+import { AssetsDirectory } from '../../../src/scripts/node/sharp/assets-directory.js';
+import { RuleSet } from '../../../src/scripts/node/sharp/rule-set.js';
+import { asDir } from '../../utils.js';
 
 vi.mock('node:fs', () => {
     const existsSync = vi.fn();
@@ -14,11 +14,11 @@ vi.mock('node:fs', () => {
 
 vi.mock('glob', () => ({ glob: vi.fn() }));
 
-vi.mock('../../src/scripts/node/sharp/rule-set.js', () => ({
+vi.mock('../../../src/scripts/node/sharp/rule-set.js', () => ({
     RuleSet: { build: vi.fn() },
 }));
 
-vi.mock('../../src/scripts/node/sharp/assets-hash-records.js', () => ({
+vi.mock('../../../src/scripts/node/sharp/assets-hash-records.js', () => ({
     AssetsHashRecords: { write: vi.fn() },
 }));
 

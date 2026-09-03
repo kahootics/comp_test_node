@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { HeadersSchema } from '../../../src/scripts/node/csv/headers-schema.js';
-import { dummy } from '../../setup.js';
+import type { dummy } from '../../setup.js';
 import { CsvOptionalSymbols } from '../../../src/scripts/node/csv/csv-optional-symbols.js';
 
 const defaultOptions = CsvOptionalSymbols.of({

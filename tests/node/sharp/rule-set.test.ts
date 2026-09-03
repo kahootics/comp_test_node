@@ -2,24 +2,24 @@ import { describe, test, expect, beforeEach, vi } from 'vitest';
 import path from 'node:path';
 import fs from 'node:fs';
 import sharp from 'sharp';
-import { Asset } from '../../src/scripts/node/sharp/asset.js';
-import { RuleSet } from '../../src/scripts/node/sharp/rule-set.js';
-import { AssetsHashRecords } from '../../src/scripts/node/sharp/assets-hash-records.js';
-import { buildRuleRegistry } from '../../src/scripts/node/sharp/rule-registry.js';
-import { dummy } from '../setup.js';
-import { createHashFromFile } from '../../src/scripts/node/writers/hash.js';
-import { asDir, asHash } from '../utils.js';
-import { _stabilizePath } from '../../src/tools/companion-util.js';
-import { Log } from '../../src/tools/console.js';
-import { AssetBin } from '../../src/scripts/node/sharp/assets-bin.js';
+import { Asset } from '../../../src/scripts/node/sharp/asset.js';
+import { RuleSet } from '../../../src/scripts/node/sharp/rule-set.js';
+import { AssetsHashRecords } from '../../../src/scripts/node/sharp/assets-hash-records.js';
+import { buildRuleRegistry } from '../../../src/scripts/node/sharp/rule-registry.js';
+import type { dummy } from '../../setup.js';
+import { createHashFromFile } from '../../../src/scripts/node/writers/hash.js';
+import { asDir, asHash } from '../../utils.js';
+import { _stabilizePath } from '../../../src/tools/companion-util.js';
+import { Log } from '../../../src/tools/console.js';
+import { AssetBin } from '../../../src/scripts/node/sharp/assets-bin.js';
 
 
-vi.mock('../../src/tools/console.js', () => ({
+vi.mock('../../../src/tools/console.js', () => ({
     Log: { msg: vi.fn(), file: vi.fn() },
 }));
 
-vi.mock('../../src/scripts/node/sharp/assets-bin.js', () => ({
-    AssetBin: { empty: vi.fn(), add: vi.fn()}
+vi.mock('../../../src/scripts/node/sharp/assets-bin.js', () => ({
+    AssetBin: { empty: vi.fn(), add: vi.fn() }
 }));
 
 vi.mock('node:fs', () => {
@@ -40,7 +40,7 @@ const { sharpToFile, sharpFactory } = vi.hoisted(() => {
 });
 vi.mock('sharp', () => ({ default: sharpFactory }));
 
-vi.mock('../../src/scripts/node/sharp/assets-hash-records.js', () => ({
+vi.mock('../../../src/scripts/node/sharp/assets-hash-records.js', () => ({
     AssetsHashRecords: {
         getHashRecord: vi.fn(() => []),
         setHashRecord: vi.fn(),
@@ -48,20 +48,17 @@ vi.mock('../../src/scripts/node/sharp/assets-hash-records.js', () => ({
     },
 }));
 
-vi.mock('../../src/scripts/node/writers/hash.js', () => ({
+vi.mock('../../../src/scripts/node/writers/hash.js', () => ({
     createHashFromBuffer: vi.fn((buf: any) => 'rsh-' + String(buf).length),
     stableHash: vi.fn((buf: any) => 'rsh-' + String(buf).length),
     createHashFromFile: vi.fn((p: string) => `filehash:${p}`),
 }));
 
-
-vi.mock('../../../tools/console.js', () => ({
-    Log: { msg: vi.fn(), file: vi.fn() },
-}));
-
-
-vi.mock('../../src/scripts/node/sharp/rule-registry.js', async () => {
-    const { AssetRule, BatchRule, ExportRule } = await vi.importActual<typeof import('../../src/scripts/node/sharp/rule.js')>('../../src/scripts/node/sharp/rule.js');
+vi.mock('../../../src/scripts/node/sharp/rule-registry.js', async () => {
+    const { AssetRule, BatchRule, ExportRule } =
+        await vi.importActual<
+            typeof import('../../../src/scripts/node/sharp/rule.js')
+        >('../../../src/scripts/node/sharp/rule.js');
     const { z } = await vi.importActual<typeof import('zod')>('zod');
 
     const anySchema = z.object({}).loose();

@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { CsvOptionalSymbols } from '../../../src/scripts/node/csv/csv-optional-symbols.js';
-import { dummy } from '../../setup.js';
+import type { dummy } from '../../setup.js';
 
 describe('CsvOptionalSymbols', () => {
     test('applies default symbols when nothing is provided', () => {

@@ -2,7 +2,7 @@ import { describe, test, expect, afterEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { buildRuleRegistry } from '../../src/scripts/node/sharp/rule-registry.js';
+import { buildRuleRegistry } from '../../../src/scripts/node/sharp/rule-registry.js';
 
 /** Relative path from within the rules. */
 const RULE_MODULE_URL = '"../rule.js"';

@@ -1,10 +1,10 @@
 import { describe, expect, beforeEach, vi, test } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { AssetsHashRecords } from '../../src/scripts/node/sharp/assets-hash-records.js';
-import { hashString } from '../../src/scripts/types/general-types.js';
-import appConfig from '../../src/config/app-config.mjs';
-import { asDir, asHash } from '../utils.js';
+import { AssetsHashRecords } from '../../../src/scripts/node/sharp/assets-hash-records.js';
+import { hashString } from '../../../src/scripts/types/general-types.js';
+import appConfig from '../../../src/config/ui-config.mjs';
+import { asDir, asHash } from '../../utils.js';
 
 vi.mock('node:fs', () => {
     const existsSync = vi.fn();

@@ -2,7 +2,7 @@
 
 import { describe, expect, beforeEach, afterEach, vi, test } from "vitest";
 import { ExtendibleElement } from "../../src/scripts/sync/ui/components/extendible-element.js";
-import { dummy } from '../setup.js';
+import type { dummy } from '../setup.js';
 
 // HELPERS ==============================================================================
 

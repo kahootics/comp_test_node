@@ -165,7 +165,7 @@ customElements.define('false-select-dropdown', FalseSelectDropdown);
  * 
  * This is not a polyfill of the select element
  */
-class FalseSelect extends HTMLElement {
+export class FalseSelect extends HTMLElement {
 
     public get multiple(): boolean {
         return this.hasAttribute('multiple');

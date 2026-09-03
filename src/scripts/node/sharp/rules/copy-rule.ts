@@ -10,7 +10,7 @@ import sharp, { type Sharp } from "sharp";
 import { createHashFromBuffer } from "../../writers/hash.js";
 import { destPathCorrected } from "../../writers/copy-file-to.js";
 import { Log } from "../../../../tools/console.js";
-import appConfig from "../../../../config/app-config.mjs";
+import appConfig from "../../../../config/ui-config.mjs";
 import { _stabilizePath } from "../../../../tools/companion-util.js";
 
 const hashSchema = z.boolean().default(false);
