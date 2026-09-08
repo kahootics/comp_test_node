@@ -2,15 +2,15 @@ import { describe, test, expect, vi } from 'vitest';
 import { HeaderEntry } from '../../../../src/scripts/node/csv/headers/header-entry.js';
 import { IndexHeader } from '../../../../src/scripts/node/csv/headers/index-header.js';
 import { NestedHeader } from '../../../../src/scripts/node/csv/headers/nested-header.js';
-import { CsvOptionalSymbols } from '../../../../src/scripts/node/csv/csv-optional-symbols.js';
+import { CsvParserOptions } from '../../../../src/scripts/node/csv/csv-parser-options.js';
 import type { dummy } from '../../../setup.js';
 
-vi.mock('../../../../src/scripts/node/csv/csv-optional-symbols.js', () => ({
-    CsvOptionalSymbols: {
+vi.mock('../../../../src/scripts/node/csv/csv-parser-options.js', () => ({
+    CsvParserOptions: {
         of: vi.fn()
     }
 }));
-vi.mocked(CsvOptionalSymbols.of).mockReturnValue({
+vi.mocked(CsvParserOptions.of).mockReturnValue({
     csvDelimiter: undefined,
     newLineReplacer: undefined,
     arraySeparator: '|',
@@ -18,8 +18,8 @@ vi.mocked(CsvOptionalSymbols.of).mockReturnValue({
     objectNotation: '_',
     nestedObjArray: '[i]',
     idIndicator: 'ID'
-} as CsvOptionalSymbols)
-const options = CsvOptionalSymbols.of();
+} as CsvParserOptions)
+const options = CsvParserOptions.of();
 
 describe('IndexHeader', () => {
     test('reads a valid integer index from its column', async () => {

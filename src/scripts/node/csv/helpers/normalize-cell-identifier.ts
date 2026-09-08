@@ -1,5 +1,5 @@
 import { ValidationError } from "../../../../errors/common-errors.mjs";
-import type { CsvOptionalSymbols } from "../csv-optional-symbols.js";
+import type { CsvParserOptions } from "../csv-parser-options.js";
 import { isNull } from "./is-null.js";
 
 /**
@@ -9,7 +9,7 @@ import { isNull } from "./is-null.js";
  * If omitted, no replacement is performed.
  * @returns normalized content inputted
  */
-export default function normalizeCellIdentifier(value: string, options: CsvOptionalSymbols) {
+export default function normalizeCellIdentifier(value: string, options: CsvParserOptions) {
 
     if (isNull(value)) return null;
     if (value === 'TRUE') throw new ValidationError(`An identifier cannot be a boolean`);

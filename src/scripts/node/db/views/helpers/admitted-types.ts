@@ -40,7 +40,7 @@ export function _getAdmittedType(schema: z.ZodType): AdmittedType {
     }
 }
 export function _unwrap(schema: z.ZodType): z.ZodType {
-    if ('unwrap' in schema && typeof (schema as any).unwrap === 'function') {
+    if ('unwrap' in schema && typeof (schema as any).unwrap === 'function' && !(schema instanceof z.ZodArray)) {
         return _unwrap((schema as any).unwrap());
     }
     return schema;

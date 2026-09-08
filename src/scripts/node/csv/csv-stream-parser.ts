@@ -4,23 +4,22 @@ import { createReadStream } from 'node:fs';
 import z from 'zod';
 import { Log } from '../../../tools/console.js';
 import { HeadersSchema } from './headers-schema.js';
-import { CsvOptionalSymbols } from './csv-optional-symbols.js';
-import type { OptionalStringSymbols } from './headers-types.js';
+import { CsvParserOptions } from './csv-parser-options.js';
 import type { PathLike } from 'node:fs';
 
 /**
  * Asynchronous generator function that parses a CSV file and returns the parsed records one by one.
  * 
  * @param csvPath - Path to a csv text file file to parse.
- * @param csvOptions - Optional fields to use during parsing; see {@link CsvOptionalSymbols} for details.
+ * @param csvOptions - Optional fields to use during parsing; see {@link CsvParserOptions} for details.
  * @yields a fully parsed record extracted from the csv.
  */
 export async function* csvStreamParser(
     csvPath: PathLike,
-    csvOptions?: OptionalStringSymbols
+    csvOptions?: CsvParserOptions
 ) {
     let schema: HeadersSchema | undefined;
-    const options = CsvOptionalSymbols.of(csvOptions);
+    const options = CsvParserOptions.of(csvOptions);
     // Build stream    
     const parser = createReadStream(csvPath, 'utf-8').pipe(
         parse({

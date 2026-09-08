@@ -1,5 +1,5 @@
-import { $stable } from "../src/scripts/node/sharp/rule";
 import { directoryString, extType, hashString, nameString } from "../src/scripts/types/general-types";
+import { $stable } from "../src/tools/companion-util";
 
 /**
  * 

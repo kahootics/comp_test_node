@@ -1,4 +1,4 @@
-import { IllegalArgumentError, IllegalStateError } from "../../../../errors/common-errors.mjs";
+import { IllegalAccessError, IllegalArgumentError, IllegalStateError } from "../../../../errors/common-errors.mjs";
 import { formatList } from "../../../../tools/string-parsers.js";
 import { reservedKeywords } from "../data-base.js";
 import { Admitted } from "./helpers/admitted-types.js";
@@ -7,6 +7,7 @@ import { _assertGlobalUniqueness, _collectAllLabels } from "./helpers/assert-glo
 import { EditableColumnDescriptor } from "./columns/editable-column-descriptor.js";
 import { NestableUColumnDescriptor } from "./columns/nestable-u-column-descriptor.js";
 import { PrimitiveUColumnDescriptor } from "./columns/primitive-u-column-descriptor.js";
+import { wrapCell, wrapRow } from "../../writers/HTML/write-table.js";
 import type z from "zod";
 import type { Brand } from "../../../types/general-types.js";
 import type { ColumnDescriptor } from "./columns/column-descriptor.js";
@@ -15,7 +16,6 @@ import type { EditableFieldDescriptor } from "../editable-field.js";
 import type { UnmodifiableColumnDescriptor } from "./columns/unmodifiable-column-descriptor.js";
 import type { PrimitivesAdmittedType } from "./helpers/admitted-types.js";
 import type { dbRecord, dbType } from "../data-base.js";
-import { wrapCell, wrapRow } from "../../writers/HTML/write-table.js";
 
 // PRIVATE HELPERS ==========================================================
 /**
@@ -381,7 +381,7 @@ export class RowsBuilder {
         // Early check to ensure the record belongs to the database and 
         // has therefore been validated for the schema this instance has received
         if (record.type !== this.#dbType)
-            throw new IllegalArgumentError(`Records for this table must have dbType '${this.#dbType}', but this record does not: ${JSON.stringify(record)}`);
+            throw new IllegalAccessError(`Records for this table must have dbType '${this.#dbType}', but this record has ${JSON.stringify(record)}`);
 
         // Resolve each row sub-section
         const base = _resolveBatchPrimitives(this.#baseColumns, record);

@@ -1,13 +1,14 @@
 import { describe, test, expect } from 'vitest';
 import { HeadersSchema } from '../../../src/scripts/node/csv/headers-schema.js';
 import type { dummy } from '../../setup.js';
-import { CsvOptionalSymbols } from '../../../src/scripts/node/csv/csv-optional-symbols.js';
+import { CsvParserOptions } from '../../../src/scripts/node/csv/csv-parser-options.js';
 
-const defaultOptions = CsvOptionalSymbols.of({
+const defaultOptions = CsvParserOptions.of({
     arrayIndicator: '[]',
     objectNotation: '_',
     nestedObjArray: '[i]',
-    arraySeparator: '|'
+    arraySeparator: '|',
+    allowMultiIndexPerLayer: true
 });
 
 async function makeSchema(headers: string[]) {
@@ -52,7 +53,7 @@ describe('HeadersSchema - no nesting', () => {
 
 describe('HeadersSchema - with nesting (2 layers)', () => {
     const headers = [
-    /* flat */  'type', 'formID', 'editorID', 'name', 'keywords[]', 'value', 'weight', 'ingredientValue',
+     /* flat */ 'type', 'formID', 'editorID', 'name', 'keywords[]', 'value', 'weight', 'ingredientValue',
 /* 1st layer */ 'effects[i]', 'effects[i]_formID', 'effects[i]_magnitude', 'effects[i]_area', 'effects[i]_duration',
 /* 2nd layer */ 'effects[i]_conditions[i]', 'effects[i]_conditions[i]_logic', 'effects[i]_conditions[i]_name',
     ];
@@ -250,6 +251,40 @@ describe('HeadersSchema - with parallel nesting (1 layer each)', () => {
         ]);
         expect(results).toEqual(expected1);
     });
+
+    test('rejects parallel nesting when opted out of it at base layer', async () => {
+        const options = CsvParserOptions.of({
+            arrayIndicator: '[]',
+            objectNotation: '_',
+            nestedObjArray: '[i]',
+            arraySeparator: '|',
+            allowMultiIndexPerLayer: false
+        });
+
+        await expect(HeadersSchema.from(headers, options)).rejects.toThrowWithName('IllegalArgumentError');
+    });
+
+    test('rejects parallel nesting when opted out of it at any layer', async () => {
+        const options = CsvParserOptions.of({
+            arrayIndicator: '[]',
+            objectNotation: '_',
+            nestedObjArray: '[i]',
+            arraySeparator: '|',
+            allowMultiIndexPerLayer: false
+        });
+
+        const headers = [
+     /* flat */  'type', 'formID', 'editorID', 'name',
+/* 1st layer */  'effects[i]', 'effects[i]_formID', 'effects[i]_magnitude', 'effects[i]_area', 'effects[i]_duration',
+/*  A1 layer */  'effects[i]_conditions[i]', 'effects[i]_conditions[i]_logic', 'effects[i]_conditions[i]_name',
+/*  B1 layer */  'effects[i]_others[i]', 'effects[i]_others[i]_logic', 'effects[i]_others[i]_name',
+        ];
+
+        await expect(HeadersSchema.from(headers, options)).rejects.toThrowWithName('IllegalArgumentError');
+        await expect(HeadersSchema.from(headers, options)).rejects.toThrow(/Two nesting arrays are not allowed in the same layer/);
+    });
+
+
 });
 
 describe('HeadersSchema - with multiple records', () => {

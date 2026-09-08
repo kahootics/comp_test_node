@@ -3,10 +3,10 @@ import { HeaderEntry } from '../../../../src/scripts/node/csv/headers/header-ent
 import { FlatHeader } from '../../../../src/scripts/node/csv/headers/flat-header.js';
 import { IndexHeader } from '../../../../src/scripts/node/csv/headers/index-header.js';
 import { NestedHeader } from '../../../../src/scripts/node/csv/headers/nested-header.js';
-import { CsvOptionalSymbols } from '../../../../src/scripts/node/csv/csv-optional-symbols.js';
+import { CsvParserOptions } from '../../../../src/scripts/node/csv/csv-parser-options.js';
 import type { dummy } from '../../../setup.js';
 
-const options = CsvOptionalSymbols.of({
+const options = CsvParserOptions.of({
     arrayIndicator: '[]',
     objectNotation: '_',
     nestedObjArray: '[i]',

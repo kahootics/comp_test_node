@@ -1,10 +1,11 @@
 import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
 import { validateSymbolStrings } from "./helpers/validate-symbol-strings.js";
-import type { OptionalStringSymbols } from "./headers-types.js";
 import { duplicatesOfStringList, formatList } from "../../../tools/string-parsers.js";
 import { DuplicateKeyError } from "../../../errors/common-errors.mjs";
 
-export class CsvOptionalSymbols implements OptionalStringSymbols {
+
+
+export class CsvParserOptions {
 
     /** Token needed to access constructor. */
     static readonly #constructionToken: unique symbol = Symbol();
@@ -17,13 +18,24 @@ export class CsvOptionalSymbols implements OptionalStringSymbols {
     #nestedObjArray: string;
     #idIndicator: string;
 
+    #allowMultiIndexPerLayer: boolean;
+
     private constructor(
         token: symbol,
-        csvOptional?: OptionalStringSymbols
+        csvOptional?: Partial<{
+            csvDelimiter: string,
+            newLineReplacer: string,
+            arraySeparator: string,
+            arrayIndicator: string,
+            objectNotation: string,
+            nestedObjArray: string,
+            idIndicator: string,
+            allowMultiIndexPerLayer: boolean
+        }>
     ) {
         // Privacy of constructor
-        if (token !== CsvOptionalSymbols.#constructionToken)
-            throw new PrivateConstructorError('CsvOptionalSymbols', { init: { method: 'of', type: 'factory' } });
+        if (token !== CsvParserOptions.#constructionToken)
+            throw new PrivateConstructorError('CsvParserOptions', { init: { method: 'of', type: 'factory' } });
 
         const csvDelimiter = csvOptional?.csvDelimiter;
         const arraySeparator = csvOptional?.arraySeparator ?? '|';
@@ -41,6 +53,8 @@ export class CsvOptionalSymbols implements OptionalStringSymbols {
         this.#nestedObjArray = nestedObjArray;
         this.#newLineReplacer = newLineReplacer;
         this.#idIndicator = idIndicator;
+
+        this.#allowMultiIndexPerLayer = csvOptional?.allowMultiIndexPerLayer ?? false;
     }
 
     /**
@@ -54,9 +68,10 @@ export class CsvOptionalSymbols implements OptionalStringSymbols {
      * @param [csvOptional.objectNotation] - Separates object keys in a CSV header; defaults to `_`.
      * @param [csvOptional.nestedObjArray] - Marks a CSV index header or one of the nested object's fields; defaults to `[i]`.
      * @param [csvOptional.idIndicator] - Marks a header that will hold an identifier-like `string`; defaults to `ID`.
+     * @param [csvOptional.allowMultiIndexPerLayer] - Determines whether two nesting fields are allowed in the same layer.
      * @returns an instance of this class.
      */
-    public static of(csvOptional?: OptionalStringSymbols) {
+    public static of(csvOptional?: Partial<CsvParserOptions>) {
         return new this(this.#constructionToken, csvOptional);
     }
 
@@ -65,6 +80,9 @@ export class CsvOptionalSymbols implements OptionalStringSymbols {
         if (dupes.size > 0)
             throw new DuplicateKeyError(`${formatList([...dupes])} are duplicates symbols; cannot accept provided arguments`);
     }
+
+    /** Determines whether two nesting fields are allowed in the same layer. */
+    get allowMultiIndexPerLayer() { return this.#allowMultiIndexPerLayer; }
 
     /** Separates CSV values. */
     get csvDelimiter() { return this.#csvDelimiter; }

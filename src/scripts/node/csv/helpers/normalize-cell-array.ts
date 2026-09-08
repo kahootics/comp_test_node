@@ -1,5 +1,5 @@
 
-import type { CsvOptionalSymbols } from "../csv-optional-symbols.js";
+import type { CsvParserOptions } from "../csv-parser-options.js";
 import { isNull } from "./is-null.js";
 import normalizeCellValue from "./normalize-cell-value.js";
 
@@ -11,7 +11,7 @@ import normalizeCellValue from "./normalize-cell-value.js";
  * If omitted, no replacement is performed.
  * @returns an array containing the elements of the string array
  */
-export default function normalizeCellArray(array: string, options: CsvOptionalSymbols) {
+export default function normalizeCellArray(array: string, options: CsvParserOptions) {
 
     if (isNull(array)) return null;
 

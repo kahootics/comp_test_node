@@ -1,13 +1,11 @@
 import { IllegalArgumentError, ValidationError, IllegalStateError } from '../../../errors/common-errors.mjs';
 import { formatList, stableStringify } from '../../../tools/string-parsers.js';
-import { CsvOptionalSymbols } from './csv-optional-symbols.js';
+import { CsvParserOptions } from './csv-parser-options.js';
 import { FlatHeader } from './headers/flat-header.js';
 import { HeaderEntry } from './headers/header-entry.js';
 import { IndexHeader } from './headers/index-header.js';
 import { NestedHeader } from './headers/nested-header.js';
-import { assertInteger } from './helpers/assert-integer.js';
 import { findNearestIndex } from './helpers/find-nearest-index.js';
-import type { OptionalStringSymbols } from './headers-types.js';
 import type { NestableHeader } from './headers/nestable-header.js';
 import { PrivateConstructorError } from '../../../errors/specialized-errors.mjs';
 
@@ -73,15 +71,16 @@ export class HeadersSchema {
      * - The outer array determines the nesting order of the indexes.
      * - Each layer (inner array) indicates a group of index headers with the same nesting depth.
      * 
-     * Within each layer of nesting, there must be exactly one
-     * active index at a time (no more, no less).   
-     * Active indexes between layers must be related according
+     * - Within each layer of nesting, there must be exactly one
+     * active index at a time (no more, no less).
+     * - Options may specify whether there can be multiple indexes per layer or not.
+     * - Active indexes between layers must be related according
      * to the nesting order (at the base of the structure, there is a layer
      * of index headers that have no ancestor).
      */
     readonly #indexTree: IndexHeader[][] = [];
 
-    private constructor(token: symbol, headers: HeaderEntry[], options: CsvOptionalSymbols) {
+    private constructor(token: symbol, headers: HeaderEntry[], options: CsvParserOptions) {
         // Privacy of constructor
         if (token !== HeadersSchema.#constructionToken)
             throw new PrivateConstructorError('HeadersSchema', { init: { method: 'from', type: 'factory' } });
@@ -137,17 +136,33 @@ export class HeadersSchema {
             if (orphaned.length > 0)
                 throw new ValidationError(`${formatList(orphaned.map(h => h.flat))} headers are fields of an object nested into an array, but no index header was provided for such array`);
 
-            // List all the index with no ancestor (at the base of their tree)
-            const baseHeaders = indexHeaders.filter(h => !h.ancestor);
+            // Build and validate the index tree
+            this.#buildIndexTree(indexHeaders, options.allowMultiIndexPerLayer);
+        }
+    }
 
-            // recursively assign children groups to 
-            let headersGroup = baseHeaders;
-            for (let i = 0; headersGroup.length > 0; i++) {
-                this.#indexTree[i] = headersGroup;
-                // Extract the group of headers children of the previous one.
-                headersGroup = headersGroup
-                    .flatMap(h => h.indexChildren);
-            }
+    #buildIndexTree(indexHeaders: IndexHeader[], allowMultipleIndexPerLayer: boolean) {
+        // List all the index with no ancestor (at the base of their tree)
+        const baseHeaders = indexHeaders.filter(h => !h.ancestor);
+
+        // recursively assign children groups to 
+        let headersGroup = baseHeaders;
+        for (let i = 0; headersGroup.length > 0; i++) {
+
+            // If there is more than 1 index header per layer
+            // and options do not allow it, throw
+            if (!allowMultipleIndexPerLayer && headersGroup.length > 1)
+                throw new IllegalArgumentError(
+                    `Two nesting arrays are not allowed in the same layer: ${formatList(
+                        headersGroup.map(header =>
+                            header.keys.join('_') + '[i]'))
+                    } cannot be at the same layer`
+                );
+
+            this.#indexTree[i] = headersGroup;
+            // Extract the group of headers children of the previous one.
+            headersGroup = headersGroup
+                .flatMap(h => h.indexChildren);
         }
     }
 
@@ -158,7 +173,7 @@ export class HeadersSchema {
      * @param options - Options object for parsing the headers and following rows.
      * @returns a promise containing the schema extracted from the headers.
      */
-    static async from(rawHeaders: string[], options: CsvOptionalSymbols) {
+    static async from(rawHeaders: string[], options: CsvParserOptions) {
         const headers = await Promise.all(
             rawHeaders.map((header, i) => HeaderEntry.of(header, i, options))
         );
@@ -275,7 +290,7 @@ export class HeadersSchema {
         // Use the flat part of the record to build an identifier.
         const identifier = stableStringify(flatSnapshot);
 
-        // Check against duplictes
+        // Check against duplicates
         if (this.#history.has(identifier))
             throw new ValidationError(`Duplicate object ${identifier}`);
         // Early exit if the schema does not have nesting fields.

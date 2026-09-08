@@ -1,7 +1,7 @@
 import { IllegalArgumentError, IllegalStateError, NotFoundError } from "../../../../errors/common-errors.mjs";
 import { PrivateConstructorError } from "../../../../errors/specialized-errors.mjs";
 import { escapeRegExp } from "../../../../tools/string-parsers.js";
-import { CsvOptionalSymbols } from "../csv-optional-symbols.js";
+import { CsvParserOptions } from "../csv-parser-options.js";
 import normalizeCellArray from "../helpers/normalize-cell-array.js";
 import normalizeCellIdentifier from "../helpers/normalize-cell-identifier.js";
 import normalizeCellValue from "../helpers/normalize-cell-value.js";
@@ -35,9 +35,9 @@ export class HeaderEntry {
     readonly #flat: string;
     get flat() { return this.#flat; }
 
-    readonly #options: CsvOptionalSymbols;
+    readonly #options: CsvParserOptions;
 
-    protected constructor(token: symbol, label: string, index: number, options: CsvOptionalSymbols) {
+    protected constructor(token: symbol, label: string, index: number, options: CsvParserOptions) {
         // Privacy of constructor
         if (token !== HeaderEntry.#constructionToken)
             throw new PrivateConstructorError('HeaderEntry', { init: { method: 'of', type: 'factory' } });
@@ -80,7 +80,7 @@ export class HeaderEntry {
     public static async of(
         label: string,
         index: number,
-        options: CsvOptionalSymbols
+        options: CsvParserOptions
     ): Promise<IndexHeader | NestedHeader | FlatHeader> {
         label = label.trim();
 

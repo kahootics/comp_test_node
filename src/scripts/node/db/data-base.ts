@@ -139,8 +139,7 @@ export class DataBase {
     readonly #path: string;
     /** Object containing the `zod` record-data validators. */
     readonly #dataSchema: { [field: dataLabel]: z.ZodTypeAny; };
-    /** Object listing each editable field, with associated editable type, of the db's records. */
-    readonly #editableFields: Map<dataLabel, EditableFieldDescriptor>;
+
 
     // STATE DESCRIPTORS ========================================================
     readonly #ready: Promise<void> | null = null;
@@ -164,6 +163,12 @@ export class DataBase {
     }
 
     // INTERNAL DATA ============================================================
+    #optionalEditableFields: Map<dataLabel, EditableFieldDescriptor> | null = null;
+    /** Object listing each editable field, with associated editable type, of the db's records. */
+    get #editableFields(): Map<dataLabel, EditableFieldDescriptor> {
+        if (this.#optionalEditableFields) return this.#optionalEditableFields;
+        throw new IllegalStateError('Cannot access database before fully loading it');
+    };
     #recordsStores: Map<dbRecordsStore['id'], DBRecordsStore> | null = null;
     /** Database of records stores; only access once `ready` is fulfilled. */
     get recordsStores() {
@@ -176,7 +181,6 @@ export class DataBase {
         token: symbol,
         type: dbType,
         dataSchema: { [field: dataLabel]: z.ZodTypeAny; },
-        allEditables: EditableFieldDescriptor[]
     ) {
         // Enforce privacy
         if (token !== DataBase.#constructionToken)
@@ -187,14 +191,14 @@ export class DataBase {
         const lcType = type.toLowerCase();
         this.#path = main + lcType + db_suffix + '.ndjson';
         this.#dataSchema = dataSchema;
-        this.#editableFields = new Map(allEditables.map(e => [e.label, e]));
 
         // Each key must be unique across editable and readonly fields 
         // (also reserved keywords are filtered out)
         this.#verifyUniquenessOfKeys();
 
         // Load the database; client must await the `ready`.
-        this.#ready = this.#loadDB();
+        this.#ready = this.#loadEditableFields()
+            .then(() => this.#loadDB());
     }
 
     /**
@@ -202,22 +206,56 @@ export class DataBase {
      * 
      * @param type - Database unique 4 characters identifier.
      * @param dataSchema - A zod schema to enforce a specific shape on the database's records immutable data.
-     * @returns an empty promise; the database data will be safe to access once such promise has resolved.
+     * @returns the database instance; the database data will be safe to access once the ready promise has resolved.
     */
-    static async #of(type: string, dataSchema: { [field: string]: z.ZodTypeAny; }) {
-        _validateDBIdentifier(type);
+    static #of(type: dbType, dataSchema: { [field: string]: z.ZodTypeAny; }) {
+        // Cannot build same database twice
         if (this.#register.has(type)) {
             throw new DuplicateKeyError(`${type} already exists in the DataBase register`);
         }
-        // Request the editable fields known for the database.
-        const allEditables = await EditableFieldDescriptor.getAllOrInit(type);
         // Make the database instance
-        const database = new this(this.#constructionToken, type, dataSchema, allEditables);
-        // Register it
+        const database = new this(this.#constructionToken, type, dataSchema);
+        // Register it as fulfilled
         this.#register.set(type, database);
-        // Return state of data loading
-        return database.ready;
+        // Return database (ready must be awaited before use)
+        return database;
     }
+
+    /**
+     * Private method to get a database either 
+     * from the internal register
+     * or by loading it from disk.
+     * 
+     * @param type - The type of database to retrieve (not type checked).
+     * @returns the database requested.
+     * 
+     * @throws {NotFoundError} If the database requested does not have an initilizer.
+     */
+    static #getDB(type: string): DataBase {
+
+        // Early exit if db is already loaded in register
+        const db = this.#register.get(type as dbType)
+        if (db) return db;
+
+        if (type in DBDataInitSchemas) {
+            // Validate identificator shape
+            _validateDBIdentifier(type);
+
+            // Get schema
+            const dataSchema = (
+                DBDataInitSchemas as any as {
+                    [type: string]: { [field: string]: z.ZodTypeAny; }
+                }
+            )[type];
+            if (!dataSchema)
+                throw new NotFoundError(type, { type: 'schema for database' });
+
+            // Register the promise
+            return this.#of(type, dataSchema);
+        }
+        throw new NotFoundError(type, { type: 'database with type' });
+    }
+
     /**
      * Initializes all the databases in the project.
      * @returns a promise whose resolution ensures safe access to all the available databases.
@@ -225,13 +263,21 @@ export class DataBase {
     public static async initAll(): Promise<void[]> {
         const buffer: Promise<void>[] = [];
         if (this.#register)
-            for (const [type, dataSchema] of Object.entries(DBDataInitSchemas)) {
-                buffer.push(this.#of(type, dataSchema));
+            for (const type of Object.keys(DBDataInitSchemas)) {
+                buffer.push(this.#getDB(type).ready);
             }
         return Promise.all(buffer);
     }
 
+    
+
     // PERSISTENCE =====================================================================
+    async #loadEditableFields() {
+        // Request the editable fields known for the database.
+        const allEditables = await EditableFieldDescriptor.getAllOrInit(this.#type);
+        this.#optionalEditableFields = new Map(allEditables.map(e => [e.label, e]));
+        return;
+    }
     /**
      * Loads the entire database with its records stores, validates and builds all
      * the database's sub-structures.
@@ -283,18 +329,20 @@ export class DataBase {
         });
     }
 
-    async* #toIterableJSONs() {
+    async *#toIterableJSONs() {
         for (const store of this.recordsStores.values()) {
             yield store;
         }
     }
 
     // ACCESSORS =======================================================================
-    public static get(type: string): DataBase {
-        const db = this.#register.get(type as dbType);
-        if (!db)
-            throw new NotFoundError(type, { type: 'database' });
-        return db;
+    /**
+     * 
+     * @param type 
+     * @returns 
+     */
+    public static get(type: dbType): DataBase {
+        return this.#getDB(type);
     }
 
     public getFlatRecords(): FlatRecord[] {

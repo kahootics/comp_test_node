@@ -4,6 +4,7 @@ import type { RestrictedAdmittedType } from "../helpers/admitted-types.js";
 export abstract class UnmodifiableColumnDescriptor<T extends RestrictedAdmittedType = RestrictedAdmittedType> extends ColumnDescriptor<T> {
 
     readonly #path: string[];
+    get path() { return Array.from(this.#path); }
 
     constructor(label: string, path: string[], type: T) {
         super(label, false, type);

@@ -1,15 +1,15 @@
 import { describe, test, expect, vi } from 'vitest';
 import { HeaderEntry } from '../../../../src/scripts/node/csv/headers/header-entry.js';
 import { FlatHeader } from '../../../../src/scripts/node/csv/headers/flat-header.js';
-import { CsvOptionalSymbols } from '../../../../src/scripts/node/csv/csv-optional-symbols.js';
+import { CsvParserOptions } from '../../../../src/scripts/node/csv/csv-parser-options.js';
 import type { dummy } from '../../../setup.js';
 
-vi.mock('../../../../src/scripts/node/csv/csv-optional-symbols.js', () => ({
-    CsvOptionalSymbols: {
+vi.mock('../../../../src/scripts/node/csv/csv-parser-options.js', () => ({
+    CsvParserOptions: {
         of: vi.fn()
     }
 }));
-vi.mocked(CsvOptionalSymbols.of).mockReturnValue({
+vi.mocked(CsvParserOptions.of).mockReturnValue({
     csvDelimiter: undefined,
     newLineReplacer: undefined,
     arraySeparator: '|',
@@ -17,8 +17,8 @@ vi.mocked(CsvOptionalSymbols.of).mockReturnValue({
     objectNotation: '_',
     nestedObjArray: '[i]',
     idIndicator: 'ID'
-} as CsvOptionalSymbols)
-const options = CsvOptionalSymbols.of();
+} as CsvParserOptions)
+const options = CsvParserOptions.of();
 
 describe('FlatHeader', () => {
     test('writes a simple scalar field to the target object', async () => {
