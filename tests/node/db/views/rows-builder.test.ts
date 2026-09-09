@@ -4,8 +4,8 @@ import { formatList, escapeHtml } from '../../../../src/tools/string-parsers.js'
 import { reservedKeywords } from '../../../../src/scripts/node/db/data-base.js';
 import { _unpackDataSchema } from '../../../../src/scripts/node/db/views/helpers/unpack-data-schema.js';
 import { RowsBuilder } from '../../../../src/scripts/node/db/views/rows-builder.js';
-import type { dbType } from '../../../../src/scripts/node/db/data-base.js';
-import type { FlatRecord } from '../../../../src/scripts/node/db/views/flat-record.js';
+import type { dbType } from '../../../../src/scripts/node/db/data-base-types.d.js';
+import type { FlatRecord } from '../../../../src/scripts/node/db/records/flat-record.js';
 import { EditableFieldDescriptor } from '../../../../src/scripts/node/db/editable-field.js';
 
 vi.mock('../../../../src/tools/console.js', () => ({
@@ -103,7 +103,7 @@ function buildFakeRecord(opts: {
     editables: Record<string, unknown>;
     storeId?: string;
     inv?: string;
-}): FlatRecord {
+}): FlatRecord<dbType> {
     const record: any = {};
     basePaths.forEach((path, i) => {
         _setPath(record, path, `BASE(${baseDescriptors[i]!.label})`);
@@ -113,7 +113,7 @@ function buildFakeRecord(opts: {
     record.inv = opts.inv ?? 'A1B';
     record.data = opts.data;
     record.editables = opts.editables;
-    return record as FlatRecord;
+    return record as FlatRecord<dbType>;
 }
 function _setPath(obj: any, path: string[], value: unknown) {
     let cur = obj;
@@ -223,7 +223,7 @@ describe('RowsBuilder - getHeaderRow', () => {
 
 describe('RowsBuilder - makeRows: validation', () => {
     test('throws IllegalAccessError if the record belongs to a different database than the one specified', () => {
-        const record = { type: 'WRNG', storeId: 's', inv: 'i', data: {}, editables: {} } as unknown as FlatRecord;
+        const record = { type: 'WRNG', storeId: 's', inv: 'i', data: {}, editables: {} } as unknown as FlatRecord<dbType>;
         expect(() => [...noEditableBuilder.makeRows(record)]).toThrowWithName('IllegalAccessError');
     });
 });

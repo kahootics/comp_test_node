@@ -1,18 +1,18 @@
 import z from "zod";
-import { IllegalAccessError, IllegalArgumentError } from "../../../errors/common-errors.mjs";
-import type { editableSchema } from "./editable-field.js";
-import type { dbRecord } from "./data-base.js";
+import { IllegalAccessError, IllegalArgumentError } from "../../../../errors/common-errors.mjs";
+import type { editableSchema } from "../editable-field.js";
+import type { dbRecord, dbRecordData, dbRecordEditables, dbRecordInv, dbRecordVersions, dbType } from "../data-base-types.d.js";
 
 
 /**
  * 
  * This class only allows acces to clones of the original data, so that no inproper edit is transmitted to the database.
  */
-export class DBRecord implements dbRecord {
-    readonly #inv: dbRecord['inv'];
-    readonly #versions: dbRecord['versions'];
-    readonly #data: dbRecord['data'];
-    readonly #editables: dbRecord['editables'];
+export class DBRecord<T extends dbType> implements dbRecord<T> {
+    readonly #inv: dbRecordInv;
+    readonly #versions: dbRecordVersions;
+    readonly #data: dbRecordData<T>;
+    readonly #editables: dbRecordEditables<T>;
 
     readonly #accessToken: symbol;
 
@@ -22,12 +22,12 @@ export class DBRecord implements dbRecord {
     get versions() { return Array.from(this.#versions) }
     get editables() { return structuredClone(this.#editables); }
 
-    constructor(record: dbRecord, accessToken: symbol) {
+    constructor(record: dbRecord<T>, accessToken: symbol) {
         this.#accessToken = accessToken;
         this.#inv = record.inv;
         this.#versions = record.versions;
         // A clone for safety
-        this.#data = Object.freeze(structuredClone(record.data));
+        this.#data = /* Object.freeze */(structuredClone(record.data));
         // original
         this.#editables = structuredClone(record.editables);
 
@@ -49,7 +49,7 @@ export class DBRecord implements dbRecord {
      * @returns
      */
     saveEdits(
-        delta: Partial<dbRecord['editables']>,
+        delta: Partial<dbRecordEditables<T>>,
         editablesSchemas: { [label: string]: editableSchema; }
     ): { ok: true; } | { ok: false; error: string; } {
         const safeSchema = z.object(editablesSchemas).partial();
@@ -61,7 +61,7 @@ export class DBRecord implements dbRecord {
         return { ok: true };
     }
 
-    toJSON(): dbRecord {
+    toJSON(): dbRecord<T> {
         return {
             inv: this.#inv,
             versions: this.versions,

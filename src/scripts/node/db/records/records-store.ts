@@ -1,30 +1,30 @@
-import { DuplicateKeyError, IllegalArgumentError, NotFoundError, ValidationError } from "../../../errors/common-errors.mjs";
-import { stableHash } from "../writers/hash.js";
+import { DuplicateKeyError, IllegalArgumentError, NotFoundError, ValidationError } from "../../../../errors/common-errors.mjs";
+import { stableHash } from "../../writers/hash.js";
 import { DBRecord } from "./record.js";
-import type { hashString } from "../../types/general-types.js";
-import type { dbRecord, dbRecordsStore } from "./data-base.js";
+import type { hashString } from "../../../types/general-types.js";
+import type { dbRecord, dbRecordData, dbRecordEditables, dbRecordInv, dbRecordsStore, dbStoreId, dbRecordVersion, dbRecordVersions, dbType } from "../data-base-types.d.js";
 
-export class DBRecordsStore implements dbRecordsStore {
+export class DBRecordsStore<T extends dbType> implements dbRecordsStore<T> {
     static getNewInv() { return _randomAlNum(3); }
 
-    readonly #records: Map<dbRecord['inv'], DBRecord>;
-    readonly #id: dbRecordsStore['id'];
-    readonly #type: dbRecordsStore['type'];
-    #allVersions: Set<dbRecord['versions'][number]> | null = null;
+    readonly #records: Map<dbRecordInv, DBRecord<T>>;
+    readonly #id: dbStoreId;
+    readonly #type: T;
+    #allVersions: Set<dbRecordVersion> | null = null;
 
     /** A symbol to identify the store from the record's interface. */
     readonly #symbolIdentifier: symbol;
 
-    readonly #recordsDataHashes: Map<hashString, dbRecord['inv']>;
+    readonly #recordsDataHashes: Map<hashString, dbRecordInv>;
 
     get id() { return this.#id; };
     get type() { return this.#type; };
     get records() { return Array.from(this.#records.values()) }
 
     /** All the versions for which a record is available in the store. */
-    get allVersions(): Set<dbRecord['versions'][number]> {
+    get allVersions(): Set<dbRecordVersion> {
         if (this.#allVersions) return this.#allVersions;
-        const result = new Set<dbRecord['versions'][number]>();
+        const result = new Set<dbRecordVersion>();
         for (const [, record] of this.#records) {
             record.versions.forEach(ver => result.add(ver));
         }
@@ -39,7 +39,7 @@ export class DBRecordsStore implements dbRecordsStore {
      * 
      * @throws {NotFoundError} If no record with the given `inv` was found.
      */
-    getRecordByInv(inv: dbRecord['inv']): DBRecord {
+    getRecordByInv(inv: dbRecordInv): DBRecord<T> {
         if (!this.#records.has(inv))
             throw new NotFoundError(inv, { type: 'record with invariant' });
         return this.#records.get(inv)!;
@@ -52,14 +52,14 @@ export class DBRecordsStore implements dbRecordsStore {
      * 
      * @throws {NotFoundError} If no record with the given version was found.
      */
-    getRecordByVersion(ver: string): DBRecord {
+    getRecordByVersion(ver: string): DBRecord<T> {
         for (const [, record] of this.#records) {
             if (record.versions.includes(ver)) return record;
         }
         throw new NotFoundError(ver, { type: 'record with version' });
     }
 
-    constructor(store: dbRecordsStore) {
+    constructor(store: dbRecordsStore<T>) {
         this.#id = store.id;
         this.#type = store.type;
         this.#symbolIdentifier = Symbol(this.#id);
@@ -104,10 +104,10 @@ export class DBRecordsStore implements dbRecordsStore {
      * @throws {IllegalArgumentError} If a record with the same version as the new one is already present in the store.
      */
     addRecord(
-        newData: dbRecord['data'],
-        newVersion: dbRecord['versions'][number],
-        defaultEditables: dbRecord['editables']
-    ): { new: boolean, inv: dbRecord['inv'] } {
+        newData: dbRecordData<T>,
+        newVersion: dbRecordVersion,
+        defaultEditables: dbRecordEditables<T>
+    ): { new: boolean, inv: dbRecordInv } {
         // Duplicate versions are not allowed
         if (this.allVersions.has(newVersion))
             throw new IllegalArgumentError(`Record store ${this.#id} of db ${this.#type} already has a registered record for version ${newVersion}`);
@@ -143,8 +143,8 @@ export class DBRecordsStore implements dbRecordsStore {
     /**
      * @returns a three alphanumeric characters sequence unique among the other `inv`
      */
-    #newUniqueInv(): dbRecord['inv'] {
-        let inv: dbRecord['inv'];
+    #newUniqueInv(): dbRecordInv {
+        let inv: dbRecordInv;
         do {
             inv = _randomAlNum(3);
         } while (this.#records.has(inv));
@@ -152,7 +152,7 @@ export class DBRecordsStore implements dbRecordsStore {
     }
 
 
-    toJSON(): dbRecordsStore {
+    toJSON(): dbRecordsStore<T> {
         return {
             id: this.#id,
             type: this.#type,
@@ -167,12 +167,12 @@ export class DBRecordsStore implements dbRecordsStore {
 // PRIVATE HELPERS =====================================================================
 const ALPHANUMERICS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-function _randomAlNum(quantity?: number): dbRecord['inv'] {
+function _randomAlNum(quantity?: number): dbRecord<dbType>['inv'] {
     const targetLength = Math.floor(Math.abs(quantity ?? 1));
     let result = '';
     while (result.length < targetLength) {
         const i = Math.floor(Math.random() * ALPHANUMERICS.length);;
         result += ALPHANUMERICS.charAt(i);
     }
-    return result as dbRecord['inv'];
+    return result as dbRecord<dbType>['inv'];
 }

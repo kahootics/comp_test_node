@@ -3,7 +3,7 @@ import { NestableUColumnDescriptor } from "../columns/nestable-u-column-descript
 import type { ColumnDescriptor } from "../columns/column-descriptor.js";
 import type { EditableColumnDescriptor } from "../columns/editable-column-descriptor.js";
 import type { UnmodifiableColumnDescriptor } from "../columns/unmodifiable-column-descriptor.js";
-import type { dataLabel } from "../../data-base.js";
+import type { dataLabel } from "../../data-base-types.d.js";
 
 export function _collectAllLabels(columns: UnmodifiableColumnDescriptor[]): dataLabel[] {
     return columns.flatMap(c => c instanceof NestableUColumnDescriptor

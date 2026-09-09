@@ -1,4 +1,4 @@
-import type { dataLabel } from "../../data-base.js";
+import type { dataLabel } from "../../data-base-types.d.js";
 import type { RestrictedAdmittedType } from "../helpers/admitted-types.js";
 
 export abstract class ColumnDescriptor<T extends RestrictedAdmittedType = RestrictedAdmittedType> {

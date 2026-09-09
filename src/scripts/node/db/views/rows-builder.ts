@@ -11,11 +11,11 @@ import { wrapCell, wrapRow } from "../../writers/HTML/write-table.js";
 import type z from "zod";
 import type { Brand } from "../../../types/general-types.js";
 import type { ColumnDescriptor } from "./columns/column-descriptor.js";
-import type { FlatRecord } from "./flat-record.js";
+import type { FlatRecord } from "../records/flat-record.js";
 import type { EditableFieldDescriptor } from "../editable-field.js";
 import type { UnmodifiableColumnDescriptor } from "./columns/unmodifiable-column-descriptor.js";
 import type { PrimitivesAdmittedType } from "./helpers/admitted-types.js";
-import type { dbRecord, dbType } from "../data-base.js";
+import type { dbRecord, dbType } from "../data-base-types.d.js";
 
 // PRIVATE HELPERS ==========================================================
 /**

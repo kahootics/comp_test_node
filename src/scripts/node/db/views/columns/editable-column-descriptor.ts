@@ -2,7 +2,7 @@ import { ColumnDescriptor } from "./column-descriptor.js";
 import { _getAdmittedType, type PrimitivesAdmittedType } from "../helpers/admitted-types.js";
 import { Admitted } from "../helpers/admitted-types.js";
 import type { EditableFieldDescriptor, editableValue } from "../../editable-field.js";
-import type { FlatRecord } from "../flat-record.js";
+import type { FlatRecord } from "../../records/flat-record.js";
 
 
 export class EditableColumnDescriptor extends ColumnDescriptor<PrimitivesAdmittedType> {

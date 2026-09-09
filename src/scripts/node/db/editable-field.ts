@@ -6,7 +6,7 @@ import { dbTypeSchema } from "./data-base.js";
 import { Log } from "../../../tools/console.js";
 import { escapeHtml } from "../../../tools/string-parsers.js";
 import dbConfig from "../../../config/db-config.mjs";
-import type { dataLabel, dbType } from "./data-base.js";
+import type { dataLabel, dbType } from "./data-base-types.d.js";
 
 const { editablesPath } = dbConfig;
 

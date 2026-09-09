@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-import type { dbType } from '../../../src/scripts/node/db/data-base.js';
+import type { dbType } from '../../../src/scripts/node/db/data-base-types.d.js';
 import type { dummy } from "../../setup.js";
 
 const SRC_EDITABLE_FIELD = '../../../src/scripts/node/db/editable-field.js';

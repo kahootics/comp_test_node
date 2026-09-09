@@ -1,4 +1,5 @@
-import { DataBase, type dbType } from "./data-base.js";
+import { DataBase } from "../data-base.js";
+import { type dbType } from "../data-base-types.d.js";
 
 
 

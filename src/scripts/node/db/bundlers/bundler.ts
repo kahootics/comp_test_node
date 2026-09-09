@@ -1,8 +1,9 @@
 import { glob } from "glob";
 import { pathToFileURL } from "node:url";
 import { IllegalStateError, NotFoundError } from "../../../../errors/common-errors.mjs";
-import { DataBase, type dbType } from "../data-base.js";
-import type { FlatRecord } from "../views/flat-record.js";
+import { DataBase } from "../data-base.js";
+import { type dbType } from "../data-base-types.d.js";
+import type { FlatRecord } from "../records/flat-record.js";
 
 type BundlerProcess = () => AsyncGenerator<FlatRecord>;
 
