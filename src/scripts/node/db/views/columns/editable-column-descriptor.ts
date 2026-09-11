@@ -1,8 +1,9 @@
 import { ColumnDescriptor } from "./column-descriptor.js";
 import { _getAdmittedType, type PrimitivesAdmittedType } from "../helpers/admitted-types.js";
 import { Admitted } from "../helpers/admitted-types.js";
-import type { EditableFieldDescriptor, editableValue } from "../../editable-field.js";
+import type { EditableFieldDescriptor, editableType, editableValue } from "../../editables/editable-field.js";
 import type { FlatRecord } from "../../records/flat-record.js";
+import type { dbType } from "../../data-base-types.js";
 
 
 export class EditableColumnDescriptor extends ColumnDescriptor<PrimitivesAdmittedType> {
@@ -18,7 +19,7 @@ export class EditableColumnDescriptor extends ColumnDescriptor<PrimitivesAdmitte
         this.#edDesc = editableDescriptor;
     }
 
-    override getValue(editables: FlatRecord['editables']) {
+    override getValue(editables: FlatRecord<dbType>['editables']) {
         if (this.label in editables)
             return editables[this.label]!;
         throw new Error();

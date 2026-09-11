@@ -20,6 +20,7 @@ import { writeZodAsSchema } from './scripts/node/writers/write-zod-as-schema.js'
 import fetchSheetAsCSV from './scripts/node/csv/fetch-sheet-as-csv.js';
 import { writeFile } from 'node:fs/promises';
 import { mkdirSync } from 'node:fs';
+import { compileEditableTypes } from './scripts/node/db/editables/compile-editable-types.js';
 
 
 export const isDev = process.env.BUILD !== 'true';
@@ -66,3 +67,5 @@ await writeAsJsonAt(mgefBlob,'dist/test/mgef.json', {minify: false})
 await writeAsJsonAt(ingrBlob,'dist/test/ingr.json', {minify: false}) */
 
 //writeAsJsonAt(await csvIntoDataset(r),'dist/armor.json', {minify:false});
+
+await compileEditableTypes();

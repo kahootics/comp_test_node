@@ -1,4 +1,3 @@
-import { DataBase } from "../data-base.js";
 import { type dbType } from "../data-base-types.d.js";
 
 
@@ -22,7 +21,4 @@ export class ViewBuilder {
 
     }
 
-    #loadDBFlatRecords(db: dbType) {
-        DataBase.get
-    }
 }

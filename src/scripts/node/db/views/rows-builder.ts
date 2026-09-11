@@ -1,6 +1,6 @@
 import { IllegalAccessError, IllegalArgumentError, IllegalStateError } from "../../../../errors/common-errors.mjs";
 import { formatList } from "../../../../tools/string-parsers.js";
-import { reservedKeywords } from "../data-base.js";
+import { reservedKeywords } from "../base-field.js";
 import { Admitted } from "./helpers/admitted-types.js";
 import { _unpackDataSchema } from "./helpers/unpack-data-schema.js";
 import { _assertGlobalUniqueness, _collectAllLabels } from "./helpers/assert-global-uniqueness.js";
@@ -12,10 +12,10 @@ import type z from "zod";
 import type { Brand } from "../../../types/general-types.js";
 import type { ColumnDescriptor } from "./columns/column-descriptor.js";
 import type { FlatRecord } from "../records/flat-record.js";
-import type { EditableFieldDescriptor } from "../editable-field.js";
+import type { EditableFieldDescriptor } from "../editables/editable-field.js";
 import type { UnmodifiableColumnDescriptor } from "./columns/unmodifiable-column-descriptor.js";
 import type { PrimitivesAdmittedType } from "./helpers/admitted-types.js";
-import type { dbRecord, dbType } from "../data-base-types.d.js";
+import type { dbDataSchemas, dbDerivedSchemas, dbRecordEditables, dbType } from "../data-base-types.d.js";
 
 // PRIVATE HELPERS ==========================================================
 /**
@@ -58,7 +58,7 @@ type primitiveString = Brand<string, 'primitive'>;
  * @returns a flat string containing the value.
  */
 function _resolvePrimitive(
-    value: {} | null,
+    value: any,
     type: PrimitivesAdmittedType,
 ): primitiveString {
 
@@ -69,12 +69,12 @@ function _resolvePrimitive(
                 : '') as primitiveString;
 
         case Admitted.PRIMITIVE:
-            return ((value === null)
+            return ((value === null || undefined)
                 ? ''
                 : String(value)) as primitiveString;
 
         default:
-            throw new IllegalArgumentError(`Value of type ${type.description} canot be resolved to a string`);
+            throw new IllegalArgumentError(`Value of type ${type.description} cannot be resolved to a string`);
     }
 }
 
@@ -94,7 +94,7 @@ function _resolvePrimitive(
  */
 function _resolveEditable(
     column: EditableColumnDescriptor,
-    obj: dbRecord['editables'],
+    obj: dbRecordEditables<dbType>,
     buildForm: boolean
 ): string {
     const value = column.getValue(obj);
@@ -115,7 +115,7 @@ function _resolveEditable(
  */
 function _resolveEditables(
     columns: EditableColumnDescriptor[],
-    obj: dbRecord['editables'],
+    obj: dbRecordEditables<dbType>,
     buildForm: boolean
 ): string[] {
     return columns.map(c => _resolveEditable(c, obj, buildForm));
@@ -142,8 +142,19 @@ function _assertGetValue(
 ): {} | null {
     const value = column.getValue(obj);
     if (value === undefined)
-        throw new IllegalStateError(`Undefined fields are not allowed, only 'null': ${JSON.stringify(obj)}`);
+        throw new IllegalStateError(`Undefined fields are not allowed here, only 'null': ${JSON.stringify(obj)}`);
     // we estabilished undefined is not accepted as value in the database, always null
+    return value;
+}
+
+function _getOptionalValue(
+    column: ColumnDescriptor,
+    obj: object
+): {} | undefined {
+    const value = column.getValue(obj);
+    if (value === null)
+        throw new IllegalStateError(`Null fields are not allowed here, only 'undefined': ${JSON.stringify(obj)}`);
+    // we estabilished undefined is only accepted as value in derived fields
     return value;
 }
 
@@ -161,6 +172,9 @@ function _resolveBatchPrimitives(columns: PrimitiveUColumnDescriptor[], obj: obj
     return columns.map(c => _resolvePrimitive(_assertGetValue(c, obj), c.type));
 }
 
+function _resolveBatchOptionalPrimitives(columns: PrimitiveUColumnDescriptor[], obj: object): primitiveString[] {
+    return columns.map(c => _resolvePrimitive(_getOptionalValue(c, obj), c.type));
+}
 
 /**
  * Provides an empty (filled with blank strings) placeholder row (single)
@@ -284,12 +298,13 @@ function _resolveNested(
  * Builder of rows (as html strings) from database records following 
  * the schemas provided by the database.
  */
-export class RowsBuilder {
-    readonly #dbType: dbType;
+export class RowsBuilder<T extends dbType> {
+    readonly #dbType: T;
     readonly #editableColumns: EditableColumnDescriptor[];
     readonly #primitiveColumns: PrimitiveUColumnDescriptor[];
     readonly #nestedColumn: NestableUColumnDescriptor | null;
     readonly #baseColumns: PrimitiveUColumnDescriptor[];
+    readonly #derivedColumns: PrimitiveUColumnDescriptor[];
     readonly #buildForm: boolean;
 
     // STARTUP =======================================================================================
@@ -299,7 +314,13 @@ export class RowsBuilder {
      * @param editableFieldDescriptors - Descriptors for the database-specific editable fields.
      * @param buildForm - Boolean flag: if `true`, editable fields will be rendered as form inputs; as plain values otherwise.
      */
-    constructor(dbType: dbType, unmodifiableDataSchema: Record<string, z.ZodType>, editableFieldDescriptors: EditableFieldDescriptor[], buildForm?: true) {
+    constructor(
+        dbType: T, 
+        unmodifiableDataSchema: dbDataSchemas<T>, 
+        derivedDataSchema: dbDerivedSchemas<T>, 
+        editableFieldDescriptors: EditableFieldDescriptor[], 
+        buildForm?: true
+    ) {
         // Register type of database
         this.#dbType = dbType;
         this.#buildForm = buildForm ?? false;
@@ -312,6 +333,9 @@ export class RowsBuilder {
         this.#primitiveColumns = primitive;
         this.#nestedColumn = nested;
 
+        // Build the derived columns
+        this.#derivedColumns = this.#buildPrimitives(derivedDataSchema);
+
         // Build the editable columns
         this.#editableColumns = editableFieldDescriptors.map(e => new EditableColumnDescriptor(e));
 
@@ -320,14 +344,18 @@ export class RowsBuilder {
 
     }
 
+    #buildPrimitives(shape: Record<string, z.ZodType>): PrimitiveUColumnDescriptor[] {
+        return _unpackDataSchema(shape).map(c => {
+            if (c instanceof PrimitiveUColumnDescriptor) return c;
+            throw new IllegalStateError(`A primitive column cannot be nesting`);
+        });
+    }
+
     /** Unpacks the reserved keywords schema to make column descriptors. */
     #buildBase() {
-        const base = _unpackDataSchema(reservedKeywords).map(c => {
-            if (c instanceof PrimitiveUColumnDescriptor) return c;
-            throw new IllegalStateError(`A record's base fields cannot be nesting`)
-        });
+        const base = this.#buildPrimitives(reservedKeywords);
         if (base.length < 1)
-            throw new IllegalStateError(``);
+            throw new IllegalStateError(`Reserved keywords columns cannot be empty`);
         return base;
     }
 
@@ -353,13 +381,14 @@ export class RowsBuilder {
     public getHeaderRow() {
         if(this.#cachedHeaderRow) return this.#cachedHeaderRow;
         const hRow = this.#baseColumns.map(c => wrapCell(c.label, { header: true, scope: 'col' }));
+        const hDer = this.#derivedColumns.map(c => wrapCell(c.label, { header: true, scope: 'col' }));
         const hEdb = this.#editableColumns.map(c => wrapCell(c.label, { header: true, scope: 'col' }));
         const hPrim = _collectAllLabels(
             this.#nestedColumn
                 ? [...this.#primitiveColumns, this.#nestedColumn]
                 : this.#primitiveColumns
         ).map(l => wrapCell(l, { header: true, scope: 'col' }));
-        return this.#cachedHeaderRow = wrapRow([...hRow, ...hPrim, ...hEdb]);
+        return this.#cachedHeaderRow = wrapRow([...hRow, ...hPrim, ...hDer, ...hEdb]);
     }
 
     /**
@@ -377,7 +406,7 @@ export class RowsBuilder {
      * @throws {IllegalArgumentError} If the record given does not belong to the database this instance refers to.
      * @throws {IllegalStateError} If there isn't at least 1 row to yield.
      */
-    public *makeRows(record: FlatRecord) {
+    public *makeRows(record: FlatRecord<T>) {
         // Early check to ensure the record belongs to the database and 
         // has therefore been validated for the schema this instance has received
         if (record.type !== this.#dbType)
@@ -386,6 +415,7 @@ export class RowsBuilder {
         // Resolve each row sub-section
         const base = _resolveBatchPrimitives(this.#baseColumns, record);
         const rows = _resolveRows(this.#primitiveColumns, this.#nestedColumn, record.data);
+        const derived = _resolveBatchOptionalPrimitives(this.#derivedColumns, record);
         const editables = _resolveEditables(this.#editableColumns, record.editables, this.#buildForm);
 
         // There should be at least 1 row for the unmodifiable fields
@@ -394,6 +424,7 @@ export class RowsBuilder {
 
         // Wrap in td elements the data
         const basePart = base.map(c => wrapCell(c, { rowspan: rows.length }));
+        const derivedPart = derived.map(c => wrapCell(c, { rowspan: rows.length }));
         const editablesPart = editables.map(c => wrapCell(c, { rowspan: rows.length }));
 
         let isFirst = true;
@@ -402,7 +433,7 @@ export class RowsBuilder {
             yield isFirst
                 // only the first row will hold the base and editables parts;
                 // their size is adjusted with the rowspan attribute
-                ? wrapRow([...basePart, ...rowPart, ...editablesPart], {
+                ? wrapRow([...basePart, ...rowPart,...derivedPart, ...editablesPart], {
                     'data-db-type': this.#dbType,
                     'data-store-id': record.storeId,
                     'data-record-inv': record.inv,

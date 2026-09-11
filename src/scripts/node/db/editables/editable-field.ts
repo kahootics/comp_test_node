@@ -1,12 +1,14 @@
 import z from "zod";
 import { writeFile, rename, readFile } from 'node:fs/promises'
-import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
-import { DuplicateKeyError, IllegalAccessError, IllegalArgumentError, IllegalStateError, NotFoundError } from "../../../errors/common-errors.mjs";
-import { dbTypeSchema } from "./data-base.js";
-import { Log } from "../../../tools/console.js";
-import { escapeHtml } from "../../../tools/string-parsers.js";
-import dbConfig from "../../../config/db-config.mjs";
-import type { dataLabel, dbType } from "./data-base-types.d.js";
+import { PrivateConstructorError } from "../../../../errors/specialized-errors.mjs";
+import { DuplicateKeyError, IllegalAccessError, IllegalArgumentError, IllegalStateError, NotFoundError } from "../../../../errors/common-errors.mjs";
+import { dbTypeSchema } from "../base-field.js";
+import { Log } from "../../../../tools/console.js";
+import { escapeHtml } from "../../../../tools/string-parsers.js";
+import dbConfig from "../../../../config/db-config.mjs";
+import type { dataLabel, dbType } from "../data-base-types.js";
+import { AsyncOperationQueue } from "../../../../tools/async-operation-queue.mjs";
+import { compileEditableTypes } from "./compile-editable-types.js";
 
 const { editablesPath } = dbConfig;
 
@@ -169,24 +171,13 @@ export class EditableFieldDescriptor {
     static #register: Map<dbType, EditableFieldDescriptor[]> | null = null;
     /** The loading register's promise; returns the register once fulfilled. */
     static #registerIsLoading: Promise<Map<dbType, EditableFieldDescriptor[]>> | null = null;
-    
+
     /** Cached default objects for each database that has editable fields registered. */
     static readonly #defaultObjects = new Map<dbType, Record<editableEntry['label'], editableValue>>();
 
     // CLASS STATE DESCRIPTORS =================================================
-    /** 
-     * Await before starting any writing operation.   
-     * If a writing operation starts, a promise should be 
-     * stored here to ensure no concurrent writing operation starts.
-     */
-    static #writePermission: Promise<void> = Promise.resolve();
-    /**
-     * @param callback - A function that will be called once write permission has fulfilled.
-     * @returns an empty promise that should be awaited to ensure completion of the operation.
-     */
-    static async #onWriteAllowed(callback: () => Promise<void>) {
-        return this.#writePermission = this.#writePermission.then(callback);
-    }
+    /** Await before starting any writing operation.     */
+    static #writeQueue = new AsyncOperationQueue();
 
     // FINAL PROPERTIES =========================================================
     readonly #label: dataLabel;
@@ -288,6 +279,16 @@ export class EditableFieldDescriptor {
         return (editableInputs[this.#type] as (n: string, v: any, c: any) => string)(this.#label, initValue, this.#config);
     }
 
+    public getTypeAsString() {
+        switch (this.#type) {
+            case 'line': case 'paragraph': case 'url': return 'string';
+            case 'check': return 'boolean';
+            case 'value': case 'int': return 'number';
+            case 'list': return (this.#config as EditableTypeConfig['list']).options.map(o => JSON.stringify(o)).join(' | ');
+            case 'checklist': return `(${(this.#config as EditableTypeConfig['checklist']).options.map(o => JSON.stringify(o)).join(' | ')})[]`;
+        }
+    }
+
     /** Serializes the descriptor in a JSON stringfy-able object */
     public toJSON(): editableEntry {
         return { label: this.#label, type: this.#type, defVal: this.#defaultVal, config: this.#config, deprecated: this.#deprecated };
@@ -334,11 +335,12 @@ export class EditableFieldDescriptor {
 
         const register = this.#register;
 
-        return this.#onWriteAllowed(async () => {
+        return this.#writeQueue.enqueue(async () => {
             const data = JSON.stringify(Array.from(register));
             const tmpPath = editablesPath + '.tmp';
             await writeFile(tmpPath, data, 'utf-8');
             await rename(tmpPath, editablesPath);
+            await compileEditableTypes();
         });
     }
 

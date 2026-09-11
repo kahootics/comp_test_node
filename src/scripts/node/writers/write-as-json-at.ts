@@ -1,5 +1,6 @@
 
 import fs from 'node:fs';
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Log } from '../../../tools/console.js';
 import hashFile from './hash.js';
@@ -18,7 +19,7 @@ interface WJOptions {
 	 * Set to `true` to add a 8 characters length hash
 	 * to the filename.
 	 */
-	hash?: boolean	
+	hash?: boolean
 }
 
 /**
@@ -30,38 +31,32 @@ interface WJOptions {
  * @returns the final path at which the file was written
  */
 export default async function writeAsJsonAt(
-	data: unknown, 
-	dest: string, 
+	data: unknown,
+	dest: string,
 	options?: WJOptions
 ): Promise<string> {
-	const minify  = options?.minify;
-	const hash    = options?.hash;
-  	const outPath = path.resolve(dest);
+	const minify = options?.minify;
+	const hash = options?.hash;
+	const outPath = path.resolve(dest);
 	try {
-		if(path.extname(outPath) !== '.json')
+		if (path.extname(outPath) !== '.json')
 			throw new IllegalArgumentError('Can only write to JSON');
 
-  		fs.mkdirSync(path.dirname(outPath), { recursive: true });
+		fs.mkdirSync(path.dirname(outPath), { recursive: true });
 
-    	if(minify) {
-  			fs.writeFileSync(
-    			outPath,
-    			JSON.stringify(data),
-    			'utf-8'
-  			);
-		} else {
-    		fs.writeFileSync(
-    			outPath,
-    			JSON.stringify(data, null, 2),
-    			'utf-8'
-    		);
-  		}
+		await writeFile(
+			outPath,
+			minify
+				? JSON.stringify(data)
+				: JSON.stringify(data, null, 2),
+			'utf-8'
+		);
 
-	} catch(err) {
-		if(err instanceof Error)
-		Log.err(err,`File writing failed at: ${dest}:`);
+	} catch (err) {
+		if (err instanceof Error)
+			Log.err(err, `File writing failed at: ${dest}:`);
 	} finally {
-		
+
 		const finalPath = hash ? hashFile(outPath) : outPath;
 		Log.file(finalPath);
 		return finalPath;

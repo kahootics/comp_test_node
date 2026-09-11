@@ -1,6 +1,6 @@
 import z from "zod";
 import { IllegalAccessError, IllegalArgumentError } from "../../../../errors/common-errors.mjs";
-import type { editableSchema } from "../editable-field.js";
+import type { editableSchema } from "../editables/editable-field.js";
 import type { dbRecord, dbRecordData, dbRecordEditables, dbRecordInv, dbRecordVersions, dbType } from "../data-base-types.d.js";
 
 

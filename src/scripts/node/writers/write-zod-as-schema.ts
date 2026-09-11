@@ -1,6 +1,6 @@
 import z from "zod"
 import fs from 'node:fs/promises'
-import * as ffs from 'node:fs'
+import {existsSync}from 'node:fs'
 import writeAsJsonAt from "./write-as-json-at.js"
 import { createHashFromBuffer, stableHash } from "./hash.js";
 import { Log } from "../../../tools/console.js";
@@ -16,7 +16,7 @@ export async function writeZodAsSchema(fileName: string, zod: z.ZodObject<{
         $schema: z.string().regex(/^(?:[a-zA-Z0-9_.-\/]).+schema\.json$/)
     }).toJSONSchema()
 
-    if (ffs.existsSync(path)) {
+    if (existsSync(path)) {
         const curr = await fs.readFile(path, { encoding: 'utf-8' });
         const that = JSON.parse(curr);
         if (typeof that === 'object') {
@@ -28,7 +28,7 @@ export async function writeZodAsSchema(fileName: string, zod: z.ZodObject<{
         }
     }
 
-    const res = writeAsJsonAt(schema, path);
+    const res = await writeAsJsonAt(schema, path);
     await registerNewSchema(path);
     return res;
 
@@ -36,7 +36,7 @@ export async function writeZodAsSchema(fileName: string, zod: z.ZodObject<{
 
 async function registerNewSchema(src: string): Promise<string> {
     let register: string =
-        ffs.existsSync(REGISTER_PATH)
+        existsSync(REGISTER_PATH)
             ? await fs.readFile(REGISTER_PATH, { encoding: 'utf-8' })
             : '[]';
 

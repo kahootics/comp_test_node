@@ -1,6 +1,6 @@
 {
   "name": "tuxborn-companion",
-  "version": "0.7.14",
+  "version": "0.7.15",
   "author": "kahootics",
   "description": "",
   "main": "dist/main.js",
@@ -8,6 +8,7 @@
     "git": "node scripts/git.mjs",
     "git:update": "node scripts/git-update.mjs",
     "clear:dist": "node scripts/clear-dist.mjs",
+    "predev": "node --loader node scripts/boot.mjs",
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",
     "test": "node scripts/test.mjs",

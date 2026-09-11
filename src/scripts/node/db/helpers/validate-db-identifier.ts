@@ -1,7 +1,7 @@
 import { ZodType } from "zod";
 import { ValidationError } from "../../../../errors/common-errors.mjs";
 import { DBInitSchemas } from "../data-base-init.js";
-import { dbTypeRegEx } from "../data-base.js";
+import { dbTypeRegEx } from "../base-field.js";
 import type { dbType } from "../data-base-types.d.js";
 import type { ZodRawShape } from "zod";
 

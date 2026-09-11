@@ -1,33 +1,33 @@
 import { glob } from "glob";
 import { pathToFileURL } from "node:url";
 import { IllegalStateError, NotFoundError } from "../../../../errors/common-errors.mjs";
-import { DataBase } from "../data-base.js";
-import { type dbType } from "../data-base-types.d.js";
+import { DataBaseRegistry } from "../data-base.js";
+import type { dbType } from "../data-base-types.d.js";
 import type { FlatRecord } from "../records/flat-record.js";
 
-type BundlerProcess = () => AsyncGenerator<FlatRecord>;
+export type BundlerProcess<T extends dbType> = () => AsyncGenerator<FlatRecord<T>>;
 
-export class Bundler {
+export class Bundler<T extends dbType = dbType> {
     static #bundlers: Map<string, Bundler> | null = null;
     static #loading: Promise<Map<string, Bundler>> | null = null;
 
     readonly #id: string;
-    readonly #requires: dbType[];
-    readonly #process: BundlerProcess;
+    readonly #requires: (dbType | T)[];
+    readonly #process: BundlerProcess<T>;
 
     get id() { return this.#id; }
     get requires(): readonly dbType[] { return this.#requires; }
 
-    constructor(id: string, required: dbType[], process: BundlerProcess) {
+    constructor(id: string, required: dbType[], process: BundlerProcess<T>) {
         this.#id = id;
         this.#requires = required;
         this.#process = process;
     }
 
-    public async *run(): AsyncGenerator<FlatRecord> {
+    public async *run(): AsyncGenerator<FlatRecord<T>> {
         // Initialize all required databases
-        await Promise.all(this.#requires.map(t => { DataBase.get(t).ready }));
-        
+        await Promise.all(this.#requires.map(t => { DataBaseRegistry.get(t).ready }));
+
         for await (const record of this.#process()) {
             //DataBase.get(record.type).assertValidRecordData(record.data, record.editables);
             yield record;

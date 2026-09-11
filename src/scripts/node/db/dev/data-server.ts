@@ -3,12 +3,12 @@ const app = express();
 const port = 3000;
 
 // return entire database
-app.get('/api/db/:type/records', () => {
-
+app.get('/db/:type/records', () => {
+    
 });
 // return restricted view
-app.get('/api/views/:name', () => { });
+app.get('/db/views/:name', () => { });
 // edit a record
-app.patch('/api/db/:type/records', () => { });
+app.patch('/db/:type/records', () => { });
 // import csv
-app.post('/api/db/:type/import', () => { })
+app.post('/db/:type/import', () => { })

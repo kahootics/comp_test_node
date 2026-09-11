@@ -1,23 +1,22 @@
 import type z from "zod";
 import type { Brand } from "../../types/general-types.js";
 import type { DBInitSchemas } from "./data-base-init.ts";
-import type { _buildRecordsStoreSchema, dbStoreIdSchema, dbRecordInvSchema, dbRecordVersionsSchema } from "./data-base.ts";
+import type { dbStoreIdSchema, dbRecordInvSchema, dbRecordVersionsSchema } from "./base-field.ts";
+import type { _buildRecordsStoreSchema } from "./helpers/build-records-store-schema.ts";
+import type { ZodObject } from "zod";
 
 // TYPES ======================================================================
 export type dataLabel = Brand<string, 'label'>;
 
-declare const primitiveSchema = z.union([
-    z.string(),
-    z.number(),
-    z.boolean(),
-]);
 export interface DataBaseInit {
     [database: string]: {
         readonly data: {
             [field: string]: z.ZodType;
         };
         readonly derived: {
-            [field: string]: typeof primitiveSchema;
+            [field: string]: z.ZodString | z.ZodNumber | z.ZodBoolean |
+            z.ZodArray<z.ZodString | z.ZodNumber> |
+            z.ZodObject<Readonly<{ [key: string]: z.ZodString | z.ZodNumber | z.ZodBoolean }>>;
         };
     };
 }
@@ -32,6 +31,7 @@ export type dbRecordsStore<T extends dbType> = z.infer<ReturnType<typeof _buildR
 export type dbRecord<T extends dbType> = dbRecordsStore<T>['records'][number];
 // DB-SPECIFIC RECORD SHAPE ================================================
 export type dbRecordData<T extends dbType> = dbRecord<T>['data'];
+export type dbRecordDerived<T extends dbType> = dbRecord<T>['derived'];
 export type dbRecordEditables<T extends dbType> = dbRecord<T>['editables'];
 // DB-AGNOSTIC TYPES =======================================================
 export type dbStoreId = z.infer<typeof dbStoreIdSchema>;
