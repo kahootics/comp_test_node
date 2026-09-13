@@ -12,6 +12,7 @@ import { asDir, asHash } from '../../utils.js';
 import { _stabilizePath } from '../../../src/tools/companion-util.js';
 import { Log } from '../../../src/tools/console.js';
 import { AssetBin } from '../../../src/scripts/node/sharp/assets-bin.js';
+import { writeZodAsSchema } from '../../../src/scripts/node/writers/write-zod-as-schema.js';
 
 
 vi.mock('../../../src/tools/console.js', () => ({
@@ -53,6 +54,8 @@ vi.mock('../../../src/scripts/node/writers/hash.js', () => ({
     stableHash: vi.fn((buf: any) => 'rsh-' + String(buf).length),
     createHashFromFile: vi.fn((p: string) => `filehash:${p}`),
 }));
+
+vi.mock('../../../src/scripts/node/writers/write-zod-as-schema.js', () => ({ writeZodAsSchema: vi.fn() }));
 
 vi.mock('../../../src/scripts/node/sharp/rule-registry.js', async () => {
     const { AssetRule, BatchRule, ExportRule } =

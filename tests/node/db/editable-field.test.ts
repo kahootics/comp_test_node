@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach, vi } from 'vitest';
 import type { dbType } from '../../../src/scripts/node/db/data-base-types.d.js';
 import type { dummy } from "../../setup.js";
 
-const SRC_EDITABLE_FIELD = '../../../src/scripts/node/db/editable-field.js';
+const SRC_EDITABLE_FIELD = '../../../src/scripts/node/db/editables/editable-field.js';
 const SRC_DB_CONFIG = '../../../src/config/db-config.mjs';
 const SRC_CONSOLE_TOOL = '../../../src/tools/console.js';
 
@@ -55,7 +55,7 @@ async function freshModule(preserveStore = false) {
     }));
 
     const mod = await import(SRC_EDITABLE_FIELD);
-    return mod.EditableFieldDescriptor as typeof import('../../../src/scripts/node/db/editable-field.js').EditableFieldDescriptor;
+    return mod.EditableFieldDescriptor as typeof import('../../../src/scripts/node/db/editables/editable-field.js').EditableFieldDescriptor;
 }
 
 beforeEach(() => {

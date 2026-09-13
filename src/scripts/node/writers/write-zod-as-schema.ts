@@ -4,6 +4,7 @@ import {existsSync}from 'node:fs'
 import writeAsJsonAt from "./write-as-json-at.js"
 import { createHashFromBuffer, stableHash } from "./hash.js";
 import { Log } from "../../../tools/console.js";
+import { IllegalStateError } from "../../../errors/common-errors.mjs";
 
 const REGISTER_PATH = 'src/data/schemas/schemas-register.json';
 
@@ -24,7 +25,8 @@ export async function writeZodAsSchema(fileName: string, zod: z.ZodObject<{
             const thisOne = stableHash(schema);
             if (thatOne === thisOne) {
                 Log.msg(`Did not overwrite file at ${path} because no edits to the file were made`);
-                return path};
+                return path
+            };
         }
     }
 
@@ -42,7 +44,7 @@ async function registerNewSchema(src: string): Promise<string> {
 
     const reg = JSON.parse(register);
     if (!Array.isArray(reg))
-        throw new Error()
+        throw new IllegalStateError('Schema register file must be an array');
     const act = new Set(reg);
     act.add(src);
     return writeAsJsonAt(Array.from(act), REGISTER_PATH);
