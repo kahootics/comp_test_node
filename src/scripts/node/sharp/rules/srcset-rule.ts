@@ -6,7 +6,7 @@ import { Asset } from '../asset.js';
 import { ValidationError } from '../../../../errors/common-errors.mjs';
 import { CopyRule } from './copy-rule.js';
 import { SrcsetOutput } from "../../../shared/assets-export-classes.js";
-import type { directoryString } from '../../../types/general-types.js';
+import type { directoryString } from '../../../../tools/general-types.js';
 
 
 const widthsSchema = z.array(z.int().min(100)).nonempty();
@@ -21,9 +21,7 @@ const ruleSchema = CopyRule.schema.extend({
 });
 type ruleType = z.infer<typeof ruleSchema>;
 
-export class SrcsetRule extends CopyRule implements ExportRule<
-    ruleType
-> {
+export class SrcsetRule extends CopyRule {
     public static override readonly ownName: string = 'SrcsetRule';
     public static override readonly schema = ruleSchema;
 

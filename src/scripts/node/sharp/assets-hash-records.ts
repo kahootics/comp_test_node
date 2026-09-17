@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import z from "zod";
-import type { directoryString, hashString } from "../../types/general-types.js";
+import type { directoryString, hashString } from "../../../tools/general-types.js";
 import appConfig from "../../../config/ui-config.mjs";
 import { _stabilizePath, type $stable } from "../../../tools/companion-util.js";
 import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";

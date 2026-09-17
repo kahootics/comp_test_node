@@ -1,5 +1,5 @@
 import type sharp from "sharp";
-import type { directoryString } from "../../types/general-types.js";
+import type { directoryString } from "../../../tools/general-types.js";
 import { AssetsDirectory } from "./assets-directory.js";
 import type { Asset } from "./asset.js";
 import type { ExportOutput } from "../../shared/assets-export-classes.js";

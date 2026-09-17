@@ -8,7 +8,8 @@ import { escapeHtml } from "../../../../tools/string-parsers.js";
 import dbConfig from "../../../../config/db-config.mjs";
 import type { dataLabel, dbType } from "../data-base-types.js";
 import { AsyncOperationQueue } from "../../../../tools/async-operation-queue.mjs";
-import { compileEditableTypes } from "./compile-editable-types.js";
+import { compileEditableTypes } from "../../tooling/compile-editable-types.js";
+import { _validateDBIdentifier } from "../helpers/validate-db-identifier.js";
 
 const { editablesPath } = dbConfig;
 
@@ -77,12 +78,14 @@ function _nonEmptyTuple(arr: string[]): [string, ...string[]] {
 }
 
 const editableTypeKeys = Object.keys(makeSchema) as [editableType, ...editableType[]];
-const editableTypeSchema = z.enum(editableTypeKeys);
+export const editableTypeSchema = z.enum(editableTypeKeys);
+
+export const editableTypes = Array.from(editableTypeKeys);
 
 export type editableType = keyof EditableTypeConfig;
 export type editableSchema = ReturnType<(typeof makeSchema)[editableType]>;
 export type editableValue = z.infer<editableSchema>;
-export type editableConfig = EditableTypeConfig[editableType];
+export type editableConfig<E extends editableType = editableType> = EditableTypeConfig[E];
 
 const editableInputs = {
     checklist: (name, initValue, { options }) =>
@@ -308,7 +311,10 @@ export class EditableFieldDescriptor {
             .then(rawData => allEditablesSchema.parseAsync(rawData))
             .then(edtbls =>
                 this.#register = new Map(
-                    edtbls.map(([db, desc]) => [db, desc.map(d => this.#of(d))])
+                    edtbls.map(([db, desc]) => {
+                        _validateDBIdentifier(db);
+                        return [ db, desc.map(d => this.#of(d))]
+                    })
                 )
             )
             .catch((e: unknown) => {

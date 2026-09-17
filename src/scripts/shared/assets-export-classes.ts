@@ -1,5 +1,5 @@
 import { toAbsolutePublicUrl, toPublicUrl } from "../../tools/companion-util.js";
-import type { nameString } from "../types/general-types.js";
+import type { nameString } from "../../tools/general-types.js";
 
 
 export interface ExportOutput {

@@ -1,7 +1,7 @@
 import { DuplicateKeyError, IllegalArgumentError, NotFoundError, ValidationError } from "../../../../errors/common-errors.mjs";
 import { stableHash } from "../../writers/hash.js";
 import { DBRecord } from "./record.js";
-import type { hashString } from "../../../types/general-types.js";
+import type { hashString } from "../../../../tools/general-types.js";
 import type { dbRecord, dbRecordData, dbRecordEditables, dbRecordInv, dbRecordsStore, dbStoreId, dbRecordVersion, dbRecordVersions, dbType } from "../data-base-types.d.js";
 
 export class DBRecordsStore<T extends dbType> implements dbRecordsStore<T> {

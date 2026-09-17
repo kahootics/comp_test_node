@@ -18,7 +18,7 @@ export const DBInitSchemas = {
             image: z.url(),
             link: z.object({
                 nexus: z.url(),
-                wiki: z.url().nullable,
+                wiki: z.url().nullable(),
                 other: z.object({
                     name: z.string(),
                     url: z.url()

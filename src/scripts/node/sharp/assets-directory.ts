@@ -2,7 +2,7 @@ import path from "path";
 import { Asset } from "./asset.js";
 import { glob } from "glob";
 import { RuleSet } from "./rule-set.js";
-import type { extType, directoryString, nameString } from "../../types/general-types.js";
+import type { extType, directoryString, nameString } from "../../../tools/general-types.js";
 import { IllegalArgumentError, NotFoundError, ValidationError } from "../../../errors/common-errors.mjs";
 import { duplicatesOfStringList, formatList } from "../../../tools/string-parsers.js";
 import fs from "node:fs";

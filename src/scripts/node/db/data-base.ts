@@ -1,5 +1,5 @@
-import z from "zod";
-import { DuplicateKeyError, IllegalStateError, NotFoundError } from "../../../errors/common-errors.mjs";
+import z, { ZodObject } from "zod";
+import { DuplicateKeyError, IllegalStateError, NotFoundError, ValidationError } from "../../../errors/common-errors.mjs";
 import { DBInitSchemas } from "./data-base-init.js";
 import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
 import { DBRecordsStore } from "./records/records-store.js";
@@ -11,11 +11,11 @@ import { writeNdjsonPipeline } from '../writers/write-ndjson-pipeline.js';
 import type { editableConfig, editableType } from "./editables/editable-field.js";
 import dbConfig from "../../../config/db-config.mjs";
 import { _verifyUniquenessOfKeys } from "./helpers/verify-uniqueness-of-keys.js";
-import type { dbType, dataLabel, dbStoreId, dbRecordData, dbRecordEditables, dbRecordVersions, dbRecordVersion, dbRecordInv, dbDataSchemas, dbDerivedSchemas } from "./data-base-types.d.js";
+import type { dbType, dataLabel, dbStoreId, dbRecordData, dbRecordEditables, dbRecordVersions, dbRecordVersion, dbRecordInv, dbDataShape, dbDerivedShape } from "./data-base-types.d.js";
 import { _validateDBIdentifier } from "./helpers/validate-db-identifier.js";
 import { AsyncOperationQueue } from "../../../tools/async-operation-queue.mjs";
 import { readNdjsonPipeline } from "../writers/read-ndjson-pipeline.js";
-import { _buildEditablesSchema } from "./editables/build-editables-schema.js";
+import { _buildEditablesShape } from "./editables/build-editables-shape.js";
 import { _buildRecordsStoreSchema } from "./helpers/build-records-store-schema.js";
 import { _isReservedKeyword } from "./base-field.js";
 
@@ -32,13 +32,21 @@ class DataBase<T extends dbType = dbType> {
     // FINAL PROPERTIES =========================================================
     /** Type of the database (unique). */
     readonly #type: T;
+    /** Type of the database (unique). */
+    get type() { return this.#type; }
+
     /** Path to the database from the project root. */
     readonly #path: string;
-    /** Object containing the `zod` record-data validators. */
-    readonly #dataSchema: dbDataSchemas<T>;
-    /** Object containing the `zod` record-derived-data validators. */
-    readonly #derivedSchema: dbDerivedSchemas<T>;
 
+    /** Object containing the `zod` record-data schema shape. */
+    readonly #dataShape: dbDataShape<T>;
+    /** Object containing the `zod` record-data schema shape. */
+    get dataShape() { return { ...this.#dataShape }; }
+
+    /** Object containing the `zod` record-derived-data schema shape. */
+    readonly #derivedShape: dbDerivedShape<T>;
+    /** Object containing the `zod` record-derived-data schema shape. */
+    get derivedShape() { return { ...this.#derivedShape }; }
 
     // STATE DESCRIPTORS ========================================================
     readonly #ready: Promise<void> | null = null;
@@ -47,6 +55,7 @@ class DataBase<T extends dbType = dbType> {
         if (this.#ready) return this.#ready;
         throw new IllegalStateError('Cannot read state of database');
     }
+
     /** Write queue to avoid concurrency. */
     readonly #writeQueue = new AsyncOperationQueue();
 
@@ -57,6 +66,7 @@ class DataBase<T extends dbType = dbType> {
         if (this.#nullableEditableFields) return this.#nullableEditableFields;
         throw new IllegalStateError('Cannot access database before fully loading it');
     };
+
     #recordsStores: Map<dbStoreId, DBRecordsStore<T>> | null = null;
     /** Database of records stores; only access once `ready` is fulfilled. */
     get recordsStores() {
@@ -68,8 +78,8 @@ class DataBase<T extends dbType = dbType> {
     private constructor(
         token: symbol,
         type: T,
-        dataSchema: dbDataSchemas<T>,
-        derivedSchema: dbDerivedSchemas<T>
+        dataShape: dbDataShape<T>,
+        derivedShape: dbDerivedShape<T>
     ) {
         // Enforce privacy
         if (token !== DataBase.#constructionToken)
@@ -79,8 +89,8 @@ class DataBase<T extends dbType = dbType> {
         this.#type = type;
         const lcType = type.toLowerCase();
         this.#path = main + lcType + db_suffix + '.ndjson';
-        this.#dataSchema = dataSchema;
-        this.#derivedSchema = derivedSchema;
+        this.#dataShape = dataShape;
+        this.#derivedShape = derivedShape;
 
         // Load the database; client must await the `ready`.
         this.#ready = this.#loadEditableFields()
@@ -101,18 +111,18 @@ class DataBase<T extends dbType = dbType> {
     #verifyUniquenessOfKeys() {
         _verifyUniquenessOfKeys(
             this.#type,
-            Object.keys(this.#dataSchema),
-            Object.keys(this.#derivedSchema),
+            Object.keys(this.#dataShape),
+            Object.keys(this.#derivedShape),
             this.#editableFields.keys()
         );
     }
 
     public static of<T extends dbType>(
         type: T,
-        dataSchema: dbDataSchemas<T>,
-        derivedSchema: dbDerivedSchemas<T>
+        dataShape: dbDataShape<T>,
+        derivedShape: dbDerivedShape<T>
     ): DataBase<T> {
-        return new this(this.#constructionToken, type, dataSchema, derivedSchema);
+        return new this(this.#constructionToken, type, dataShape, derivedShape);
     }
 
     // PERSISTENCE =====================================================================
@@ -128,7 +138,7 @@ class DataBase<T extends dbType = dbType> {
      * @returns an empty promise indicating wheter the database has fully loaded; the same promise is stored in the `#ready`.
      */
     async #loadDB() {
-        if (this.#ready) return this.#ready;
+        //if (this.#ready) return this.#ready;
         if (this.#recordsStores) return;
         try {
             const temp = new Map();
@@ -198,36 +208,32 @@ class DataBase<T extends dbType = dbType> {
         }
     }
 
-    /*  #getColumnStaticHeaders() {
-         const staticFieldsH = Object.entries(this.#dataSchema).map(
-             ([label,schema]) => new StaticColumn(label,schema.type)
-         )
-     } */
-
-    // INTERFACE =======================================================================
-
-    /* #getHTMLByType()
-
-    public getHTMLFlatRecord(record: FlatRecord) {
-        record
-    } */
-
     // SCHEMAS OF THE DATABASE =========================================================
     #schemaCache: ReturnType<typeof _buildRecordsStoreSchema<T>> | null = null;
     /** Zod schema of the entire database. */
     get #storesSchema() {
         return this.#schemaCache ??=
-            _buildRecordsStoreSchema<T>(this.#type, this.#dataSchema, this.#derivedSchema, this.#editablesSchema);
+            _buildRecordsStoreSchema<T>(this.#type, this.#dataShape, this.#derivedShape, this.#editablesShape);
     }
-    #editablesSchemaCache: ReturnType<typeof _buildEditablesSchema> | null = null;
+    #editablesShapeCache: ReturnType<typeof _buildEditablesShape> | null = null;
     /** Zod schema for the editable fields of the database. */
-    get #editablesSchema() {
-        return this.#editablesSchemaCache ??= _buildEditablesSchema(this.#editableFields.values());
+    get #editablesShape() {
+        return this.#editablesShapeCache ??= _buildEditablesShape(this.#editableFields.values());
     }
     /** Resets both caches for the database full schema and the editable fields one. */
     #resetSchemasCaches() {
         this.#schemaCache = null;
-        this.#editablesSchemaCache = null;
+        this.#editablesShapeCache = null;
+    }
+    #derivedSchemaCache: z.ZodObject<any> | null = null;
+    get #derivedSchema() {
+        return this.#derivedSchemaCache ??= z.object(this.#derivedShape).partial();
+    }
+
+    // VALIDATION ==========================================================
+
+    assertValidDerived(derived: unknown): void {
+        this.#derivedSchema.parse(derived ?? {});
     }
 
     // ADD NEW RECORD TO DATABASE ======================================================
@@ -273,7 +279,7 @@ class DataBase<T extends dbType = dbType> {
         newVersion: dbRecordVersion
     ) {
         // Validation
-        const result = await z.object(this.#dataSchema).safeParseAsync(newData);
+        const result = await z.object(this.#dataShape).safeParseAsync(newData);
         if (!result.success) {
             return { ok: false, error: result.error.message }
         }
@@ -316,7 +322,7 @@ class DataBase<T extends dbType = dbType> {
         const validations = await Promise.all(
             newRecords.map(async ({ storeId, newData }) => ({
                 storeId, newData,
-                result: await z.object(this.#dataSchema).safeParseAsync(newData)
+                result: await z.object(this.#dataShape).safeParseAsync(newData)
             }))
         );
         // If error, don't add any record
@@ -358,10 +364,10 @@ class DataBase<T extends dbType = dbType> {
      * @param defVal - Default value to assign uninitialized fields.
      * @returns the instance of the new editable field descriptor.
      */
-    public async addEditableField(label: string, type: editableType, defVal: any, config: editableConfig) {
+    public async addEditableField<E extends editableType>(label: string, type: E, defVal: any, config: editableConfig<E>) {
         if (this.#editableFields.has(label as dataLabel))
             throw new DuplicateKeyError(`Editable field ${label} already exists for this db (${this.#type})`);
-        if (Object.keys(this.#dataSchema).includes(label))
+        if (Object.keys(this.#dataShape).includes(label))
             throw new DuplicateKeyError(`Editable field ${label} cannot have the same name as an immutable field in db ${this.#type}`);
         if (_isReservedKeyword(label))
             throw new DuplicateKeyError(`Editable field ${label} cannot use a reserved keyword in db ${this.#type}`);
@@ -400,20 +406,20 @@ class DataBaseRegister {
      * Private factory constructor.
      * 
      * @param type - Database unique 4 characters identifier.
-     * @param dataSchema - A zod schema to enforce a specific shape on the database's records immutable data.
+     * @param dataShape - A zod schema to enforce a specific shape on the database's records immutable data.
      * @returns the database instance; the database data will be safe to access once the ready promise has resolved.
     */
     #of<T extends dbType>(
         type: T,
-        dataSchema: dbDataSchemas<T>,
-        derivedSchema: dbDerivedSchemas<T>
+        dataShape: dbDataShape<T>,
+        derivedShape: dbDerivedShape<T>
     ): DataBase<T> {
         // Cannot build same database twice
         if (this.#register.has(type)) {
             throw new DuplicateKeyError(`${type} already exists in the DataBase register`);
         }
         // Make the database instance
-        const database = DataBase.of(type, dataSchema, derivedSchema);
+        const database = DataBase.of(type, dataShape, derivedShape);
         // Register it as fulfilled
         this.#register.set(type, database as any as DataBase);
         // Return database (ready must be awaited before use)
@@ -440,15 +446,15 @@ class DataBaseRegister {
             _validateDBIdentifier(type);
 
             // Get schemas
-            const dataSchema = DBInitSchemas[type].data;
-            if (!dataSchema)
+            const dataShape = DBInitSchemas[type].data;
+            if (!dataShape)
                 throw new NotFoundError(type, { type: 'data schema for database' });
 
-            const derivedSchema = DBInitSchemas[type].derived;
-            if (!derivedSchema)
+            const derivedShape = DBInitSchemas[type].derived;
+            if (!derivedShape)
                 throw new NotFoundError(type, { type: 'derived data schema for database' });
 
-            return this.#of(type, dataSchema, derivedSchema);
+            return this.#of(type, dataShape, derivedShape);
         }
         throw new NotFoundError(type, { type: 'database with type' });
     }
@@ -458,8 +464,17 @@ class DataBaseRegister {
      * @param type 
      * @returns 
      */
-    public get<T extends dbType>(type: T): DataBase<T> {
-        return this.#getDB(type);
+    public get(type: string): DataBase {
+        try {
+            _validateDBIdentifier(type);
+            return this.#getDB(type);
+        }
+        catch (e: unknown) {
+            if (e instanceof ValidationError) {
+                throw new NotFoundError(type, { type: 'database of type' });
+            }
+            throw e;
+        }
     }
 
     /**

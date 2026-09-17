@@ -10,7 +10,7 @@ export const dbTypeRegEx = /^(?:[A-Z_]{4})$/;
 /** Zod schema enforcing the database identifier shape. */
 export const dbTypeSchema = z.string().regex(dbTypeRegEx) /* .brand('database') */.refine(
     (type) => Object.keys(DBInitSchemas).includes(type)
-).transform(type => type as dbType);
+);
 
 const dbStoreIdRegEx = /^(?:[A-Z0-9]{5,6})$/;
 

@@ -1,18 +1,18 @@
 import z from "zod";
-import type { dbType, dataLabel, dbDataSchemas, dbDerivedSchemas } from "../data-base-types.js";
+import type { dbType, dataLabel, dbDataShape, dbDerivedShape } from "../data-base-types.js";
 import { dbStoreIdSchema, dbRecordInvSchema, dbRecordVersionsSchema } from "../base-field.js";
 import type { editableSchema } from "../editables/editable-field.js";
 
 /**
  * @param type - Database identifier; each store will be required to know the database it belongs to.
- * @param dataSchema - Zod schema to enforce on each record's immutable fields.
+ * @param dataShape - Zod schema to enforce on each record's immutable fields.
  * @param editablesSchemas - Zod schema to enforce on each record's editable fields.
  * @returns a zod schema to enforce on each store within the specified database.
  */
 export function _buildRecordsStoreSchema<T extends dbType>(
     type: T,
-    dataSchema: dbDataSchemas<T>,
-    derivedSchema: dbDerivedSchemas<T>,
+    dataShape: dbDataShape<T>,
+    derivedShape: dbDerivedShape<T>,
     editablesSchemas: { [key: dataLabel]: editableSchema; }
 ) {
     return z.object({
@@ -28,9 +28,7 @@ export function _buildRecordsStoreSchema<T extends dbType>(
             // A list of versions the data in this record is compatible for
             versions: dbRecordVersionsSchema,
             // bundle-dependent data
-            data: z.object(/* Static Non-modifiable data goes in here */ dataSchema),
-
-            derived: z.object(derivedSchema).partial().optional(),
+            data: z.object(/* Static Non-modifiable data goes in here */ dataShape),
             // bundle-dependent editable data
             editables: z.object(/* Editable data goes in here */ editablesSchemas)
         }))

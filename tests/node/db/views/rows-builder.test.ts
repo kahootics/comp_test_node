@@ -2,7 +2,7 @@ import { describe, test, expect, beforeAll, vi } from 'vitest';
 import z from 'zod';
 import { formatList, escapeHtml } from '../../../../src/tools/string-parsers.js';
 import { reservedKeywords } from '../../../../src/scripts/node/db/data-base.js';
-import { _unpackDataSchema } from '../../../../src/scripts/node/db/views/helpers/unpack-data-schema.js';
+import { _unpackdataShape } from '../../../../src/scripts/node/db/views/helpers/unpack-data-schema.js';
 import { RowsBuilder } from '../../../../src/scripts/node/db/views/rows-builder.js';
 import type { dbType } from '../../../../src/scripts/node/db/data-base-types.d.js';
 import type { FlatRecord } from '../../../../src/scripts/node/db/records/flat-record.js';
@@ -91,7 +91,7 @@ function _getColumnPath(col: { getValue(obj: object): unknown }): string[] {
 }
 
 /** Descriptors of "base" (reserved keywords) columns. */
-const baseDescriptors = _unpackDataSchema(reservedKeywords);
+const baseDescriptors = _unpackdataShape(reservedKeywords);
 const basePaths = baseDescriptors.map(_getColumnPath);
 
 /**
@@ -174,8 +174,8 @@ describe('RowsBuilder - setup and validation', () => {
     });
 
     test('throws when an editabile field shares the same label with an immutable field', () => {
-        const dataSchema = { note: z.string() };
-        expect(() => new RowsBuilder(TEST_DB, dataSchema, [lineField])).toThrowWithName('IllegalArgumentError');
+        const dataShape = { note: z.string() };
+        expect(() => new RowsBuilder(TEST_DB, dataShape, [lineField])).toThrowWithName('IllegalArgumentError');
     });
 
     test('throws when an editabile field shares the same label with a "base" field (uses a reserved keyword)', async () => {
@@ -187,11 +187,11 @@ describe('RowsBuilder - setup and validation', () => {
     });
 
     test('throws when an immutable field has two arrays of objects at the same flattened level (layer)', () => {
-        const dataSchema = {
+        const dataShape = {
             l1: z.array(z.object({ id: z.string() })),
             l2: z.array(z.object({ id: z.string() })),
         };
-        expect(() => new RowsBuilder(TEST_DB, dataSchema, [])).toThrowWithName('IllegalArgumentError');
+        expect(() => new RowsBuilder(TEST_DB, dataShape, [])).toThrowWithName('IllegalArgumentError');
     });
 });
 

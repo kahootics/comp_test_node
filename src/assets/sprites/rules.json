@@ -1,5 +1,5 @@
 {
-    "$schema": "../../schemas/rules-schema.json",
+    "$schema": "../../data/schemas/rules-schema.json",
     "FormatRule": {
         "format": "webp",
         "formatOptions": {

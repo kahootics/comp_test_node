@@ -15,12 +15,19 @@ const HTML = (title: string, content: string, ...headTags: string[]) =>
         '</head>',
 
         '<body>', content, '</body>',
-        
+
         '</html>'
     ].join('');
 
-
-export async function writePage(title: string, content: string, loc: string, ...headTags: string[]) {
+/**
+ * 
+ * @param title - Title attribute content.
+ * @param content - Content of the `body` in the page.
+ * @param loc - Path where the file should be written (include extension).
+ * @param headTags - Head tags to include (such as link or script)
+ * @returns a promise to await in order to ensure the completion of the operation.
+ */
+export async function writePage(title: string, loc: string, content: string, ...headTags: string[]) {
     if (!loc.endsWith('.html'))
         throw new IllegalArgumentError(
             "Cannot write pages other than html\n"

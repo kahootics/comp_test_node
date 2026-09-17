@@ -315,10 +315,6 @@ export class SetOnceWeakMap<K extends WeakKey = object, V = any> extends WeakMap
  * Checks whether `baseClassConstructor` is in the prototype chain of `classConstructor`.
  */
 export function extendsClass(classConstructor: Function, baseClassConstructor: Function): boolean {
-    let proto = Object.getPrototypeOf(classConstructor);
-    while (proto) {
-        if (proto === baseClassConstructor) return true;
-        proto = Object.getPrototypeOf(proto);
-    }
-    return false;
+    if (classConstructor === baseClassConstructor) return true;
+    return classConstructor.prototype instanceof baseClassConstructor;
 }

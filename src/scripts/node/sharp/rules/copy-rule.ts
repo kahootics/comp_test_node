@@ -1,6 +1,6 @@
 import path from "node:path";
 import z from "zod";
-import type { directoryString } from "../../../types/general-types.js";
+import type { directoryString } from "../../../../tools/general-types.js";
 import fs from 'node:fs';
 import { formatSchema, optionsSchema } from './format-rule.js';
 import { ExportRule } from "../rule.js";

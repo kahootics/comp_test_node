@@ -9,18 +9,17 @@
 
 
 import writeAsJsonAt from './scripts/node/writers/write-as-json-at.js';
-import buildScripts from './scripts/node/main/build-scripts.js';
+import buildScripts from './scripts/node/writers/build-scripts.js';
 import { Log } from './tools/console.js';
 import { CopyRule } from './scripts/node/sharp/rules/copy-rule.js';
 import { Asset } from './scripts/node/sharp/asset.js';
 import { AssetsLibrary } from './scripts/node/sharp/assets-library.js';
-import { buildRuleRegistry } from './scripts/node/sharp/rule-registry.js';
 import z, { object, regex } from 'zod';
 import { writeZodAsSchema } from './scripts/node/writers/write-zod-as-schema.js';
 import fetchSheetAsCSV from './scripts/node/csv/fetch-sheet-as-csv.js';
 import { writeFile } from 'node:fs/promises';
 import { mkdirSync } from 'node:fs';
-import { compileEditableTypes } from './scripts/node/db/editables/compile-editable-types.js';
+import { compileEditableTypes } from './scripts/node/tooling/compile-editable-types.js';
 
 
 export const isDev = process.env.BUILD !== 'true';

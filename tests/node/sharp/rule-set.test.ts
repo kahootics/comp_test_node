@@ -5,7 +5,7 @@ import sharp from 'sharp';
 import { Asset } from '../../../src/scripts/node/sharp/asset.js';
 import { RuleSet } from '../../../src/scripts/node/sharp/rule-set.js';
 import { AssetsHashRecords } from '../../../src/scripts/node/sharp/assets-hash-records.js';
-import { buildRuleRegistry } from '../../../src/scripts/node/sharp/rule-registry.js';
+import { allRuleClassesMap, rulesetSchema } from '../../../src/scripts/node/sharp/rule-registry.js';
 import type { dummy } from '../../setup.js';
 import { createHashFromFile } from '../../../src/scripts/node/writers/hash.js';
 import { asDir, asHash } from '../../utils.js';
@@ -121,12 +121,10 @@ vi.mock('../../../src/scripts/node/sharp/rule-registry.js', async () => {
         ['TestExportRule', TestExportRule],
         ['SecondExportRule', SecondExportRule],
     ]);
-    const buildRuleRegistry = vi.fn(() => { return { rulesetSchema, allRuleClassesMap } })
 
-    return { buildRuleRegistry };
+    return { rulesetSchema, allRuleClassesMap };
 });
 var __fixtures: any = {};
-const { allRuleClassesMap, rulesetSchema } = await buildRuleRegistry('');
 allRuleClassesMap.forEach(rule => __fixtures[rule.ownName] = rule);
 
 // RuleSet caches instances by directory + filename in a static, module-lifetime cache.

@@ -3,21 +3,16 @@ import path from "node:path";
 import sharp, { type Sharp } from "sharp";
 import z from "zod";
 import { Log } from "../../../tools/console.js";
-import type { directoryString, hashString } from "../../types/general-types.js";
+import type { directoryString, hashString } from "../../../tools/general-types.js";
 import { createHashFromBuffer, createHashFromFile } from "../writers/hash.js";
 import type { Asset } from "./asset.js";
 import { AssetsHashRecords } from "./assets-hash-records.js";
 import { AssetRule, BatchRule, Rule, ExportRule, type RuleConstructor } from "./rule.js";
 import { _stabilizePath } from "../../../tools/companion-util.js";
 import { FileNotFoundError, IllegalAccessError, NotFoundError, NullPointerError } from "../../../errors/common-errors.mjs";
-import { buildRuleRegistry } from "./rule-registry.js";
 import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
 import { AssetBin } from "./assets-bin.js";
-import { writeZodAsSchema } from "../writers/write-zod-as-schema.js";
-
-const { rulesetSchema, allRuleClassesMap, } = await buildRuleRegistry('build/scripts/node/sharp/rules');
-
-await writeZodAsSchema('rules', z.object(rulesetSchema));
+import { rulesetSchema, allRuleClassesMap } from "./rule-registry.js";
 
 // Class =================================================================================
     /** Sorts the rules by priority. */

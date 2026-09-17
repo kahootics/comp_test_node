@@ -1,5 +1,5 @@
 import { escapeHtml } from "../../../../tools/string-parsers.js";
-import type { Brand } from "../../../types/general-types.js";
+import type { Brand } from "../../../../tools/general-types.js";
 
 type tableCell = Brand<string, 'cell'>;
 type tableHCell = Brand<string, 'tt'>;

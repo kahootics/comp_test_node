@@ -1,0 +1,19 @@
+
+table tbody tr:nth-of-type(even) td {
+    background-color: antiquewhite;
+}
+table tbody tr:nth-of-type(odd) td {
+    background-color: beige;
+}
+
+table {
+    border: 0.1em solid red;
+}
+table :is(td,th) {
+    border: 0.08em solid brown;
+}
+
+div:has(>table) {
+    max-width: 100%;
+    overflow-x: scroll;
+}
