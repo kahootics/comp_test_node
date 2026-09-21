@@ -2,6 +2,7 @@ import { glob } from "glob/raw";
 import { pathToFileURL } from "node:url";
 import { NotFoundError, IllegalStateError } from "../../../errors/common-errors.mjs";
 import { Bundler } from "./bundler.js";
+import { isTsx } from "../process-env.js";
 
 class BundlersRegister {
     #bundlers: Map<string, Bundler> | null = null;
@@ -45,9 +46,10 @@ class BundlersRegister {
      */
     async #loadBundlers(): Promise<Map<string, Bundler>> {
         // Bundlers search
-        const bundlerPaths = await glob('build/scripts/**/*-bundler.{js,ts,mjs}');
+        const globBundlers = `${isTsx ? 'src' : 'build'}/scripts/**/*-bundler.{js,ts,mjs}`
+        const bundlerPaths = await glob(globBundlers);
         if (bundlerPaths.length === 0)
-            throw new NotFoundError('build/scripts/**/*-bundler.{js,ts,mjs}', { type: 'file pattern per bundler' });
+            throw new NotFoundError(globBundlers, { type: 'file pattern per bundler' });
 
         // Modules resolution
         const modules = await Promise.all(

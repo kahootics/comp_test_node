@@ -1,13 +1,13 @@
 import type sharp from "sharp";
-import type { directoryString } from "../../../tools/general-types.js";
+import type { directoryString } from "../../shared/general-types.js";
 import { AssetsDirectory } from "./assets-directory.js";
 import type { Asset } from "./asset.js";
 import type { ExportOutput } from "../../shared/assets-export-classes.js";
 import { DirectoryNotFoundError, NotFoundError, ValidationError } from "../../../errors/common-errors.mjs";
 import { PrivateConstructorError, SingletonDuplicateError, SingletonNotInitializedError } from "../../../errors/specialized-errors.mjs";
-import { duplicatesOfStringList, formatList } from "../../../tools/string-parsers.js";
+import { duplicatesOfStringList, formatList } from "../../../tools/string-parsers.mjs";
 import fs from "node:fs";
-import { _stabilizePath, type $stable } from "../../../tools/companion-util.js";
+import { _stabilizePath, type $stable } from "../companion-util.js";
 import { AssetBin } from "./assets-bin.js";
 import type { FormatEnum, Sharp, SharpConstructor } from "sharp";
 

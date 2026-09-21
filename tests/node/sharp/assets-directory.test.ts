@@ -131,7 +131,7 @@ describe('AssetsDirectory.enforceLocalRuleset', () => {
 
         expect(RuleSet.build).toHaveBeenCalledWith(dir.path, 'rules');
         expect(fakeRuleset.enforce).toHaveBeenCalledTimes(1);
-        //@ts-ignore
+        //@ ts-ignore
         expect(fakeRuleset.enforce.mock.calls[0]![0]).toHaveLength(2);
         expect(AssetsHashRecords.write).toHaveBeenCalledOnce();
         expect(result).toHaveLength(2);

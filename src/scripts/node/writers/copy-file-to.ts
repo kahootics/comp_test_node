@@ -1,7 +1,6 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { toUnitBytes } from '../../../tools/companion-util.js';
 
 /**
  * Compares a source valid path with a destination one and returns a validated version of it
@@ -41,7 +40,7 @@ export function destPathCorrected(src: string, dest: string): string {
  * - if `dest` has no extension or it is different from the one of `src`,
  * the extension will be set to that of `src`
  */
-export default function copyFileTo(src: string, dest: string) {
+/* export default function copyFileTo(src: string, dest: string) {
 
     const destCorr = destPathCorrected(src, dest);
     try {
@@ -57,5 +56,5 @@ export default function copyFileTo(src: string, dest: string) {
     } catch(err) {
         console.error(`Copying of ${src} failed at: ${destCorr}:`, err);     
     }
-}
+} */
 

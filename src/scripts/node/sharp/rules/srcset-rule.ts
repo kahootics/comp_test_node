@@ -1,12 +1,12 @@
 import sharp from 'sharp';
-import { Log } from '../../../../tools/console.js';
-import { ExportRule } from '../rule.js';
+import { Log } from '../../../../tools/logger.mjs';
 import z from 'zod';
 import { Asset } from '../asset.js';
 import { ValidationError } from '../../../../errors/common-errors.mjs';
 import { CopyRule } from './copy-rule.js';
 import { SrcsetOutput } from "../../../shared/assets-export-classes.js";
-import type { directoryString } from '../../../../tools/general-types.js';
+import type { directoryString } from '../../../shared/general-types.js';
+import { stat } from 'node:fs/promises';
 
 
 const widthsSchema = z.array(z.int().min(100)).nonempty();
@@ -55,7 +55,8 @@ export class SrcsetRule extends CopyRule {
                 asset.setOutParam('hash', hash);
             }
             await srcsetSharp.toFile(asset.outPath);
-            Log.file(asset.outPath);
+            const { size } = await stat(asset.outPath);
+            Log.file(asset.outPath, size);
 
             output.add(width, asset.outPath);
         }

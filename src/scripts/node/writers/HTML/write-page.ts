@@ -1,7 +1,8 @@
 import path from "path";
 import { mkdir, writeFile } from 'node:fs/promises';
 import { IllegalArgumentError } from "../../../../errors/common-errors.mjs";
-import { Log } from "../../../../tools/console.js";
+import { Log } from '../../../../tools/logger.mjs';
+import { statSync } from "node:fs";
 
 
 const HTML = (title: string, content: string, ...headTags: string[]) =>
@@ -39,5 +40,5 @@ export async function writePage(title: string, loc: string, content: string, ...
     const pageHtml = HTML(title, content, ...headTags);
 
     return writeFile(dest, pageHtml, 'utf-8')
-        .then(() => Log.file(dest));
+        .then(() => Log.file(dest, statSync(dest).size));
 }

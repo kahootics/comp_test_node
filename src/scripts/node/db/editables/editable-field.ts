@@ -3,31 +3,16 @@ import { writeFile, rename, readFile } from 'node:fs/promises'
 import { PrivateConstructorError } from "../../../../errors/specialized-errors.mjs";
 import { DuplicateKeyError, IllegalAccessError, IllegalArgumentError, IllegalStateError, NotFoundError } from "../../../../errors/common-errors.mjs";
 import { dbTypeSchema } from "../base-field.js";
-import { Log } from "../../../../tools/console.js";
-import { escapeHtml } from "../../../../tools/string-parsers.js";
+import { Log } from '../../../../tools/logger.mjs';
+import { escapeHtml } from "../../../../tools/string-parsers.mjs";
 import dbConfig from "../../../../config/db-config.mjs";
 import type { dataLabel, dbType } from "../data-base-types.js";
 import { AsyncOperationQueue } from "../../../../tools/async-operation-queue.mjs";
 import { compileEditableTypes } from "../../tooling/compile-editable-types.js";
 import { _validateDBIdentifier } from "../helpers/validate-db-identifier.js";
+import type { editableType, editableConfig } from "../../../shared/editable-type-config.js";
 
 const { editablesPath } = dbConfig;
-
-/**
- * Editable field descriptors' configurations interface.
- * 
- * This interface serves as a type safety net for the rest of the related script.
- */
-interface EditableTypeConfig {
-    checklist: { options: string[] };
-    list: { options: string[] };
-    url: {};
-    paragraph: {};
-    line: {};
-    value: { min: number, max: number };
-    int: { min: number, max: number };
-    check: {};
-}
 
 /**
  * Zod schemas per type for the configuration of the editable field.
@@ -48,7 +33,7 @@ const configSchemas = {
     ),
     check: z.object({}),
 } satisfies {
-    [K in editableType]: z.ZodType<EditableTypeConfig[K]>
+    [K in editableType]: z.ZodType<editableConfig<K>>
 };
 
 /**
@@ -68,7 +53,7 @@ const makeSchema = {
     int: ({ min, max }) => z.int32().min(min).max(max),
     check: () => z.boolean(),
 } satisfies {
-    [K in editableType]: (config: EditableTypeConfig[K]) => z.ZodTypeAny
+    [K in editableType]: (config: editableConfig<K>) => z.ZodType
 };
 
 function _nonEmptyTuple(arr: string[]): [string, ...string[]] {
@@ -82,10 +67,8 @@ export const editableTypeSchema = z.enum(editableTypeKeys);
 
 export const editableTypes = Array.from(editableTypeKeys);
 
-export type editableType = keyof EditableTypeConfig;
 export type editableSchema = ReturnType<(typeof makeSchema)[editableType]>;
 export type editableValue = z.infer<editableSchema>;
-export type editableConfig<E extends editableType = editableType> = EditableTypeConfig[E];
 
 const editableInputs = {
     checklist: (name, initValue, { options }) =>
@@ -106,7 +89,7 @@ const editableInputs = {
     [K in editableType]: (
         name: string,
         initValue: z.infer<ReturnType<(typeof makeSchema)[K]>>,
-        config: EditableTypeConfig[K]
+        config: editableConfig<K>
     ) => string
 };
 
@@ -145,8 +128,8 @@ type editableEntry = z.infer<typeof editableEntrySchema>;
  * @param config - Descriptor's specific configuration (use empty {} if none is necessary).
  * @returns the zod schema to parse *values* for the descriptor.
  */
-function _buildSchemaFor<K extends editableType>(type: K, config: EditableTypeConfig[K]): ReturnType<(typeof makeSchema)[K]> {
-    const builder = makeSchema[type] as unknown as (c: EditableTypeConfig[K]) => ReturnType<(typeof makeSchema)[K]>;
+function _buildSchemaFor<K extends editableType>(type: K, config: editableConfig<K>): ReturnType<(typeof makeSchema)[K]> {
+    const builder = makeSchema[type] as unknown as (c: editableConfig<K>) => ReturnType<(typeof makeSchema)[K]>;
     return builder(config);
 }
 /**
@@ -156,8 +139,8 @@ function _buildSchemaFor<K extends editableType>(type: K, config: EditableTypeCo
  * @param config - Configuration to parse based on the editable field type specified (not type checked).
  * @returns the parsed (and typed) configuration.
  */
-function _parseConfigFor<K extends editableType>(type: K, config: unknown): EditableTypeConfig[K] {
-    const parser = configSchemas[type] as unknown as z.ZodType<EditableTypeConfig[K]>;
+function _parseConfigFor<K extends editableType>(type: K, config: unknown): editableConfig<K> {
+    const parser = configSchemas[type] as unknown as z.ZodType<editableConfig<K>>;
     return parser.parse(config);
 }
 // CLASS ========================================================
@@ -209,7 +192,7 @@ export class EditableFieldDescriptor {
     get deprecated(): boolean { return this.#deprecated ?? false }
 
     // STARTUP =========================================================================
-    private constructor(token: symbol, schema: editableSchema, label: string, type: editableType, config: EditableTypeConfig[editableType], defVal: editableValue, deprecated?: boolean) {
+    private constructor(token: symbol, schema: editableSchema, label: string, type: editableType, config: editableConfig, defVal: editableValue, deprecated?: boolean) {
         // Enforce privacy
         if (token !== EditableFieldDescriptor.#constructionToken)
             throw new PrivateConstructorError("EditableFieldDescriptor", { init: { method: 'create', type: 'factory' } });
@@ -287,8 +270,8 @@ export class EditableFieldDescriptor {
             case 'line': case 'paragraph': case 'url': return 'string';
             case 'check': return 'boolean';
             case 'value': case 'int': return 'number';
-            case 'list': return (this.#config as EditableTypeConfig['list']).options.map(o => JSON.stringify(o)).join(' | ');
-            case 'checklist': return `(${(this.#config as EditableTypeConfig['checklist']).options.map(o => JSON.stringify(o)).join(' | ')})[]`;
+            case 'list': return (this.#config as editableConfig<'list'>).options.map(o => JSON.stringify(o)).join(' | ');
+            case 'checklist': return `(${(this.#config as editableConfig<'checklist'>).options.map(o => JSON.stringify(o)).join(' | ')})[]`;
         }
     }
 

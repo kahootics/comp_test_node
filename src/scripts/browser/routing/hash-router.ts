@@ -2,7 +2,7 @@
 import { IllegalArgumentError, ValidationError } from "../../../errors/common-errors.mjs";
 import { RouterInitializationError, RouterInvalidRequestError } from "../../../errors/route-errors.js";
 import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
-import { escapeRegExp } from "../../../tools/string-parsers.js";
+import { escapeRegExp } from "../../../tools/string-parsers.mjs";
 import { hashRouterEvent, hashRouterRequestEvent, type hash, type HashRouterOptions, type route, type title } from "./router-types.js";
 import { HashRouterEvent } from "./hash-router-event.js";
 import type { HashRouterRequestEvent } from "./hash-router-request-event.js";
@@ -359,7 +359,7 @@ export class HashRouter {
         const routeRegExp = this.#routeCaptureRegExp;
         for (const [route, title] of map) {
             // route validation
-            const mRoute = route.match(this.#routeCaptureRegExp)?.groups?.route;
+            const mRoute = route.match(routeRegExp)?.groups?.route;
             if (!mRoute)
                 throw new ValidationError(`Route ${route} contains illegal syntax for a hash`);
             if (mRoute !== route)

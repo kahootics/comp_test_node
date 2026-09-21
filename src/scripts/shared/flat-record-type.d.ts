@@ -1,6 +1,7 @@
+import type { EditablesFor } from "../../data/db/editables-types.js";
 import type { dbRecordData, dbRecordDerived, dbRecordInv, dbRecordVersions, dbStoreId, dbType } from "../node/db/data-base-types.js";
-import type { dbEditableFields } from "./compiled-editable-fields.js";
 
+type dbEditableFields<T extends dbType> = EditablesFor[T];
 
 export type record<T extends dbType> =
     dbRecordData<T> &
@@ -11,4 +12,3 @@ export type record<T extends dbType> =
     versions: dbRecordVersions,
     inv: dbRecordInv
 }
-

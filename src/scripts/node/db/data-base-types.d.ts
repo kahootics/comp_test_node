@@ -1,5 +1,5 @@
 import type z from "zod";
-import type { Brand } from "../../../tools/general-types.js";
+import type { Brand } from "../../shared/general-types.js";
 import type { DBInitSchemas } from "./data-base-init.ts";
 import type { dbStoreIdSchema, dbRecordInvSchema, dbRecordVersionsSchema } from "./base-field.ts";
 import type { _buildRecordsStoreSchema } from "./helpers/build-records-store-schema.ts";

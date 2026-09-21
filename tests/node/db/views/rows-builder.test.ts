@@ -8,7 +8,7 @@ import type { dbType } from '../../../../src/scripts/node/db/data-base-types.d.j
 import type { FlatRecord } from '../../../../src/scripts/node/db/records/flat-record.js';
 import { EditableFieldDescriptor } from '../../../../src/scripts/node/db/editable-field.js';
 
-vi.mock('../../../../src/tools/console.js', () => ({
+vi.mock('../../../../src/tools/logger.mjs', () => ({
     Log: { msg: vi.fn(), file: vi.fn(), wrn: vi.fn() },
 }));
 

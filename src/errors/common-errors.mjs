@@ -1,5 +1,5 @@
 // @ts-check
-import { formatList } from "../tools/string-parsers.js";
+import { formatList } from "../tools/string-parsers.mjs";
 
 /**
  * Hyerachy:  
@@ -48,6 +48,8 @@ import { formatList } from "../tools/string-parsers.js";
  *      * {@link AlreadyExistsError} -
  * 
  *      * {@link DuplicateKeyError} -
+ * 
+ *      * {@link DuplicateOperationError} -
  * 
  */
 // @ts-ignore
@@ -232,6 +234,19 @@ export class DuplicateKeyError extends Error {
     constructor(message, options) {
         super(message, options);
         Object.setPrototypeOf(this, DuplicateKeyError.prototype);
+    }
+}
+export class DuplicateOperationError extends Error {
+    /** @override @type {string} */
+    name = "DuplicateOperationError";
+    /**
+     * @param {string} message - Error message.
+     * @param {ErrorOptions} [options] - Optional fields:
+     * * `cause` - A cause for the error.
+     */
+    constructor(message, options) {
+        super(message, options);
+        Object.setPrototypeOf(this, DuplicateOperationError.prototype);
     }
 }
 /**

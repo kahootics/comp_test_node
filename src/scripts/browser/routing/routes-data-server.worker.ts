@@ -4,7 +4,7 @@ declare const register: Map<bundleID, string>; // temp (will be static import)
 
 const cache = new Map<bundleID, Promise<bundleData>>();
 
-function _respond(bundleID: bundleID, type: ResponseType, payload: Map<route, routeData>, error?: any) {
+function _respond(bundleID: bundleID, type: ResponseType, payload: Map<route, routeData>, error?: Error) {
     self.postMessage({ bundleID, type, payload, error } as ResponseMessage);
 }
 
@@ -59,6 +59,8 @@ self.onmessage = async (e: MessageEvent<RequestMessage>) => {
                 break;
         }
     } catch (e) {
+        if (e instanceof Error)
         _respond(bundleID, Response.ERROR, new Map(), e);
+        else throw e;
     }
 };

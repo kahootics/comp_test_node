@@ -1,5 +1,5 @@
 import z from "zod";
-import type { directoryString, hashString } from "../../../tools/general-types.js";
+import type { directoryString, hashString } from "../../shared/general-types.js";
 import type { Asset } from "./asset.js";
 import { stableHash } from "../writers/hash.js";
 import type { ExportOutput } from "../../shared/assets-export-classes.js";

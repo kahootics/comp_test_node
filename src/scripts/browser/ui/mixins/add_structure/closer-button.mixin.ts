@@ -1,5 +1,5 @@
 import { ValidationError } from "../../../../../errors/common-errors.mjs";
-import type { Closeable } from "../../../../../tools/general-types.js";
+import type { Closeable } from "../../../../shared/general-types.js";
 import { ExtendibleElement } from "../../components/extendible-element.js";
 
 // !! Globally change CloserButton, CloserButtonMixin and ExtendibleElementPlus before implementing !!

@@ -1,5 +1,5 @@
 import { ValidationError } from "../../../../../errors/common-errors.mjs";
-import { _getPrivateProp, _initPrivateProp, SetOnceWeakMap } from "../../../../../tools/encapsulation.js";
+import { _getPrivateProp, _initPrivateProp, SetOnceWeakMap } from "../../../../../tools/encapsulation.mjs";
 import { ExtendibleElement } from "../../components/extendible-element.js";
 
 // EXTENDED CONSTRUCTOR ================================================================

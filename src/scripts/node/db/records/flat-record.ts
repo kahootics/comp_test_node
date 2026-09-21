@@ -1,5 +1,5 @@
 import { IllegalArgumentError } from "../../../../errors/common-errors.mjs";
-import { formatList } from "../../../../tools/string-parsers.js";
+import { formatList } from "../../../../tools/string-parsers.mjs";
 import type { dbRecord, dbRecordDerived, dbRecordInv, dbRecordVersions, dbStoreId, dbType } from "../data-base-types.d.js";
 
 export class FlatRecord<T extends dbType> implements dbRecord<T> {

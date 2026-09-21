@@ -1,5 +1,5 @@
 import { IllegalStateError, NotFoundError } from "../../../../../errors/common-errors.mjs";
-import { _assertRegistered, _getPrivateProp, _initPrivateProp, SetOnceWeakMap } from "../../../../../tools/encapsulation.js";
+import { _assertRegistered, _getPrivateProp, _initPrivateProp } from "../../../../../tools/encapsulation.mjs";
 import type { route } from "../../../routing/router-types.js";
 
 declare const ROUTE_ANCHOR_CLASS: string;

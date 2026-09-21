@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import writeAsJsonAt from "./write-as-json-at.js"
 import { createHashFromBuffer, stableHash } from "./hash.js";
-import { Log } from "../../../tools/console.js";
+import { Log } from '../../../tools/logger.mjs';
 import { IllegalStateError } from "../../../errors/common-errors.mjs";
 
 const REGISTER_PATH = 'src/data/schemas/schemas-register.json';

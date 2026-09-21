@@ -1,9 +1,9 @@
 import path from "node:path";
 import z from "zod";
-import { getFileBirthTime } from "../../../../tools/companion-util.js";
+import { getFileBirthTime } from "../../companion-util.js";
 import { BatchRule } from "../rule.js";
 import { Asset } from "../asset.js";
-import type { nameString } from "../../../../tools/general-types.js";
+import type { nameString } from "../../../shared/general-types.js";
 import { ValidationError } from "../../../../errors/common-errors.mjs";
 
 function reorderScreenshotName(filename: string): string {

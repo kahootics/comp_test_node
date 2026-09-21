@@ -1,8 +1,8 @@
-import devConfig from "../../../config/dev-config.mjs";
+import {CLIENT_ID} from "../../shared/client-ids.js";
 import { BundlersRegistry } from "../bundlers/bundlers-registry.js";
 import { DBInitSchemas } from "../db/data-base-init.js";
 
-const { selectorOptionsId } = devConfig
+const { selectorOptionsId } = CLIENT_ID
 
 export async function buildSelectorOptions(): Promise<string> {
     const dbTypes = Object.keys(DBInitSchemas);

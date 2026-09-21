@@ -1,8 +1,8 @@
 import path from "path";
-import type { nameString, directoryString, extType } from "../../../tools/general-types.js";
+import type { nameString, directoryString, extType } from "../../shared/general-types.js";
 import { IllegalArgumentError } from "../../../errors/common-errors.mjs";
-import { parseQueryString } from "../../../tools/string-parsers.js";
-import { _stabilizePath, type $stable } from "../../../tools/companion-util.js";
+import { parseQueryString } from "../../../tools/string-parsers.mjs";
+import { _stabilizePath, type $stable } from "../companion-util.js";
 
 /**
  * @param str - string to parse.

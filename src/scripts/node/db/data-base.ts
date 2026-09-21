@@ -4,11 +4,11 @@ import { DBInitSchemas } from "./data-base-init.js";
 import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
 import { DBRecordsStore } from "./records/records-store.js";
 import { rename } from "fs/promises";
-import { Log } from "../../../tools/console.js";
+import { Log } from '../../../tools/logger.mjs';
 import { FlatRecord } from "./records/flat-record.js";
 import { EditableFieldDescriptor } from "./editables/editable-field.js";
 import { writeNdjsonPipeline } from '../writers/write-ndjson-pipeline.js';
-import type { editableConfig, editableType } from "./editables/editable-field.js";
+import type { editableConfig, editableType } from "../../shared/editable-type-config.js";
 import dbConfig from "../../../config/db-config.mjs";
 import { _verifyUniquenessOfKeys } from "./helpers/verify-uniqueness-of-keys.js";
 import type { dbType, dataLabel, dbStoreId, dbRecordData, dbRecordEditables, dbRecordVersions, dbRecordVersion, dbRecordInv, dbDataShape, dbDerivedShape } from "./data-base-types.d.js";
@@ -156,7 +156,7 @@ class DataBase<T extends dbType = dbType> {
             if (e && typeof e === 'object' && 'code' in e && e.code === 'ENOENT') {
                 this.#recordsStores = new Map();
                 Log.wrn(
-                    'Cannot find database at ' + this.#path
+                    `Cannot find database ${this.#type} at ` + this.#path
                     + '\nA new empty database has been initialized'
                     + '\nIf this is not the expected outcome, '
                     + 'please exit and verify the data is at the correct path.'

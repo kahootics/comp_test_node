@@ -1,9 +1,9 @@
 import { ValidationError } from "../../../../../errors/common-errors.mjs";
 import { Backdrop } from "../../components/backdrop.js";
 import { expandableCloseTransition, expandableOnTransitionEnd, expandableOpenTransition } from "./expandable.mixin.js";
-import { getFocusableExtremities } from "../../../shared/getFocusableExtremities.js";
+import { getFocusableExtremities } from "../../../utilities/get-focusable-extremities.js";
 import type { Popover } from "./popover.mixin.js";
-import { _getPrivateProp, _initPrivateProp, _setPrivateProp, SetOnceWeakMap } from "../../../../../tools/encapsulation.js";
+import { _getPrivateProp, _initPrivateProp, _setPrivateProp, SetOnceWeakMap } from "../../../../../tools/encapsulation.mjs";
 
 // EXTENDED CONSTRUCTOR ================================================================
 type Constructor<T extends object> = new (...args: any[]) => T;

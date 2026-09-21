@@ -1,7 +1,5 @@
 // @ts-check
-import tsconfig from '../../tsconfig.json' with {type: 'json'}
 import pkg from '../../package.json' with {type: 'json'}
-import { _stabilizePath } from '../tools/companion-util.js';
 
 const prefix = 'tx-cp';
 const repoName = pkg.repository.url.replace(`.${pkg.repository.type}`,'');
@@ -16,7 +14,7 @@ export default {
     paths: {
         root: projectRoot,
         outDir: "dist",
-        tsDir: tsconfig.compilerOptions.outDir,
+        //tsDir: 'build',
         srcDir: 'src',
 
         /** Location of the hash records of the assets in src directory. */

@@ -1,5 +1,5 @@
-import { _getPrivateProp } from "../../../../../tools/encapsulation.js";
-import { getAllFocusables } from "../../../shared/getFocusableExtremities.js";
+import { _getPrivateProp } from "../../../../../tools/encapsulation.mjs";
+import { getAllFocusables } from "../../../utilities/get-focusable-extremities.js";
 
 // EXTENDED CONSTRUCTOR ================================================================
 type Constructor<T extends object> = new (...args: any[]) => T;

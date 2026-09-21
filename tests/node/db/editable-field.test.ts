@@ -4,7 +4,7 @@ import type { dummy } from "../../setup.js";
 
 const SRC_EDITABLE_FIELD = '../../../src/scripts/node/db/editables/editable-field.js';
 const SRC_DB_CONFIG = '../../../src/config/db-config.mjs';
-const SRC_CONSOLE_TOOL = '../../../src/tools/console.js';
+const SRC_CONSOLE_TOOL = '../../../src/tools/logger.mjs';
 
 const toDbType = (n: string) => n as dbType;
 

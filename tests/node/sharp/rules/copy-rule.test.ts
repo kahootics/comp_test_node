@@ -1,23 +1,21 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import fs from 'node:fs';
+import {mkdir, stat} from 'node:fs/promises';
 import path from 'node:path/posix';
 import { Asset } from '../../../../src/scripts/node/sharp/asset.js';
 import { CopyRule } from '../../../../src/scripts/node/sharp/rules/copy-rule.js';
-import { Log } from '../../../../src/tools/console.js';
+import { Log } from '../../../../src/tools/logger.mjs';
 import { stableHash } from '../../../../src/scripts/node/writers/hash.js';
 
-vi.mock('../../../../src/tools/console.js', () => ({
+vi.mock('../../../../src/tools/logger.mjs', () => ({
     Log: { msg: vi.fn(), file: vi.fn() },
 }));
 
-vi.mock('node:fs', () => {
-    const mkdirSync = vi.fn();
-    return { default: { mkdirSync }, mkdirSync };
+vi.mock('node:fs/promises', () => {
+    const mkdir = vi.fn();
+    const stat = vi.fn(() => 120);
+    const fs = { mkdir, stat }
+    return { default: { fs }, mkdir, stat };
 });
-
-vi.mock('../../../../src/scripts/node/writers/copy-file-to.js', () => ({
-    destPathCorrected: vi.fn((assetPath: string, dest: string) => path.join(dest, path.basename(assetPath))),
-}));
 
 vi.mock('../../../../src/scripts/node/writers/hash.js', () => ({
     createHashFromBuffer: vi.fn(() => 'copyhash1'),
@@ -67,7 +65,7 @@ describe('CopyRule', () => {
 
         const result = await rule.enforce(asset, 'dist' as any);
 
-        expect(fs.mkdirSync).toHaveBeenCalledWith('dist', { recursive: true });
+        expect(mkdir).toHaveBeenCalledWith('dist', { recursive: true });
         expect(sharpToFormat).not.toHaveBeenCalled();
         expect(result).toEqual({ name: 'hero', src: path.join('dist', 'hero.jpg'), width: 200, height: 100 });
     });
@@ -107,7 +105,7 @@ describe('CopyRule', () => {
 
         await rule.enforce(asset, '/exports/nested' as any);
 
-        expect(fs.mkdirSync).toHaveBeenCalledWith(path.join('/exports/nested'), { recursive: true });
+        expect(mkdir).toHaveBeenCalledWith(path.join('/exports/nested'), { recursive: true });
     });
 
     test('saves the edits onto the asset after writing (path/dir/ext reflect the copy destination)', async () => {

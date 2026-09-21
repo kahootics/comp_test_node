@@ -1,5 +1,4 @@
-// @ts-check
-import readline from 'node:readline/promises';
+//@ ts-check
 
 const UNITS = ['B', 'KB', 'MB', 'GB', 'TB'];
 const UNITS_LIMIT = UNITS.length - 1;
@@ -42,7 +41,6 @@ export function _c(text, color, intensity = 'text', style = 'regular',) {
  * 
  */
 class Logger {
-
     /**
      * @param {string} outPath
      * @param {number} sizeInBytes 
@@ -56,16 +54,6 @@ class Logger {
      */
     msg(message) {
         console.info(`${_c('●', 'cyan')} ${message}`);
-    }
-    /**
- * @param {readline.Interface} rl 
-     * @param {number} no 
-     * @param {string} msg 
-     */
-    listI(rl, no, msg) {
-        return rl.question(
-            _c(msg, 'white', 'text', 'underline')
-        )
     }
     /**
      * Outputs a header between two '⏹' on a green background.
@@ -97,3 +85,4 @@ class Logger {
 }
 
 export const Log = new Logger();
+

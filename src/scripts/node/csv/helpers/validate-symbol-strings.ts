@@ -1,5 +1,5 @@
 import { ValidationError } from "../../../../errors/common-errors.mjs";
-import { formatList } from "../../../../tools/string-parsers.js";
+import { formatList } from "../../../../tools/string-parsers.mjs";
 
 /**
  * Validate any amount of strings to be a symbol

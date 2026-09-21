@@ -1,28 +1,19 @@
-
-/* 
- * assets/  # must be optimized and copied in dist (same routing)
- * scripts/node/    # execution helpers (transpile for execution only)
- * scripts/ # transpile and route (shipped with routing)
- * static/  # copied directly as they are
- */
-
-
-
-import writeAsJsonAt from './scripts/node/writers/write-as-json-at.js';
-import buildScripts from './scripts/node/writers/build-scripts.js';
-import { Log } from './tools/console.js';
-import { CopyRule } from './scripts/node/sharp/rules/copy-rule.js';
-import { Asset } from './scripts/node/sharp/asset.js';
-import { AssetsLibrary } from './scripts/node/sharp/assets-library.js';
+import writeAsJsonAt from './node/writers/write-as-json-at.js';
+import { Log } from '../tools/logger.mjs';
+import { CopyRule } from './node/sharp/rules/copy-rule.js';
+import { Asset } from './node/sharp/asset.js';
+import { AssetsLibrary } from './node/sharp/assets-library.js';
 import z, { object, regex } from 'zod';
-import { writeZodAsSchema } from './scripts/node/writers/write-zod-as-schema.js';
-import fetchSheetAsCSV from './scripts/node/csv/fetch-sheet-as-csv.js';
+import { writeZodAsSchema } from './node/writers/write-zod-as-schema.js';
+import fetchSheetAsCSV from './node/csv/fetch-sheet-as-csv.js';
 import { writeFile } from 'node:fs/promises';
 import { mkdirSync } from 'node:fs';
-import { compileEditableTypes } from './scripts/node/tooling/compile-editable-types.js';
+import { compileEditableTypes } from './node/tooling/compile-editable-types.js';
+import { isBuild } from './node/process-env.js';
+import { IllegalAccessError } from '../errors/common-errors.mjs';
 
+if (!isBuild) throw new IllegalAccessError(`Cannot build static site and app in dev-mode`);
 
-export const isDev = process.env.BUILD !== 'true';
 
 Log.hdr('building script bundles');
 //const scripts = await buildScripts();

@@ -2,7 +2,7 @@
 import { parse } from 'csv-parse';
 import { createReadStream } from 'node:fs';
 import z from 'zod';
-import { Log } from '../../../tools/console.js';
+import { Log } from '../../../tools/logger.mjs';
 import { HeadersSchema } from './headers-schema.js';
 import { CsvParserOptions } from './csv-parser-options.js';
 import type { PathLike } from 'node:fs';

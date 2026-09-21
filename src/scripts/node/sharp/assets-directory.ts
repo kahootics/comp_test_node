@@ -2,15 +2,15 @@ import path from "path";
 import { Asset } from "./asset.js";
 import { glob } from "glob";
 import { RuleSet } from "./rule-set.js";
-import type { extType, directoryString, nameString } from "../../../tools/general-types.js";
+import type { extType, directoryString, nameString } from "../../shared/general-types.js";
 import { IllegalArgumentError, NotFoundError, ValidationError } from "../../../errors/common-errors.mjs";
-import { duplicatesOfStringList, formatList } from "../../../tools/string-parsers.js";
+import { duplicatesOfStringList, formatList } from "../../../tools/string-parsers.mjs";
 import fs from "node:fs";
 import { AssetsHashRecords } from "./assets-hash-records.js";
-import { _stabilizePath, type $stable } from "../../../tools/companion-util.js";
+import { _stabilizePath, type $stable } from "../companion-util.js";
 import type { ExportOutput } from "../../shared/assets-export-classes.js";
 import { OperationFailedError, PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
-import { Log } from "../../../tools/console.js";
+import { Log } from '../../../tools/logger.mjs';
 
 
 // PRIVATE HELPERS =======================================================

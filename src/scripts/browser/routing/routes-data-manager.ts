@@ -16,7 +16,7 @@ export class RoutesDataManager {
                 route,
                 {
                     resolve: (value: routeData | PromiseLike<routeData>) => void,
-                    reject: (reason?: any) => void
+                    reject: (reason?: string) => void
                 }[]
             >,
             timer: number

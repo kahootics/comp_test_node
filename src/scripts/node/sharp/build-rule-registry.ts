@@ -2,7 +2,7 @@ import { glob } from "glob/raw";
 import path from "node:path";
 import type z from "zod";
 import { type RuleConstructor, Rule, ruleConstructorStaticShape, type zobject } from "./rule.js";
-import { extendsClass } from "../../../tools/encapsulation.js";
+import { extendsClass } from "../../../tools/encapsulation.mjs";
 import { pathToFileURL } from "node:url";
 import type { ZodError } from "zod";
 import { ValidationError } from "../../../errors/common-errors.mjs";

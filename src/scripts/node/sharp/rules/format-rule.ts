@@ -2,7 +2,7 @@ import sharp, { type FormatEnum, type Sharp } from "sharp";
 import z from "zod";
 import { AssetRule } from "../rule.js";
 import { Asset } from "../asset.js";
-import type { extType } from "../../../../tools/general-types.js";
+import type { extType } from "../../../shared/general-types.js";
 
 export const formatSchema = z.enum(['jpeg', 'gif', 'webp', 'png']);
 export const optionsSchema = z.object({

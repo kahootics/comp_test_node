@@ -7,7 +7,7 @@
  * the chunks into a buffer to split on newlines 
  * (also handles carriage returns).
  * 
- * @param {AsyncIterable<Uint8Array | string> | ReadableStream<Uint8Array | string>} chunkIterable - Async iterable of bytes or strings.
+ * @param {AsyncIterable<Uint8Array|string> | ReadableStream<Uint8Array|string>} chunkIterable - Async iterable of bytes or strings.
  * @param {Object} [options] - Options object:
  * @param {boolean} [options.trim] - Cuts away blank spaces between read lines.
  * @param {boolean} [options.skip_empty_lines] - Skip lines with no content (`''`).

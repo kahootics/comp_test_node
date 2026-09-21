@@ -1,17 +1,15 @@
 import path from "node:path";
 import z from "zod";
-import type { directoryString } from "../../../../tools/general-types.js";
-import fs from 'node:fs';
+import type { directoryString } from "../../../shared/general-types.js";
+import {mkdir, stat} from 'node:fs/promises';
 import { formatSchema, optionsSchema } from './format-rule.js';
 import { ExportRule } from "../rule.js";
 import { AssetOutput } from "../../../shared/assets-export-classes.js";
 import { Asset } from "../asset.js";
 import sharp, { type Sharp } from "sharp";
 import { createHashFromBuffer } from "../../writers/hash.js";
-import { destPathCorrected } from "../../writers/copy-file-to.js";
-import { Log } from "../../../../tools/console.js";
-import appConfig from "../../../../config/ui-config.mjs";
-import { _stabilizePath } from "../../../../tools/companion-util.js";
+import { Log } from '../../../../tools/logger.mjs';
+import { _stabilizePath } from "../../companion-util.js";
 
 const hashSchema = z.boolean().default(false);
 type hashType = z.infer<typeof hashSchema>;
@@ -54,11 +52,12 @@ export class CopyRule extends ExportRule<
             const hash = await this.createHashFromSharp(sharpAsset);
             asset.setOutParam('hash', hash);
         }
-        fs.mkdirSync(asset.outDir, { recursive: true });
+        await mkdir(asset.outDir, { recursive: true });
 
         await sharpAsset.toFile(asset.outPath);
         asset.saveEdits();
-        Log.file(asset.outPath);
+        const { size } = await stat(asset.outPath);
+        Log.file(asset.outPath, size);
 
         return new AssetOutput(asset.name, asset.outPath, width, height);
     }

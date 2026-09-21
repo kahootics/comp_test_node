@@ -1,6 +1,6 @@
 import { PrivateConstructorError } from "../../../errors/specialized-errors.mjs";
 import { validateSymbolStrings } from "./helpers/validate-symbol-strings.js";
-import { duplicatesOfStringList, formatList } from "../../../tools/string-parsers.js";
+import { duplicatesOfStringList, formatList } from "../../../tools/string-parsers.mjs";
 import { DuplicateKeyError } from "../../../errors/common-errors.mjs";
 
 

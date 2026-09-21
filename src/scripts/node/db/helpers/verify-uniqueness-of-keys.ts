@@ -1,5 +1,5 @@
 import { DuplicateKeyError } from "../../../../errors/common-errors.mjs";
-import { duplicatesOfStringList, formatList } from "../../../../tools/string-parsers.js";
+import { duplicatesOfStringList, formatList } from "../../../../tools/string-parsers.mjs";
 import { reservedKeywords, _isReservedKeyword } from "../base-field.js";
 import type { dbType } from "../data-base-types.d.js";
 

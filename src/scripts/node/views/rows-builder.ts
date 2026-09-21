@@ -1,5 +1,5 @@
 import { IllegalAccessError, IllegalArgumentError, IllegalStateError } from "../../../errors/common-errors.mjs";
-import { formatList } from "../../../tools/string-parsers.js";
+import { formatList } from "../../../tools/string-parsers.mjs";
 import { reservedKeywords } from "../db/base-field.js";
 import { Admitted } from "./helpers/admitted-types.js";
 import { _unpackdataShape } from "./helpers/unpack-data-schema.js";
@@ -9,7 +9,7 @@ import { NestableUColumnDescriptor } from "./columns/nestable-u-column-descripto
 import { PrimitiveUColumnDescriptor } from "./columns/primitive-u-column-descriptor.js";
 import { wrapCell, wrapRow } from "../writers/HTML/write-table.js";
 import type z from "zod";
-import type { Brand } from "../../../tools/general-types.js";
+import type { Brand } from "../../shared/general-types.js";
 import type { ColumnDescriptor } from "./columns/column-descriptor.js";
 import type { FlatRecord } from "../db/records/flat-record.js";
 import type { EditableFieldDescriptor } from "../db/editables/editable-field.js";

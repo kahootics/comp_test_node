@@ -1,5 +1,5 @@
 import { IllegalArgumentError, ValidationError, IllegalStateError } from '../../../errors/common-errors.mjs';
-import { formatList, stableStringify } from '../../../tools/string-parsers.js';
+import { formatList, stableStringify } from '../../../tools/string-parsers.mjs';
 import { CsvParserOptions } from './csv-parser-options.js';
 import { FlatHeader } from './headers/flat-header.js';
 import { HeaderEntry } from './headers/header-entry.js';

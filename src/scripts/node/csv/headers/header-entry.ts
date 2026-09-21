@@ -1,6 +1,6 @@
 import { IllegalArgumentError, IllegalStateError, NotFoundError } from "../../../../errors/common-errors.mjs";
 import { PrivateConstructorError } from "../../../../errors/specialized-errors.mjs";
-import { escapeRegExp } from "../../../../tools/string-parsers.js";
+import { escapeRegExp } from "../../../../tools/string-parsers.mjs";
 import { CsvParserOptions } from "../csv-parser-options.js";
 import normalizeCellArray from "../helpers/normalize-cell-array.js";
 import normalizeCellIdentifier from "../helpers/normalize-cell-identifier.js";

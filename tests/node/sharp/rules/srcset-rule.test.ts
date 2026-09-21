@@ -5,13 +5,14 @@ import type { dummy } from '../../../setup.js'
 import { SrcsetRule } from '../../../../src/scripts/node/sharp/rules/srcset-rule.js';
 import { stableHash } from '../../../../src/scripts/node/writers/hash.js';
 
-vi.mock('node:fs', () => {
-    const mkdirSync = vi.fn();
-    return { default: { mkdirSync }, mkdirSync };
+vi.mock('node:fs/promises', () => {
+    const mkdir = vi.fn();
+    const stat = vi.fn(() => 120);
+    return { default: { mkdir }, mkdir, stat };
 });
 
 
-vi.mock('../../../../src/tools/console.js', () => ({
+vi.mock('../../../../src/tools/logger.mjs', () => ({
     Log: { msg: vi.fn(), file: vi.fn() },
 }));
 
@@ -101,7 +102,7 @@ describe('SrcsetRule', () => {
         await rule.enforce(asset, '/exports' as any);
 
         // call 0 = the base copy from CopyRule.enforce, call 1 = this width variant
-        //@ts-ignore
+        // @ts-ignore
         const writtenPath = sharpToFile.mock.calls.at(-1)![0] as unknown as string;
         expect(writtenPath).toContain('w=400px');
         expect(writtenPath).toContain('hash=srcsethash1');
@@ -113,7 +114,7 @@ describe('SrcsetRule', () => {
 
         await rule.enforce(asset, '/exports' as any);
 
-        //@ts-ignore
+        // @ts-ignore
         const writtenPath = sharpToFile.mock.calls.at(-1)![0] as unknown as string;
         expect(writtenPath).toContain('w=400px');
         expect(writtenPath).not.toContain('hash=');

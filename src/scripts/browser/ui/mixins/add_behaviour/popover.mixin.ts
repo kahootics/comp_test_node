@@ -1,5 +1,5 @@
 import { ValidationError } from "../../../../../errors/common-errors.mjs";
-import { _getPrivateProp, _initPrivateProp, _setPrivateProp } from "../../../../../tools/encapsulation.js";
+import { _getPrivateProp, _initPrivateProp, _setPrivateProp } from "../../../../../tools/encapsulation.mjs";
 import { Expandable, expandableCloseTransition, expandableOpenTransition, expandableOnTransitionEnd } from "./expandable.mixin.js";
 
 // EXTENDED CONSTRUCTOR ================================================================

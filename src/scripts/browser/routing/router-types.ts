@@ -2,7 +2,7 @@ import type { HashRouterRequestEvent } from "./hash-router-request-event.js";
 import type { HashRouterEvent } from "./hash-router-event.js";
 import type { Response } from "./routes-data-enums.js";
 import type { Request } from "./routes-data-enums.js";
-import type { Brand } from "../../../tools/general-types.js";
+import type { Brand } from "../../shared/general-types.js";
 
 export const hashRouterEvent: hashroutechange = "hashroutechange";
 export type hashroutechange = "hashroutechange";

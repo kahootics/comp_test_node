@@ -10,12 +10,12 @@ import type { dummy } from '../../setup.js';
 import { createHashFromFile } from '../../../src/scripts/node/writers/hash.js';
 import { asDir, asHash } from '../../utils.js';
 import { _stabilizePath } from '../../../src/tools/companion-util.js';
-import { Log } from '../../../src/tools/console.js';
+import { Log } from '../../../src/tools/logger.mjs';
 import { AssetBin } from '../../../src/scripts/node/sharp/assets-bin.js';
 import { writeZodAsSchema } from '../../../src/scripts/node/writers/write-zod-as-schema.js';
 
 
-vi.mock('../../../src/tools/console.js', () => ({
+vi.mock('../../../src/tools/logger.mjs', () => ({
     Log: { msg: vi.fn(), file: vi.fn() },
 }));
 

@@ -1,9 +1,9 @@
 import { IllegalArgumentError, ValidationError } from "../../../../../errors/common-errors.mjs";
-import type { Brand, Closeable, Showable } from "../../../../../tools/general-types.js";
+import type { Brand, Closeable, Showable } from "../../../../shared/general-types.js";
 import type { ExtendibleElement } from "../../components/extendible-element.js";
-import { requestTransitionFrame } from "../../../shared/utilities.js";
-import { Lock } from "../../../shared/lock.js";
-import { _getPrivateProp, _initPrivateProp, _setPrivateProp, SetOnceWeakMap } from "../../../../../tools/encapsulation.js";
+import { requestTransitionFrame } from "../../../utilities/utilities.js";
+import { Lock } from "../../../utilities/lock.js";
+import { _getPrivateProp, _initPrivateProp, _setPrivateProp, SetOnceWeakMap } from "../../../../../tools/encapsulation.mjs";
 
 
 // EXTENDED CONSTRUCTOR ================================================================
@@ -103,13 +103,14 @@ export interface Expandable extends ExpandableToggles, ExtendibleElement {
      * click of any of its controllers.
      * 
      * @remarks 
-     * The `aria-controls` and `aria-expanded` attributes of the 
+     * - The `aria-controls` and `aria-expanded` attributes of the 
      * controllers are handled automatically.
+     * - This method doesn't read any attribute from the controller.
      * 
      * @param newController - HTMLElement to set as a controller for the expandable element.
      * @param addListener - Option to automatically add an event listener (for `click` events) on the specified controller to toggle the expandable.
      */
-    addController(newController: HTMLElement, addListener?: boolean): void;
+    addController(newController: HTMLElement, options?: { addListener?: boolean}): void;
     /**
      * Removes an element from the expandable's controllers list 
      * and outputs the result of such operation.
@@ -365,9 +366,9 @@ export function Expandable<
         }
 
         // CONTROLLER SETUP ==============================================================
-        public addController(newController: HTMLElement, addListener?: boolean): void {
+        public addController(newController: HTMLElement, options?: {addListener?: boolean}): void {
             const controllers = _getPrivateProp(this, _controllers)
-            const isListening = (addListener ?? false) as isListening;
+            const isListening = (options?.addListener ?? false) as isListening;
             if (!controllers.has(newController))
                 controllers.set(newController, isListening);
 

@@ -1,7 +1,7 @@
 import appConfig from "../../../../config/ui-config.mjs";
-import { IllegalArgumentError, IllegalStateError, NotFoundError } from "../../../../errors/common-errors.mjs";
-import { Lock } from "../../shared/lock.js";
-import { requestTransitionFrame } from "../../shared/utilities.js";
+import { IllegalArgumentError, NotFoundError } from "../../../../errors/common-errors.mjs";
+import { Lock } from "../../utilities/lock.js";
+import { requestTransitionFrame } from "../../utilities/utilities.js";
 import { isPointerCoarse } from "../handle.js";
 
 /**
@@ -146,7 +146,8 @@ export class Carousel extends HTMLElement {
     /** Renders all the elements within the view `inert`. */
     #inertAll() {
         for (const child of this.#view) {
-            child.inert || (child.inert = true); // or just child.inert = true
+            if(child.inert) continue;
+            child.inert = true; // or just child.inert = true
         }
     }
 
@@ -284,7 +285,7 @@ export class Carousel extends HTMLElement {
      */
     #observeChildren() {
         const { children } = this;
-        const { length } = children;
+        //const { length } = children;
         // Verify if a recalc of observed children is needed
         // if (this.#childrenAmount === length) return; // exit if not
 

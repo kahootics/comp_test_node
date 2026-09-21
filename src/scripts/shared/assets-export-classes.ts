@@ -1,6 +1,19 @@
-import { toAbsolutePublicUrl, toPublicUrl } from "../../tools/companion-util.js";
-import type { nameString } from "../../tools/general-types.js";
+import { IllegalArgumentError, IllegalStateError } from "../../errors/common-errors.mjs";
+import type { nameString } from "./general-types.js";
 
+export function pathFromDist(path: string) {
+    path = path.replaceAll(`\\`, '/');
+    const res = path.split(/[\W]?(?:dist\/)/);
+    if (res.length > 2)
+        throw new IllegalArgumentError(`${path} contains dist in too many places, please use the resolved path`);
+
+    if (res.length === 1) return res[0]!;
+    if (res.length === 2) return res[1]!;
+
+
+    // Defensive
+    throw new IllegalStateError("'split' method cannot return undefined");
+}
 
 export interface ExportOutput {
     readonly name: nameString;
@@ -19,7 +32,7 @@ export class AssetOutput implements ExportOutput {
     ) {
         this.name = name;
         this.#path = src;
-        this.src = toAbsolutePublicUrl(src);
+        this.src = pathFromDist(src);
         this.width = width;
         this.height = height;
     }
@@ -32,7 +45,7 @@ export class SrcsetOutput extends AssetOutput {
     readonly #srcsetPaths: { [width_w: string]: string; } = {};
     readonly srcset: { [width_w: string]: string; } = {};
     add(width: number, assetPath: string) {
-        this.srcset[`${width}w`] = toAbsolutePublicUrl(assetPath);
+        this.srcset[`${width}w`] = pathFromDist(assetPath);
         this.#srcsetPaths[`${width}w`] = assetPath;
     }
     public static from(output: AssetOutput) {

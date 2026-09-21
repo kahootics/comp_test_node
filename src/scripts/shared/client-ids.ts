@@ -1,5 +1,5 @@
-//@ts-check
-export default {
+
+export const CLIENT_ID = {
     selectorOptionsId: 'selector-select',
     loadButtonId: 'load',
     containerId: 'container',
@@ -7,6 +7,6 @@ export default {
     editableTypeSelectId: 'editable-type',
     editableLabelInputId: 'editable-label',
     editableValueInputId: 'editable-value',
-    falseModalId: 'ffffffff',
+    falseModalId: 'false-modal-id',
 
-}
+} as const;

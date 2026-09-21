@@ -25,13 +25,13 @@ async function mainMenu() {
         '  3) Push (bump + commit + push)\n' +
         '  4) Merge with other branch\n' +
         '  0) Exit\n')
-    const action = await Log.listI(rl, 3,
-        /* 'Choose action:\n' +
+    const action = await rl.question(
+        'Choose action:\n' +
         '  1) Switch branch\n' +
         '  2) Create new branch\n' +
         '  3) Push (bump + commit + push)\n' +
         '  4) Merge with other branch\n' +
-        '  0) Exit\n' + */
+        '  0) Exit\n' +
         LN_INPUT
     );
 

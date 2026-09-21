@@ -1,8 +1,8 @@
 
-import fs from 'node:fs';
+import fs, { statSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { Log } from '../../../tools/console.js';
+import { Log } from '../../../tools/logger.mjs';
 import hashFile from './hash.js';
 import { IllegalArgumentError } from '../../../errors/common-errors.mjs';
 
@@ -58,7 +58,7 @@ export default async function writeAsJsonAt(
 	} finally {
 
 		const finalPath = hash ? hashFile(outPath) : outPath;
-		Log.file(finalPath);
+		Log.file(finalPath, statSync(finalPath).size);
 		return finalPath;
 	}
 }

@@ -1,6 +1,6 @@
 // HELPERS =============================================================================
 /** CSS selectors list of focusable elements. */
-const FOCUSABLES = ':not(:disabled, [hidden]):where(a, button, input, textarea, select, [tabindex]:not([tabindex="-1"]))';
+const FOCUSABLES = ':not(:disabled, [hidden], [inert]) :not(:disabled, [hidden], [inert]):where(a, button, input, textarea, select, [tabindex]:not([tabindex="-1"]))';
 /* a[href], button, input, select, textarea, audio[controls], video[controls],
 [contenteditable]:not([contenteditable="false"]), [tabindex],
 iframe, embed, object, summary */

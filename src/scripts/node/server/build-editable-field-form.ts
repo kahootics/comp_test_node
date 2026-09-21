@@ -2,10 +2,10 @@
 
 // addEditableField<E extends editableType>(label: string, type: E, defVal: any, config: editableConfig<E>) {
 
-import devConfig from "../../../config/dev-config.mjs";
+import {CLIENT_ID} from "../../shared/client-ids.js";
 import { editableTypes } from "../db/editables/editable-field.js";
 
-const {editableLabelInputId, editableTypeSelectId, editableValueInputId} = devConfig;
+const {editableLabelInputId, editableTypeSelectId, editableValueInputId} = CLIENT_ID;
 
 function _buildEditableTypeSelector() {
     const edbOptions = editableTypes.map(t => `<option value="${t}">${t}</option>`).join('');

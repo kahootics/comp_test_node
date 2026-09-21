@@ -1,6 +1,6 @@
 import { IllegalArgumentError } from "../../../../errors/common-errors.mjs";
 import z from "zod";
-import type { Brand } from "../../../../tools/general-types.js";
+import type { Brand } from "../../../shared/general-types.js";
 
 export const Admitted = {
     PRIMITIVE: Symbol('primitive') as Brand<symbol, 'primitive'>,

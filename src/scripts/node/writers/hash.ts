@@ -1,8 +1,8 @@
 import { createHash, type BinaryLike } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { hashString, pathString } from '../../../tools/general-types.js';
-import { stableStringify } from '../../../tools/string-parsers.js';
+import type { hashString, pathString } from '../../shared/general-types.js';
+import { stableStringify } from '../../../tools/string-parsers.mjs';
 
 /** 
  * @param algorithm - Hashing algorithm (defaults to `md5`)
