@@ -20,13 +20,13 @@ await bundleJsScripts(
 const styles = await readFile('src/stylesheets/view.css', 'utf-8');
 // Build the loading options
 const selector = await buildSelectorOptions();
-const { loadButtonId, addEditableId, falseModalId, containerId } = CLIENT_ID;
+const { loadButtonId, addEditableId, falseModalId, containerId, optionsFormId } = CLIENT_ID;
 // Structure the body of the document
-const body = '<form>'
+const body = `<form id="${optionsFormId}" >`
     // For loading a database or a view
     + `${selector}<button id="${loadButtonId}" type="button">Load Selection</button>`
     // For adding an editable field to a database
-    + `<button type="button" id="${addEditableId}" >Add new Editable Field</button>`
+    + `<button type="button" id="${addEditableId}" >Add Editable Field</button>`
     + `<false-modal id="${falseModalId}">`
     + ''
     + '</false-modal>'

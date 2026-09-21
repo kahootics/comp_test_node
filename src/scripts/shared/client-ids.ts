@@ -1,5 +1,6 @@
 
 export const CLIENT_ID = {
+    optionsFormId: 'form-options',
     selectorOptionsId: 'selector-select',
     loadButtonId: 'load',
     containerId: 'container',

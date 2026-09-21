@@ -2,9 +2,10 @@
 
 import { compileEditableTypes } from '../src/scripts/node/tooling/compile-editable-types.js';
 import { writeRulesSchema } from "../src/scripts/node/tooling/write-rules-schema.js";
+import { Log } from "../src/tools/logger.mjs";
 
-console.log('Initializing editable fields type declarations document');
+Log.hdr('Initializing editable fields type declarations document');
 await compileEditableTypes();
 
-console.log('Building Assets rules schema');
+Log.hdr('Building Assets rules schema');
 await writeRulesSchema();

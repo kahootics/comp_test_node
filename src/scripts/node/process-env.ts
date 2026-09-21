@@ -10,4 +10,4 @@ export const isBuild = process.env.BUILD === 'true';
  */
 export const isDev = !isBuild;
 
-export const isTsx = process.env.TSX === 'true';
+//export const isTsx = process.env.TSX === 'true';
