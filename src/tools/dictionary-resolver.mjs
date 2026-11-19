@@ -1,22 +1,42 @@
 //@ ts-check
 import { IllegalArgumentError, IllegalStateError } from "../errors/common-errors.mjs";
-import { escapeRegExp } from "./string-parsers.mjs";
+import { escapeRegExp, fromCamelToKebab, toSafeKebab } from "./string-parsers.mjs";
+
+/**
+ * @typedef {object} DictionaryResolverOptions
+ * @prop {string} keyPrefix
+ * @prop {string} keySuffix
+ * @prop {boolean} keysToKebab Converts all keys from camel case to kebab keys (only the keys, prefix and suffix are not converted)
+ * @prop {string} valuePrefix
+ * @prop {string} valueSuffix
+*/
 
 /**
  * 
  * @param {string} prefix 
  * @param {{ [key: string]: string }} dictionary 
+ * @param {Partial<DictionaryResolverOptions>} options 
  * @returns {(text: string) => string}
  */
 export function dictionayResolver(
-    prefix,     dictionary
+    prefix, dictionary, options = {},
 ) {
     prefix = prefix.trim();
+
+    const {
+        keySuffix = '',
+        keysToKebab = false,
+        valuePrefix = '',
+        valueSuffix = ''
+    } = options
 
     /** @type {Map<string, string>} */
     const resolverMap = new Map();
     for (const [key, value] of Object.entries(dictionary)) {
-        resolverMap.set(prefix + key, value); // chiave NON escapata
+        resolverMap.set(
+            prefix + (keysToKebab ? fromCamelToKebab(key) : key) + keySuffix,
+            valuePrefix + value + valueSuffix
+        );
     }
 
     if (resolverMap.size === 0) {
@@ -37,8 +57,8 @@ export function dictionayResolver(
      */
     function _replacer(match) {
         const matched = resolverMap.get(match);
-        if (!matched)
-            throw new IllegalStateError(`Cannot replace ${match} for it was not in the original dictionary`);
+        if (matched === undefined)
+            throw new IllegalStateError(`Cannot replace ${match} for it was not in the original dictionary: ${JSON.stringify(Array.from(resolverMap))}`);
         return matched;
     }
 

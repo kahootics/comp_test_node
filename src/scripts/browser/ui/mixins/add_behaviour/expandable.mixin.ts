@@ -1,100 +1,137 @@
 import { IllegalArgumentError, ValidationError } from "../../../../../errors/common-errors.mjs";
-import type { Brand, Closeable, Showable } from "../../../../shared/general-types.js";
-import type { ExtendibleElement } from "../../components/extendible-element.js";
-import { requestTransitionFrame } from "../../../utilities/utilities.js";
-import { Lock } from "../../../utilities/lock.js";
-import { _getPrivateProp, _initPrivateProp, _setPrivateProp, SetOnceWeakMap } from "../../../../../tools/encapsulation.mjs";
-
+import { createMixin } from "../../../../../tools/create-mixin.mjs";
+import type { Constructor } from "../../../../../tools/create-mixin.mjs";
+import { _getPrivateProp, _initPrivateProp, SetOnceWeakMap } from "../../../../../tools/encapsulation.mjs";
+import { ExpandableChangeEvent, expandableChangeEvent } from "./expandable-change-event.js";
 
 // EXTENDED CONSTRUCTOR ================================================================
-type Constructor<T extends object> = new (...args: any[]) => T;
+type Constructed = HTMLElement & {
+    connectedCallback?(): void;
+    attributeChangedCallback?(n: string, o: string | null, v: string | null): void;
+}
+// CONTROLLER OPTIONS ==================================================================
 
-// OBFUSCATED PROPERTIES ===============================================================
-/** Executes during opening transition. */
-export const expandableOpenTransition: unique symbol = Symbol('expandableOpenTransition');
-/** Executes during closing transition. */
-export const expandableCloseTransition: unique symbol = Symbol('expandableCloseTransition');
-/** Executes after transition has ended. */
-export const expandableOnTransitionEnd: unique symbol = Symbol('expandableOnTransitionEnd');
-
+// NOTE: 
+// implement aria behaviour and roles according to listeners (?)
+// Tooltip closes if external to controller (should not close when hovering on expandable)
+/* Overload types to prevent toggle and forceshow on hover/focus events. */
+export interface ControllerOptions {
+    /** Toggles the expandable on click of the controller. */
+    toggleOnClick?: boolean;
+    /** Shows the expandable while pointer is hovering the controller. */
+    showOnHover?: boolean;
+    /** 
+     * Shows the expandable while the controller is focused. 
+     * 
+     * @remarks
+     * The controller element must be focusable for this setting to work.
+     */
+    showOnFocus?: boolean;
+}
+interface ControllerListeners {
+    abortController: AbortController | null;
+}
 // MIXIN PUBLIC INTERFACE ==============================================================
-/** Methods `show` and `close`. */
-export interface ExpandableToggles extends Closeable, Showable {
+export interface Expandable extends HTMLElement {
+    // Hooks for derived classes to add class-scoped 
+    // behaviour to the three moments of the transition
+    /** 
+     * @protected 
+     * Hook method for derivate mixin and classes to append 
+     * behaviour to the opening process.
+     * 
+     * The function is called synchronously after the beginning of 
+     * the state change transition, right after 'open' attribute and class have mutated.
+     * 
+     * @remarks
+     * If any changes to style properties with associated 
+     * transition animations are made by this function,
+     * those transitions will play.   
+     * The function is not called: 
+     * - if the state change is immediately reverted 
+     * as a response to the 'change(open,start)' event,
+     * - on connect.
+     */
+    _onExpandableOpen?(): void;
+    /** @protected */
+    _onExpandableClose?(): void;
+    /** @protected */
+    _onExpandableTransitionEnd?(): void;
+
+    /** Indicates whether the element is in open logical state. */
+    open: boolean;
+    /** Indicates the visual state of the expandable element. */
+    readonly expanded: boolean;
+
     /** 
      * - Element exits `hidden` state,
-     * - Adds `OPEN` constant class,
-     * - schedules callbacks for execution,
-     * - Applies lock to the transition playing on the element.
+     * - Adds `OPEN` css class (separated moment from exiting `hidden`)
+     * - The hook protected method `_onExpandableOpen` is called.
+     * - At the end of the transition, the hook protected method 
+     * {@link _onExpandableTransitionEnd} is called.
      * 
-     * @param callbacks - Allows scheduling any amount of callback functions
-     * that will be called at end of transition.
+     * @returns a promise containing 
+     * `true` if the transition completed successfully, 
+     * `false` if the transition was reversed.
      * 
-     * @throws {DOMException} If called while another opening/closing transition is in progress.
-     * @throws {DOMException} If called with arguments while the element is already open.
-     * 
-     * @remarks quietly fails if called with no arguments while the element is already open.
-     * 
+     * @remarks 
+     * - If called while the element is already open it will 
+     * resolve immediately (and change nothing).
+     * - If called while the element is in an opening transition:
+     * no new 'start' event will be fired and that transition's
+     * promise will be returned,
+     * - If called while the element is in a closing transition:
+     * a new 'start' event will be fired and the old transition's
+     * promise will resolve (as `false`) and a new one will be returned.
      */
-    show(...callback: (() => void)[]): void;
+    show(): Promise<boolean>;
     /**  
-     * - Removes `OPEN` constant class,
-     * - schedules callbacks for execution,
-     * - Element enters `hidden` state at end of transition,
-     * - Applies lock to the transition playing on the element.
+     * - Removes `OPEN` css class,
+     * - The hook protected method `_onExpandableClose`} is called.
+     * - Element enters `hidden` state at end of transition(s) if any (immediately if none),
+     * - At the end of the transition, the hook protected method 
+     * `_onExpandableTransitionEnd` is called.
      * 
-     * @param callbacks - Allows scheduling any amount of callback functions
-     * that will be called at end of transition.
+     * @returns a promise containing 
+     * `true` if the transition completed successfully, 
+     * `false` if the transition was reversed
      * 
-     * @throws {DOMException} If called while another opening/closing transition is in progress. 
-     * @throws {DOMException} If called with arguments while the element is already closed.
-     * 
-     * @remarks quietly fails if called with no arguments while the element is already closed.
+     * @remarks 
+     * - If called while the element is already closed it will 
+     * resolve immediately (and change nothing).
+     * - If called while the element is in a closing transition:
+     * no new 'start' event will be fired and that transition's
+     * promise will be returned,
+     * - If called while the element is in an opening transition:
+     * a new 'start' event will be fired and the old transition's
+     * promise will resolve (as `false`) and a new one will be returned.
      */
-    close(...callback: (() => void)[]): void;
-}
-export interface Expandable extends ExpandableToggles, ExtendibleElement {
-    [expandableOpenTransition](): void;
-    [expandableCloseTransition](): void;
-    [expandableOnTransitionEnd](): void;
-
-    /** Indicates whether the element is in an active transition. */
-    isLocked: boolean;
-
-    /** Indicates whether the element is in open state. */
-    isOpen: boolean
-
-    /** 
-     * Calls opening/closing method of element
-     * but safely returns `false` instead of throwing `Error`.
-     */
-    safeCall(
-        call: keyof Expandable,
-        ...callbacks: (() => void)[]
-    ): boolean;
-
+    close(): Promise<boolean>;
     /**
      * Calls either `show` or `close` on the element
      * depending on its current state.
      * 
-     * @throws {DOMException} If called while another opening/closing transition is in progress.
-     * 
      * @remarks 
      * This is an arrow function, so it can be safely used in place of a callback.
      */
-    toggle: () => void;
+    readonly toggle: () => Promise<boolean>;
 
     /** 
+     * @internal
      * Handles attribute changes. 
      * 
-     * On change of `open`, 
-     * if the attribute
+     * Triggers a change in the expandable state when
+     * either `open` or `hidden` attribute are changed.
      *  
      * @param name - Name of the attribute.
      * @param oldValue - Pre-change value.
      * @param newValue - After-change value.
      */
     attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void;
-    /** On injection in DOM, align `hidden` and `open` attributes and class. */
+    /** 
+     * @internal 
+     * On injection in DOM, aligns `hidden` and `open` attributes and class (css). 
+     */
     connectedCallback(): void;
 
     /**
@@ -105,12 +142,13 @@ export interface Expandable extends ExpandableToggles, ExtendibleElement {
      * @remarks 
      * - The `aria-controls` and `aria-expanded` attributes of the 
      * controllers are handled automatically.
-     * - This method doesn't read any attribute from the controller.
+     * - This method doesn't read any attribute from the controller;
+     * changing `aria-expanded` on it won't trigger a transition.
      * 
      * @param newController - HTMLElement to set as a controller for the expandable element.
-     * @param addListener - Option to automatically add an event listener (for `click` events) on the specified controller to toggle the expandable.
+     * @param options.addListener - Option to automatically add an event listener (for `click` events) on the specified controller to toggle the expandable.
      */
-    addController(newController: HTMLElement, options?: { addListener?: boolean}): void;
+    addController(newController: HTMLElement, options?: ControllerOptions): void;
     /**
      * Removes an element from the expandable's controllers list 
      * and outputs the result of such operation.
@@ -118,302 +156,443 @@ export interface Expandable extends ExpandableToggles, ExtendibleElement {
      * @remarks
      * - If the controller has a registered listener (set from `addController`),
      * it will be removed by this operation.
-     * - If the controller has a listener, but set manually outside of `addController`,
+     * - If the controller has a listener, but it was set manually outside of `addController`,
      * it will *NOT* be removed by this operation.
      * 
      * @param controller - HTMLElement to remove from the expandable's controllers list.
      * @returns a boolean value representing the outcome of the operation (`true` if successful, `false` if the controller could not be removed, because it was never set as one).
      */
     removeController(controller: HTMLElement): boolean;
+    /**
+     * @returns `true` if the specified element is registered 
+     * as a controller for this expandable.
+     */
+    isController(controller: HTMLElement): boolean;
+    /**
+     * @returns `true` if the specified node is a controller
+     * for this expandable or one of its descendants.
+     */
+    isInController(n: Node): boolean;
 }
 
-// HELPERS =============================================================================
-function throwDOMException(message: string): never {
-    throw new DOMException(
-        message,
-        "InvalidStateError");
-}
-
-// PRIVATE FIELDS ======================================================================
-const _lock = new SetOnceWeakMap<Expandable, Lock>();
-const _scheduledCallbacks = new SetOnceWeakMap<Expandable, Set<() => void>>();
-
-/* Schedules a set of callback functions to be executed at the end of the transition. */
-function _scheduleCallbacks(self: Expandable, callbacks: (() => void)[]) {
-    _assertBranded(self);
-    const set = _getPrivateProp(self, _scheduledCallbacks);
-    for (const callback of callbacks) {
-        set.add(callback);
-    }
-}
-
+// PRIVATE PROPERTIES ==================================================================
+type isListening = boolean & {
+    readonly __brand: 'is-listening'
+};
 /** 
- * Adds `OPEN` class in an AnimationFrame requested after setting `hidden` to `false`.
- * 
- * @remarks
- * Extra behaviour can be added by using the symbol public method keyed with `expandableOpenTransition`.
+ * Map of registered controllers for the expandable; 
+ * each one has an associated boolean indicating whether 
+ * a listener was registered for them during initialization. 
  */
-function _handleOpening(self: Expandable, OpenClass: string): void {
-    _assertBranded(self);
-    self.hidden = false;
-    requestTransitionFrame(() => {
-        self.classList.add(OpenClass);
-    });
-    self[expandableOpenTransition]();
-}
-/** 
- * Removes `OPEN` class. 
- * 
- * @remarks
- * Extra behaviour can be added by using the symbol public method keyed with `expandableCloseTransition`.
- */
-function _handleClosing(self: Expandable, OpenClass: string): void {
-    _assertBranded(self);
-    self.classList.remove(OpenClass);
-    self[expandableCloseTransition]();
-}
+const _controllers = new SetOnceWeakMap<Expandable, Map<HTMLElement, ControllerListeners>>();
 
-/** Indicates whether a 'ontransitionend' handler is already set. */
-const _pendingOnTransitionEnd = new WeakMap<Expandable, boolean>();
+interface Transition { readonly finished: Promise<boolean> }
+/**
+ * Ongoing transition object of the expandable; it only
+ * has a `finished` property that indicates its state.
+ * 
+ * This object is `undefined` if no transition from
+ * an expandable change has been triggered.
+ */
+const _currentTransition = new WeakMap<Expandable, Transition>();
+
+// INNER PRIVATE METHODS ===============================================================
 /**
  * @unchecked
- * Handles *end of transition* cleanup:
- * - hides the element if it doesn't have `open` attribute,
- * - calls all pending callbacks safely,
- * - empties pending callbacks,
- * - releases transition lock.
+ * Dispatches an `ExpandableChangeEvent` from `self` 
+ * using the given `open` and `stage` parameters.
  */
-function _onTransitionEnd(self: Expandable) {
-    self.hidden = !self.isOpen; // only hide at end of transition
-    self[expandableOnTransitionEnd]();
-    const callbacks = _getPrivateProp(self, _scheduledCallbacks);
-    callbacks.forEach(
-        callback => {
-            try { callback(); }
-            catch (e) { console.error(e); }
-        }
+function _dispatchChangeEvent(
+    self: Expandable,
+    open: ExpandableChangeEvent['open'],
+    stage: ExpandableChangeEvent['stage']
+): boolean {
+    return self.dispatchEvent(
+        new ExpandableChangeEvent(expandableChangeEvent, { open, stage })
     );
-    // Release resources:
-    callbacks.clear();
-    _setPrivateProp(self, _pendingOnTransitionEnd, false);
-    _getPrivateProp(self, _lock).unlock();
 }
 
-/** Activates a one-time listener for the end of transition operations. */
-function _setupOnTransitionEnd(self: Expandable) {
-    _assertBranded(self);
-    _updateControllers(self);
-    if (_getPrivateProp(self, _pendingOnTransitionEnd)) return;
-    _setPrivateProp(self, _pendingOnTransitionEnd, true);
-    self.addEventListener('transitionend', () => _onTransitionEnd(self), { once: true });
+/**
+ * @unchecked
+ * Concludes the transition (early exit if the transition is not the current one)
+ * by setting the `hidden` attribute to the opposite of `open`,   
+ * calling the hook function and dispatching the 'end' event.
+ * @returns `true` if the transition it was given has come to an end;
+ * `false` if it did not finish.
+ */
+function _endTransition(self: Expandable, transition: Transition): boolean {
+    if (_currentTransition.get(self) !== transition) return false;
+    _currentTransition.delete(self);
+    const open = self.open;
+    self.hidden = !open;
+    self._onExpandableTransitionEnd?.();
+    _dispatchChangeEvent(self, open, 'end');
+    return true;
 }
-
-type isListening = Brand<boolean, 'is-listening'>;
-const _controllers = new WeakMap<Expandable, Map<HTMLElement, isListening>>();
 
 /**
  * @unchecked
  * Updates all the registered controllers'
- * `aria-expanded` attribute to the element's
- * `isOpen` state
+ * `aria-expanded` attributes to the element's
+ * `open` state.
  */
 function _updateControllers(self: Expandable) {
     const controllers = _getPrivateProp(self, _controllers);
-    const expanded = String(self.isOpen);
+    const expanded = String(self.open);
     controllers.forEach((_, c) => c.setAttribute('aria-expanded', expanded));
 }
 
-// MIXIN FUNCTION ======================================================================
+// PRIVATE METHODS =====================================================================
 /**
+ * Transition is handled as follows:
+ * 1. the current transition promise is created and deferred,
+ * 2. all the ongoing animations are registered (to make 
+ * sure the transitions happening after the change only include new ones),
+ * 3. 'start' event is dispatched; should the event trigger another change in response,
+ * an early exit (1), that will immediately resolve the transition promise 
+ * to `false`, is in place to defend against such behaviour, 
+ * 4. `hidden` and the class 'OpenClass' are handled to begin 
+ * an opening/closing transition as estabilished by the class,
+ * 5. the expandable hook functions are called 
+ * (which one is called depends on the type of change),
+ * 6. all registered controllers are updated (@see {@link _updateControllers}),
+ * 7. all *now* ongoing transitions are stored; any transition
+ * that was happening before the change of state is filtered out,
+ * 8. if no transition remains, an early exit (2) closes the operation
+ * and resolves the transition promise to `true`,
+ * 9. once all transitions have settled,the method {@link _endTransition}
+ * is called, it will resolve the transition promise and set
+ * the expandable to its destination state.
+ */
+function _startTransition(self: Expandable): void {
+    Expandable.assertBranded(self);
+
+    // INITIAL STATE READING ============================================
+    let defer: (value: boolean | PromiseLike<boolean>) => void;
+    const promise = new Promise<boolean>((resolve) => defer = resolve);
+    const transition: Transition = {
+        finished: promise
+    };
+    _currentTransition.set(self, transition);
+    const open = self.open;
+    const before = new Set(self.getAnimations());
+
+    // INITIATE =====================================================
+    _dispatchChangeEvent(self, !open, 'start'); // gives old 'open'
+    // Defense against transitions started in response to 'start' event
+    if (_currentTransition.get(self) !== transition) {
+        defer!(false);
+        return; // Early exit (1)
+    };
+
+    // TRANSITION ==================================================
+    if (open) {
+        self.hidden = false;
+        void getComputedStyle(self).opacity;
+        self.toggleAttribute('expanded', true);
+        self._onExpandableOpen?.();
+    } else {
+        self.toggleAttribute('expanded', false);
+        self._onExpandableClose?.();
+    }
+    _updateControllers(self);
+
+    // DETERMINE END OF TRANSITION ==================================
+    const running = self.getAnimations()
+        .filter(a => a instanceof CSSTransition && !before.has(a));
+    if (running.length === 0) {
+        defer!(_endTransition(self, transition));
+        return; // Early exit (2)
+    }
+
+    Promise.allSettled(running.map(t => t.finished))
+        .then(() => defer(_endTransition(self, transition)));
+}
+
+/**
+ * @returns the promise of the current transition; 
+ * `true` once it has completed running,
+ * `false` if it was reverted.
+ */
+function _getCurrentTransitionState(self: Expandable): Promise<boolean> {
+    Expandable.assertBranded(self);
+    return _currentTransition.get(self)?.finished ?? Promise.resolve(true);
+}
+
+/**
+ * Ensures the element has a non-blank id attribute.
+ */
+function _ensureId(self: Expandable): void {
+    Expandable.assertBranded(self);
+    if (self.id) return;
+    self.id = `expandable-${(Math.random() * 5).toFixed(0)}`;
+}
+
+// HELPERS FUNCTIONS ===================================================================
+/**
+ * 
+ * @returns an array containing all the ids of the element's 'aria-controls' attribute.
+ */
+function getControlledIds(el: Element): string[] {
+    return el.getAttribute('aria-controls')?.split(/\s+/).filter(Boolean) ?? [];
+}
+/**
+ * Sets the element's 'aria-controls' attribute to be the list of specified ids.
+ */
+function setControlledIds(el: Element, ids: string[]): void {
+    if (ids.length) el.setAttribute('aria-controls', ids.join(' '));
+    else el.removeAttribute('aria-controls');
+}
+
+// NOTE: make abort controller optional (nothing to abort)
+/**
+ * Implements the events listeners from the given options for the controller 
+ * and binds an abort signal to each.
+ * @returns the abort controller that holds the signal of all the added events.
+ */
+function _implementControllerOptions(
+    self: Expandable,
+    controller: HTMLElement,
+    options: ControllerOptions
+): AbortController | null {
+    Expandable.assertBranded(self);
+    const { toggleOnClick, showOnFocus, showOnHover } = options;
+
+    let abortController: AbortController | null = null;
+
+    if (toggleOnClick) {
+        const { signal } = abortController ?? (abortController = new AbortController());
+        controller.addEventListener('click', (e: Event) => {
+            if (e.target instanceof Node && self.contains(e.target)) return;
+            self.toggle();
+        }, { signal });
+    }
+    if (showOnFocus) {
+        const { signal } = abortController ?? (abortController = new AbortController());
+        implementShowOnFocus(self, controller, signal);
+    }
+    if (showOnHover) {
+        const { signal } = abortController ?? (abortController = new AbortController());
+        implementShowOnHover(self, controller, signal);
+    }
+
+    return abortController;
+}
+
+function implementShowOnFocus(self: Expandable, controller: HTMLElement, signal: AbortSignal) {
+    controller.addEventListener('focusin', () => {
+        if (controller.contains(document.activeElement)) {
+            self.show();
+            controller.addEventListener('focusout',
+                () => self.close(), { once: true, signal });
+        }
+    }, { signal });
+}
+
+function implementShowOnHover(self: Expandable, controller: HTMLElement, signal: AbortSignal) {
+    controller.addEventListener('mouseenter', () => {
+        self.show();
+    }, { signal });
+    controller.addEventListener('mouseleave', () => self.close(), { signal });
+}
+
+// MIXIN FUNCTION ======================================================================
+// Add usage baseline 
+// (min 2021 as per signal in addListener options; 2020 for custom elements)
+// Add component general desc
+/**
+ * 
  * Generic branded Expandable Element.
  * 
  * The class provides basic structure for handling an HTML element's
- * transition between hidden states; refer to the configurable `OPEN`
- * class for transitions.
+ * transition between hidden and visible states; 
+ * refer to the configurable `OPEN` class (css) for transitions.
  * 
- * @param Base - Base class on which the mixin will be implemented
- * @param OpenClass - Class that handles the states transition
- * @returns an extension of the Base class implementing the interface `Expandable`
- * @see {@link Expandable} for full documentation on the available methods
- * 
- * States are switched by using **`close()`** and **`show()`** public methods;
- * an opening transition must complete to start a closing one and viceversa,
- * also, it is possible to schedule any amount of callbacks to be called
- * at the end of the transition.
+ * @param Base - Base class on which the mixin will be implemented.
+ * @param OpenClass - Class that handles the states transition (defaults to `'is-open'`).
+ * @returns an extension of the Base class implementing the interface `Expandable`.
+ * @see {@link Expandable} for full documentation on the available methods.
  * 
  * @remarks
- * - It is *not* recommended to manually alter the `open` attribute to trigger
- * the transitions; use the provided methods instead.
- * - It is *not* recommended to manually alter the `hidden` attribute since hiding 
- * the element forcefully will not trigger any transition.
+ * State can be changed by using **`close()`**, **`show()`** or **`toggle()`** public methods
+ * or by changing the `open` attribute (changing the attribute will not provide feedback on the results);
+ * - "transitions" include any css transition happening after the change has triggered,
+ * - any transition will be reverted if the opposite one is called while it is still occurring,
+ * - an {@link ExpandableChangeEvent} is dispatched at the beginning 
+ * and end of each transition carrying the state of the element at the 
+ * moment the attribute change/method call happened/resolved, 
+ * but note that a transition that is reverted won't fire any 'end' event.
  * - `hidden` and `open` are kept aligned throughout the element's lifecycle, 
- * BUT, if the element is created via JS, the attribute will not be aligned 
- * until after the element is injected into the DOM
+ * *BUT*, if the element is created via script, the attributes will not be aligned 
+ * until *after* the element has been injected into the DOM.
  * - *Requires a DOM environment* — not compatible with Node.js.
  * 
  */
-export function Expandable<
-    TBase extends Constructor<ExtendibleElement>
->(Base: TBase, OpenAttribute: string, OpenClass: string) {
-    if (OpenAttribute in Base.prototype)
-        throw new IllegalArgumentError("Cannot overwrite existing attribute " + OpenAttribute);
+export const Expandable = createMixin<
+    Constructed, Expandable
+>('Expandable', (brand) => <
+    TBase extends Constructor<Constructed> & {
+        observedAttributes?: readonly string[]
+    }
+>(Base: TBase) => {
+    if ('open' in Base.prototype)
+        throw new IllegalArgumentError(
+            `Cannot overwrite existing attribute "open" in class ${Base.name}`
+        );
+
     return class ExpandableElement extends Base implements Expandable {
 
         constructor(...args: any[]) {
             super(...args);
-            _brand(this);
-            _initPrivateProp(this, _lock, new Lock());
-            _initPrivateProp(this, _scheduledCallbacks, new Set());
-            _initPrivateProp(this, _pendingOnTransitionEnd, false);
+            brand.add(this);
             _initPrivateProp(this, _controllers, new Map());
         }
-        public get isLocked(): boolean { return _getPrivateProp(this, _lock).isLocked; };
 
         // OPEN ATTRIBUTE SETUP =============================================================
+        public get open(): boolean {
+            return this.hasAttribute('open');
+        }
+        public set open(v: boolean) {
+            this.toggleAttribute('open', v);
+        }
 
-        public get [OpenAttribute](): boolean {
-            return this.hasAttribute(OpenAttribute);
+        public get expanded(): boolean {
+            return this.hasAttribute('expanded');
         }
-        public set [OpenAttribute](value: boolean) {
-            if (value) {
-                this.setAttribute(OpenAttribute, '');
-            } else {
-                this.removeAttribute(OpenAttribute);
-            }
+
+        public get controlledby(): string[] {
+            return this.getAttribute('controlledby')?.split(' ') ?? [];
         }
-        public get isOpen(): boolean { return this[OpenAttribute]; }
 
         /** Element's observed attributes. */
-        static get observedAttributes(): string[] {
-            return [OpenAttribute, 'hidden'];
+        static override get observedAttributes(): string[] {
+            return [
+                ...(super.observedAttributes ?? []),
+                'open', 'hidden', 'controlledby'
+            ];
         }
 
-        // Hooks for derivate classes
-        public [expandableOpenTransition](): void { }
-        public [expandableCloseTransition](): void { }
-        public [expandableOnTransitionEnd](): void { }
-
-        // Attribute related callbacks ==================================================
-        connectedCallback(): void {
-            this.isOpen ? this.classList.add(OpenClass) : this.classList.remove(OpenClass);
-            this.hidden = !this.isOpen;
+        // ATTRIBUTE RELATED CALLBACKS ==================================================
+        override connectedCallback(): void {
+            super.connectedCallback?.();
+            _ensureId(this);
+            this.toggleAttribute('expanded', this.open);
+            this.hidden = !this.open;
+            if (this.controlledby.length > 0)
+                this.controlledby.forEach((cI) => {
+                    const el = document.getElementById(cI);
+                    //if (el) console.log(el)
+                    if (el) this.addController(el, { toggleOnClick: true });
+                });
+            _updateControllers(this);
         }
-        attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
+        override attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
+            super.attributeChangedCallback?.(name, oldValue, newValue);
             if (
-                name === OpenAttribute
-                && typeof oldValue !== typeof newValue
+                name === 'open' &&
+                (oldValue === null) !== (newValue === null)
             ) {
-                _getPrivateProp(this, _lock).lock();
-                if (newValue !== null) {
-                    // OPEN
-                    _handleOpening(this, OpenClass);
-                } else {
-                    // CLOSE
-                    _handleClosing(this, OpenClass);
-                }
-                // LOCK RELEASE
-                _setupOnTransitionEnd(this);
-
+                if (!this.isConnected) return;
+                _startTransition(this);
             } else if (
                 name === 'hidden'
-                && typeof oldValue !== typeof newValue
-                && this.isOpen === this.hidden
+                && (oldValue === null) !== (newValue === null)
+                && this.open === this.hidden
             ) {
-                this[OpenAttribute] = !this.hidden
+                this.open = !this.hidden
+            } else if (
+                name === 'controlledby'
+            ) {
+                const remove = oldValue?.split(' ') ?? [];
+                this.controlledby.forEach((cI) => {
+                    const el = document.getElementById(cI);
+                    if (el) {
+                        this.addController(el, { toggleOnClick: true });
+                        const I = remove.indexOf(cI);
+                        if (I > 0) remove.splice(I, 1);
+                    }
+                });
+                remove.forEach((rI) => {
+                    const el = document.getElementById(rI);
+                    if (el)
+                        this.removeController(el)
+                })
             }
         }
 
         // SHOW =========================================================================
-        public show(...callbacks: (() => void)[]): void {
-            if (_getPrivateProp(this, _lock).isLocked)
-                throwDOMException("Cannot open the element while a transition is in progress");
-            if (this.isOpen) {
-                if (callbacks.length === 0) return; // second request without extra arguments quietly fails
-                throwDOMException("Cannot schedule callbacks without a state change");
-            };
-            _scheduleCallbacks(this, callbacks);
-            this[OpenAttribute] = true;
+        public show(): Promise<boolean> {
+            this.open = true;
+            return _getCurrentTransitionState(this);
         }
 
         // CLOSE ========================================================================
-        public close(...callbacks: (() => void)[]): void {
-            if (_getPrivateProp(this, _lock).isLocked)
-                throwDOMException("Cannot close the element while a transition is in progress");
-            if (!this.isOpen) {
-                if (callbacks.length === 0) return; // second request without extra arguments quietly fails
-                throwDOMException("Cannot schedule callbacks without a state change");
-            };
-            _scheduleCallbacks(this, callbacks);
-            this[OpenAttribute] = false;
+        public close(): Promise<boolean> {
+            this.open = false;
+            return _getCurrentTransitionState(this);
         }
 
         // TOGGLE =======================================================================
-        public toggle = (): void => {
-            if (this.isOpen) this.close();
-            else this.show();
-        }
-
-        // SAFE CALL ====================================================================
-        public safeCall(
-            call: keyof ExpandableToggles,
-            ...callbacks: (() => void)[]
-        ): boolean {
-            try {
-                this[call](...callbacks);
-            } catch (e) {
-                return false;
-            } return true;
+        public readonly toggle = (): Promise<boolean> => {
+            this.open = !this.open;
+            return _getCurrentTransitionState(this);
         }
 
         // CONTROLLER SETUP ==============================================================
-        public addController(newController: HTMLElement, options?: {addListener?: boolean}): void {
-            const controllers = _getPrivateProp(this, _controllers)
-            const isListening = (options?.addListener ?? false) as isListening;
-            if (!controllers.has(newController))
-                controllers.set(newController, isListening);
+        public addController(newController: HTMLElement, options: ControllerOptions = {}): void {
 
-            newController.setAttribute('aria-controls', this.id);
-            newController.setAttribute('aria-expanded', String(this.isOpen));
-            if (isListening) newController.addEventListener('click', this.toggle);
+            // Hard Unallow auto controlling
+            if (this === newController)
+                throw new IllegalArgumentError(`An expandable cannot connot control itself`);
+
+            const controllers = _getPrivateProp(this, _controllers);
+            // Reset
+            if (controllers.has(newController)) this.removeController(newController);
+
+            // Add expandable's Id to aria-controls controller's list
+            const controlsIds = getControlledIds(newController);
+            if (!controlsIds.includes(this.id)) controlsIds.push(this.id);
+            setControlledIds(newController, controlsIds);
+            // Init aria expanded
+            newController.setAttribute('aria-expanded', String(this.open));
+
+            // Setup listener options
+            const abortController = _implementControllerOptions(this, newController, options);
+
+            // Finally register the controller
+            controllers.set(newController, { abortController });
         }
+
         public removeController(controller: HTMLElement): boolean {
             const controllers = _getPrivateProp(this, _controllers);
-            const isListening = controllers.get(controller);
-            if (isListening) controller.removeEventListener('click', this.toggle);
+            const { abortController } = controllers.get(controller) ?? {};
+
+            if (abortController !== undefined) {
+
+                // Abort all listeners on the controller
+                abortController?.abort();
+
+                // Remove expandable from aria-controls list
+                const controlsIds = getControlledIds(controller);
+                const i = controlsIds.indexOf(this.id)
+                if (i >= 0) {
+                    controlsIds.splice(i, 1);
+                    setControlledIds(controller, controlsIds);
+                    controller.removeAttribute('aria-expanded');
+                }
+            }
             return controllers.delete(controller);
         }
+
+        public isController(controller: HTMLElement): boolean {
+            return _getPrivateProp(this, _controllers).has(controller)
+        }
+        public isInController(n: Node): boolean {
+            const controllers = _getPrivateProp(this, _controllers).keys();
+            for (const controller of controllers) {
+                if (controller.contains(n)) return true;
+            }
+            return false;
+        }
     }
-}
-
-
-
-// EXPORTED NAMESPACE ==================================================================
-export namespace Expandable {
-    /**
-     * Validates an element as a `Expandable`
-     * 
-     * @param that - Element that needs to be validated
-     * @returns the validated element
-     * 
-     * @throws {ValidationError} If the element passed as argument 
-     * has not been branded as a `Expandable`
-     */
-    export function getValidated(that: ExtendibleElement): Expandable {
-        if (branded.has(that)) return that as Expandable;
-        else throw new ValidationError(
-            `${that.constructor.name} does not extend ${Expandable.name}`
-        );
-    }
-}
-
-// PRIVATE INTERNAL IDENTIFICATION =====================================================
-/** Holds all branded instances of `Expandable`. */
-const branded = new WeakSet();
-function _assertBranded(instance: Expandable): true {
-    if (branded.has(instance)) return true;
-    throw new TypeError("Cannot access private member");
-}
-/** Brands an element as an instance of `Expandable`. */
-function _brand(instance: Expandable) {
-    branded.add(instance);
-}
+});

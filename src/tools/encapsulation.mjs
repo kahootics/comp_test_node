@@ -23,7 +23,7 @@ function _hasAccess(instance, register, typeErrorMsg) {
  * @returns {never}
  * @throws {TypeError} With provided message string. 
  */
-function _throwTypeError(message) {
+export function _throwTypeError(message) {
     throw new TypeError(message);
 }
 
@@ -205,11 +205,12 @@ export function _assertRegistered(instance, register) {
  *
  * @template {object} T - Type of the object whose property belongs to.
  * @template V - Type of the property's value.
+ * @template {V} H - Type (restricted) of the value set.
  * @param {T} instance - Object whose property belongs to (usually `this`).
  * @param {WeakMap<T, V>} register - Scoped (module or other) `WeakMap` that stores the private properties of a class, 
  * preventing them to be accessed from outside its definition scope.
- * @param {V} value - Value to use for setting the property.
- * @returns {V} the value of the private property.
+ * @param {H} value - Value to use for setting the property.
+ * @returns {H} the value of the private property.
  * 
  * @throws {TypeError} If `instance` is not in the `register`;
  * it means that the private property was not defined on the object.
@@ -228,12 +229,13 @@ export function _setPrivateProp(instance, register, value) {
  *
  * @template {object} T - Type of the object whose property belongs to.
  * @template V - Type of the property's value.
+ * @template {V} H - Type (restricted) of the value set.
  * @param {T} instance - Object whose property belongs to (usually `this`).
  * @param {WeakMap<T, V>} register - Scoped (module or other) `WeakMap` that stores the private properties of a class, 
  * preventing them to be accessed from outside its definition scope.
- * @param {V} value - Value to use for setting the property.
+ * @param {H} value - Value to use for setting the property.
  * @param {(val: V) => any} setter - A setter method that will be called using 'instance' as its 'this' value and 'value' as the only argument.
- * @returns {V} the value of the private property.
+ * @returns {H} the value of the private property.
  * 
  * @throws {TypeError} If `instance` is not in the `register`;
  * it means that the private property was not defined on the object.
@@ -289,13 +291,16 @@ export class SetOnceWeakMap extends WeakMap {
 
 // MISC ==================================================
 /**
- * Checks whether `baseClassConstructor` is in the prototype chain of `classConstructor`.
+ * Checks whether `parentClass` is in the prototype chain of `childClass`.
  * 
- * @param {Function} baseClassConstructor 
- * @param {Function} classConstructor 
+ * @template {object} T
+ * @template {T} H
+ * 
+ * @param {new (...args: any[]) => T} parentClass 
+ * @param {new (...args: any[]) => H} childClass
  * @returns {boolean}
  */
-export function extendsClass(classConstructor, baseClassConstructor) {
-    if (classConstructor === baseClassConstructor) return true;
-    return classConstructor.prototype instanceof baseClassConstructor;
+export function extendsClass(childClass, parentClass) {
+    if (childClass === parentClass) return true;
+    return childClass.prototype instanceof parentClass;
 }

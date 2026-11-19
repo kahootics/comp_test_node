@@ -1,0 +1,341 @@
+
+/* ### Core Setup *
+ * based on modern-normalize.css v3.0.1 & sanitize.css *
+ */
+
+/*
+ * Root Corrections & Normalization *
+ * ========================================================================== *
+ */
+
+*, *::before, *::after {
+	box-sizing: border-box;
+    margin: 0;
+}
+
+*::before, *::after {
+  text-decoration: inherit;
+  vertical-align: inherit;
+}
+
+html, body {
+    /* layout normalization */
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    /* Layout & Theme root setup */ 
+    scrollbar-width: thin;
+    scroll-behavior: var(--scroll-behavior);
+    scrollbar-color: var(--h-color-scrollbar) var(--h-color-scrollbar-track);
+    background-color: var(--h-color-background);
+    color: var(--h-color-text);
+    font-weight: var(--font-weight);
+    font-size: var(--font-size);
+    line-height: var(--line-height);
+    font-family: var(--font-family);
+    text-underline-offset: var(--text-underline-offset);
+    /* basic SVGs */
+    --image-placeholder: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='152' height='152' viewBox='0 0 152 152'%3E%3Cg transform='translate(0 152) scale(0.1 -0.1)' fill='%23000000' stroke='none'%3E%3Cpath d='M0 760 l0 -760 760 0 760 0 0 760 0 760 -760 0 -760 0 0 -760z m320 637 c0 -1 -45 -47 -100 -102 l-100 -100 0 103 0 102 100 0 c55 0 100 -1 100 -3z m145 -337 l-340 -340 -3 122 -3 122 218 218 218 218 125 0 125 0 -340 -340z m935 -300 l0 -640 -640 0 -640 0 0 182 0 183 457 457 458 458 182 0 183 0 0 -640z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+:root, :host {
+    /* cross-Browser normalization */
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    -ms-text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    overflow-wrap: break-word;
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+}
+
+/*
+ * Text-Elements Corrections & Noramlization *
+ * ========================================================================== *
+ */
+
+/* Bold Text *
+ * ========= */
+
+b, strong {
+	font-weight: bolder;
+}
+
+/* Code(s) *
+ * ======= */
+
+code, kbd, samp, pre, var {
+	font-family: var(--font-family-mono);
+	font-size: 1em; 
+}
+
+pre code {
+    padding:0
+}
+
+/* Small *
+ * ===== */
+
+small {
+	font-size: 80%;
+}
+
+/* Sub & Sup *
+ * ========= */
+
+sub, sup {
+	font-size: 75%;
+	line-height: 0;
+	position: relative;
+	vertical-align: baseline;
+}
+sub {
+	bottom: -0.25em;
+}
+sup {
+	top: -0.5em;
+}
+
+/* Horizontal Rule *
+ * =============== */
+
+hr {
+    height: 0;
+    overflow: visible;
+}
+
+/* Links *
+ * ===== */
+
+a {
+    background-color: transparent;
+}
+
+/* Abbreviation *
+ * ============ */
+
+abbr[title] {
+    text-decoration: underline;
+    text-decoration: underline dotted;
+    cursor: help;
+}
+
+/*
+ * Misc-Elements Corrections & Normalization *
+ * ========================================================================== *
+ */
+
+main {
+    display: block;
+}
+
+template {
+    display: none;
+}
+
+.icon-placeholder {
+    display: inline-block;
+    background-image: var(--image-placeholder);
+    background-size: 100% 100%;
+    aspect-ratio: 1;
+}
+
+.show-even-if-hidden {
+    display: block;
+}
+
+[hidden]:not(.show-even-if-hidden) {
+    display: none;
+}
+
+[aria-hidden="false"][hidden]:not(.show-even-if-hidden) {
+    display: initial;
+}
+
+[aria-hidden="false"][hidden]:not(:focus):not(.show-even-if-hidden) {
+    clip: rect(0, 0, 0, 0);
+    clip-path: circle(0);
+    position: absolute;
+}
+
+[aria-busy="true"] {
+    cursor: progress;
+}
+
+[aria-controls] {
+    cursor: pointer;
+}
+
+[aria-disabled="true"], [disabled] {
+    cursor: not-allowed !important;
+}
+
+/*
+ * Tables Corrections & Normalization *
+ * ========================================================================== *
+ */
+
+table {
+	border-color: currentcolor;
+    border-collapse: collapse;
+    text-indent: 0;
+}
+
+/*
+ * Lists Corrections & Normalization *
+ * ========================================================================== *
+ */
+
+dl dl, dl ol, dl ul, 
+ol dl, ol ol, ol ul,
+ul dl, ul ol, ul ol {
+    margin: 0;
+}
+
+nav ol, nav ul,
+nav ol li, nav ul li {
+    list-style-type: none;
+    list-style: none;
+    padding: 0;
+}
+
+/*
+ * Embedded-Elements Corrections & Normalization *
+ * ========================================================================== *
+ */
+
+audio, canvas, iframe, img, svg, video {
+    vertical-align: middle;
+}
+
+audio, canvas, iframe, img, svg, video, object, embed {
+    vertical-align: middle;
+    max-width: 100%;
+    height: auto;
+}
+
+audio, video, canvas {
+    display: inline-block;
+}
+
+audio:not([controls]) {
+    display: none;
+    height: 0;
+}
+
+iframe, img {
+    border-style: none;
+}
+
+svg:not([fill]) {
+    fill: currentColor;
+}
+
+svg:not(:root), svg:not(:host) {
+    overflow: hidden;
+}
+
+/*
+ * Forms Corrections & Normalization *
+ * ========================================================================== *
+ */
+
+button, input, optgroup, select, textarea {
+    box-sizing: border-box;
+    font-family: inherit; 
+	font-size: 100%; 
+	line-height: var(--line-height); 
+	margin: 0; 
+    padding: 0;
+}
+
+button, select { 
+    text-transform: none;
+}
+
+fieldset:disabled :where(button, input, optgroup, select, textarea) {
+    cursor: not-allowed;
+}
+
+button, [type='button'], [type='reset'], [type='submit'] {
+	-webkit-appearance: button;
+    appearance: button;
+    cursor: pointer;
+}
+
+input {
+  overflow: visible;
+}
+
+legend {
+    max-width: 100%;
+	padding: 0;
+    color: inherit;
+    display: table;
+    max-width: 100%; 
+    white-space: normal;
+}
+
+textarea {
+    resize: vertical;
+    overflow: auto;
+}
+
+progress {
+    display: inline-block;
+	vertical-align: baseline;
+}
+
+[type="checkbox"], [type="radio"] {
+    padding: 0;
+}
+
+::-webkit-inner-spin-button, 
+::-webkit-outer-spin-button {
+	height: auto;
+}
+
+[type='search'] {
+	-webkit-appearance: textfield;
+    appearance: textfield;
+	outline-offset: -2px; 
+}
+
+::-webkit-search-decoration {
+	-webkit-appearance: none;
+}
+
+::-webkit-file-upload-button {
+	-webkit-appearance: button; 
+    appearance: button;
+	font: inherit; 
+}
+
+::-webkit-input-placeholder {
+    color: inherit;
+    opacity: 0.54;
+}
+
+summary {
+	display: list-item;
+    cursor: pointer;
+}
+summary:focus {
+    box-shadow: none;
+}
+
+details {
+    display: block;
+}
+
+::-moz-focus-inner {
+    border-style: none;
+    padding: 0;
+}
+
+:-moz-ui-invalid {
+    box-shadow: none;
+}

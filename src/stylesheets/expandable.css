@@ -1,0 +1,9 @@
+
+:where(expandable) {
+    opacity: 0;
+    transition: opacity 10s;
+}
+:where(expandable[expanded]) {
+    opacity: 1;
+}
+

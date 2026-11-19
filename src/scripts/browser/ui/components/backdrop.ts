@@ -1,6 +1,5 @@
 import config from "../../../../config/ui-config.mjs";
-import { Expandable, expandableOnTransitionEnd, expandableCloseTransition, expandableOpenTransition, type ExpandableToggles } from "../mixins/add_behaviour/expandable.mixin.js";
-import { ExtendibleElement } from "./extendible-element.js";
+import { Expandable } from "../mixins/add_behaviour/expandable.mixin.js";
 
 /** Backdrop specific css class name. */
 const OPEN_CLASS = config.css.classes.BACKDROP_OPEN;
@@ -13,7 +12,7 @@ const OPEN_CLASS = config.css.classes.BACKDROP_OPEN;
  * const backdrop = new Backdrop(closeMyModalFunc);
  * @see {@link Expandable} for details about inherited methods
  */
-export class Backdrop extends Expandable(ExtendibleElement, 'open', OPEN_CLASS) {
+export class Backdrop extends Expandable(HTMLElement, OPEN_CLASS) {
     /**
      * @param backdropClass - Class to apply to the backdrop element;
      * @param modalCloserFunction - Function that closes the modal;

@@ -1,0 +1,18 @@
+
+
+:where(false-modal) {
+    position: absolute;
+    inset-inline-start: 0px;
+    inset-inline-end: 0px;
+    width: fit-content;
+    height: fit-content;
+    background-color: canvas;
+    color: canvastext;
+    margin: auto;
+    border-width: medium;
+    border-style: solid;
+    border-color: currentcolor;
+    border-image: none;
+    padding: 1em;
+}
+

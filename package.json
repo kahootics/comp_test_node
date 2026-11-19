@@ -1,6 +1,6 @@
 {
   "name": "tuxborn-companion",
-  "version": "0.7.18",
+  "version": "0.8.0",
   "author": "kahootics",
   "description": "",
   "main": "dist/main.js",
@@ -11,6 +11,7 @@
     "predev": "node --import tsx scripts/boot.mjs",
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",
+    "lint": "eslint .",
     "test": "node scripts/test.mjs",
     "start": "node build/main.js",
     "write": "tsc",
@@ -41,5 +42,8 @@
     "typescript-eslint": "^8.70.0",
     "vitest": "^4.1.9",
     "zod": "^4.4.3"
+  },
+  "dependencies": {
+    "eslint-plugin-baseline-js": "^0.7.5"
   }
 }

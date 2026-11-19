@@ -32,15 +32,15 @@ export function requestTransitionFrame(callback: () => void): void {
  * const btn = document.getElementById('btn');
  * const div = document.getElementById('div');
  *
- * if (areInstancesOf(HTMLButtonElement, btn, div)) {
+ * if (areInstancesOf(HTMLButtonElement, [btn, div])) {
  *     // btn e div sono entrambi HTMLButtonElement
  * }
  * ```
  */
 export function areInstancesOf<T>(
     type: new (...args: unknown[]) => T,
-    ...elements: unknown[]
-): boolean {
+    elements: unknown[]
+): elements is T[] {
     return elements.every(el => el instanceof type);
 }
 

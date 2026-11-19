@@ -1,7 +1,5 @@
-// Assumes this file is co-located with rule-constructor.ts and rule.ts (same relative import paths).
-
 import { describe, test, expect } from 'vitest';
-import { extendsClass } from '../../src/tools/encapsulation.js';
+import { extendsClass } from '../../src/tools/encapsulation.mjs';
 
 
 class Grandparent { }

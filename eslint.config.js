@@ -1,6 +1,7 @@
 // eslint.config.js
 import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
+import baselineJs, { BASELINE } from "eslint-plugin-baseline-js";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 
 const NODE_BUILTIN_PATHS = ['fs', 'fs/promises', 'path', 'child_process', 'crypto', 'os'];
@@ -21,8 +22,17 @@ export default defineConfig([
   // Browser cannot import from Node (or import from who uses it)
   {
     files: ['src/scripts/browser/**/*.ts'],
-    languageOptions: { parser: tseslint.parser },
+    languageOptions: { 
+      parser: tseslint.parser,
+      parserOptions: { project: true}
+    },
+    plugins: { "baseline-js": baselineJs },
     rules: {
+      'baseline-js/use-baseline': ['error', {
+        available: 2020,
+        includeWebApis: { preset: 'type-aware' },
+        includeJsBuiltins: { preset: 'type-aware'}
+      }],
       'no-restricted-imports': ['error', {
         paths: NODE_BUILTIN_PATHS,
         patterns: ['node:*','**/node/**'],
@@ -30,6 +40,7 @@ export default defineConfig([
       'no-restricted-globals': ['error', ...NODE_GLOBALS],
     },
   },
+
 
   // tools, errors cannot use DOM or Node 
   // (or import from who uses them)

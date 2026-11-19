@@ -1,0 +1,68 @@
+
+## Refactor
+- [ ] Project's base ui components should be moved to another repository to be shipped separatedly and added as a dependency to this project:
+    - Expandable, Popover, Modal, Carousel, Slide, SlideTranslator, Movement are plain purely ui elements, mixin or helpers
+    - FalseSelect, FalseSelectDropdown, FalseOption, DynamicChip, DynamicSelector are form-related implementations
+    - client custom elements tags and mixin-elements.ts (defines the custom element) should stay where they are (here)
+- [ ] DataClient script should live here
+- [ ] Cut dependency from general-types.d.ts
+- [ ] Move default stylesheets along with components
+- [ ] BaseArticle, HashRouter, RoutesDataManager stay here
+- [ ] Logger display div refactor from data-client.ts and move to new location (implement as custom element)
+
+## Implement/Edit
+
+### In New Proj (Refactored)
+
+#### Form Components
+- [ ] Missing implementation for FalseRange custom element^
+- [ ] Dynamic Chip to grouped element/class
+- [ ] Dynamic Chip should be allowed to be persistent (don't delete on click)
+- [ ] Dynamic Selector avoids using AbortController due to baseline; remove limitation and instantiate arrow functions used in listeners as prototype methods.
+
+#### UI Mixins
+- [ ] Implement vertical behaviour for Slide
+- [ ] Expandable implementation of 'show' quick behaviours and bindings to controller: separate behaviours into different methods instead of one method with options; delete aria invalid behaviours; implement further ramification for tooltip
+- [ ] Finish implementation of 'controlledby' attribute on Expandable: must be a token list, observed and updated as consequence of addController/removeController and viceversa
+- [ ] Implement JS animations via attribute on Expandable
+- [ ] something something modal's backdrop aria behaviour
+- [ ] Add attribute for control popover's light-dismiss behaviour
+- [ ] Handle c.el. leveraging SlideTranslator
+
+- [ ] Evaluate whether a mixin is the right choice for these entities and their behaviour
+
+#### UI Components
+- [ ] Test garbage collection of movement aborted instances in SlideTranslator (how??); memory leak risk!
+- [ ] Remove Slide dependency from SlideTranslator
+- [ ] Implement vertical direction behaviour for Carousel (controls pan-x/pan-y)
+- [ ] Remove left/right references in SlideTranslator (use prev/next instead)
+- [ ] Replace all left/right
+- [ ] Attributes to add to carousel:
+    - [ ] direction: mirrors direction property^ (listen)
+    - [ ] current-position (name TBD): current index+1 of view (listen)
+    - [ ] loop (boolean): whether carousel swipes are in a loop (listen)
+    - [ ] swipe-after (name TBD): (if present) auto swipe next after timeout (listen)
+    - [ ] threshold: translation threshold (between 0 and 1) (listen)
+    - [ ] with-speed: use a min-speed for the swipe
+- [ ] Implement (from refactored) custom element LogDisplay; displays must be able to mirror one another when set up with the same log (or by default? Maybe an entire class should be interconnected, and the component should be created from a class-factory function)
+
+### Here (Local)
+- [ ] PagePicker & RoutedPage coupling
+- [ ] PagesCollection&lt;T extends Bundles[keyof Bundles]&gt;
+- [ ] Filter object (type: `sort`, `exclude`, `include`)
+- [ ] Remove explicit Worker usage from RoutesDataManager
+- [ ] Implement singleton behaviour by exporting a single instance of RouteDataManager and HashRouter
+
+
+## Fixes
+
+- [ ] Fix FalseSelect test-file: when "Enter" or ' ' are pressed dropdown should open but test shows it doesn't; behaviour is correct in real env
+    - may be a faulty mock
+    - may be missing implementation in jsdom
+    - may be missing behaviour when mocking Popover and not Dropdown
+- [ ] Fix Slide (mixin) overloaded options of withTransition (doesn't really stop or generate a transition)
+    - add withReflow option (forces layout recalc)
+    - preventTransition option (completely blocks transitions)
+    - [ ] Fix Carousel behaviour onCommit and onCancel to ensure coherency
+- [ ] Fix Modal (mixin) polyfill getFocusablesExtremities; throws when no focusables are found (should instead replicate native dialog behaviour)
+- [ ] Fix Expandable

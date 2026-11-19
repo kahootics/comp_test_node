@@ -1,25 +1,65 @@
-carousel-element [inert] {
-    transition: none !important;
-    transform: none !important;
+
+
+div:has(> carousel) {
+    box-sizing: border-box;
+    width: auto;
+    height: auto;
+}
+div:has(> carousel) * {
+    box-sizing: inherit;
 }
 
-carousel-element {
-    --§TRANSLATION_CSS_VAR: 0px;
-    --§POSITION_CSS_VAR: 100%;
-    --translation-var: clamp(-100%,var(--§TRANSLATION_CSS_VAR),100%);
-}
-
-carousel-element.--§TRANSLATING_CSS_CLASS carousel-item {
+carousel[translating] slide {
     transition: none;
     overflow-y: hidden;
 }
+carousel [inert] {
+    transition: none !important;
+    --§POSITION_CSS_VAR: 0px !important;
+}
 
-carousel-item {
-    --x-translation: calc(var(--§POSITION_CSS_VAR) + var(--translation-var));
+carousel {
+    display: block;
+    position: relative;
+    width: 50vw;
+    height: 30vh;
+    overflow: hidden;
+    touch-action: pan-y;
+    overscroll-behavior-y: contain;
+}
+
+slide {
+    display: block;
     position: absolute;
-    width: 100%;
-    top: 0;
     left: 0;
-    transform: translateX(var(--x-translation));
-    transition: transform 1s;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    transform: translateX(calc(var(--position, -100%) + var(--§POSITION_CSS_VAR, 0px)));
+    transition: 1s transform;
+
+    border: 0.2px solid purple;
+    text-align: center;
+    align-items: center;
+    font-size: xx-large;
+    font-weight: bolder;
+}
+
+slide[position="center"] {
+    --position: 0%;
+}
+
+slide[position="left"] {
+    --position: -100%;
+}
+
+slide[position="right"] {
+    --position: 100%;
+}
+
+slide div {
+    width: 80px;
+    height: 60px;
 }

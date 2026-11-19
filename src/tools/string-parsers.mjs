@@ -14,6 +14,19 @@ export function toSafeKebab(string) {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "");
 }
+
+/**
+ * 
+ * @param {string} string 
+ * @returns {string}
+ */
+export function fromCamelToKebab(string) {
+    return string
+        .trim()
+        .split(/(?=[A-Z])/g)
+        .map(chunk => chunk.toLocaleLowerCase())
+        .join('-');
+}
 /** 
  * Converts string from kebab case 
  * 

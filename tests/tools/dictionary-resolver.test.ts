@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { dictionayResolver } from "../src/tools/dictionary-resolver.mjs"; // adatta il percorso
+import { dictionayResolver } from "../../src/tools/dictionary-resolver.mjs"; // adatta il percorso
 
 describe("dictionayResolver - resolve", () => {
     it("replaces a single occurrence of a dictionary term", () => {

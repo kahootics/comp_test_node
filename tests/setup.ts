@@ -1,6 +1,7 @@
 import { expect, type MatcherResult } from 'vitest';
 import type { MatcherState } from '@vitest/expect';
 
+/** Empty type to import in order to force IDE to detect global declarations. */
 export type dummy = never;
 
 declare module 'vitest' {

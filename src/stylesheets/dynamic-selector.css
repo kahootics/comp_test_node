@@ -1,0 +1,104 @@
+
+:where(dynamic-selector) {
+    --ds-gap: 0.5rem;
+    --ds-field-border: GrayText;
+    --ds-field-radius: 0.25rem;
+    --ds-chip-bg: Canvas;
+    --ds-chip-fg: CanvasText;
+    --ds-chip-border: GrayText;
+    --ds-chip-radius: 999px;
+    --ds-chip-padding: 0.125rem 0.625rem;
+    --ds-focus: Highlight;
+    --ds-invalid: #b00020;
+
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ds-gap);
+    align-items: center;
+}
+
+:where(dynamic-selector > div) {
+    flex: 1 0 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ds-gap);
+    align-items: center;
+}
+
+:where(dynamic-selector > div > input) {
+    flex: 1 1 10rem;
+    min-width: 0;
+    border: 1px solid var(--ds-field-border);
+    border-radius: var(--ds-field-radius);
+    padding: 0.25rem 0.5rem;
+    font: inherit;
+}
+
+:where(dynamic-selector > div > button) {
+    font: inherit;
+    cursor: pointer;
+}
+
+:where(dynamic-selector > div > input[aria-invalid="true"]) {
+    border-color: var(--ds-invalid);
+}
+
+:where(dynamic-selector > div > [role="status"]) {
+    flex: 1 0 100%;
+    color: var(--ds-invalid);
+    font-size: 0.875em;
+}
+
+:where(dynamic-selector > div > [role="status"]:empty) {
+    display: none;
+}
+
+:where(dynamic-selector > label) {
+    position: relative;
+    display: inline-flex;
+    cursor: pointer;
+}
+
+:where(dynamic-selector > label > input) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+:where(dynamic-selector > label > span) {
+    padding: var(--ds-chip-padding);
+    border: 1px solid var(--ds-chip-border);
+    border-radius: var(--ds-chip-radius);
+    background: var(--ds-chip-bg);
+    color: var(--ds-chip-fg);
+}
+
+:where(dynamic-selector > label > span)::after {
+    content: " \00d7";
+}
+
+:where(dynamic-selector > label > input:focus + span) {
+    outline-width: 2px;
+    outline-style: solid;
+    outline-color: var(--ds-focus);
+    outline-offset: 2px;
+}
+
+:where(dynamic-selector > label > input[aria-invalid="true"] + span) {
+    border-color: var(--ds-invalid);
+}
+
+:where(dynamic-selector > label > input:disabled + span) {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+:where(dynamic-selector > label[hidden]) {
+    display: none;
+}

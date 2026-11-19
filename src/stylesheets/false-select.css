@@ -1,0 +1,107 @@
+
+:where(false-select) {
+    --fs-bg: Field;
+    --fs-fg: FieldText;
+    --fs-border: GrayText;
+    --fs-radius: 0.25rem;
+    --fs-padding: 0.25rem 0.5rem;
+    --fs-gap: 0.5rem;
+    --fs-popover-bg: Canvas;
+    --fs-popover-fg: CanvasText;
+    --fs-popover-max-height: 15rem;
+    --fs-highlight-bg: Highlight;
+    --fs-highlight-fg: HighlightText;
+    --fs-focus: Highlight;
+
+    position: relative;
+    display: inline-block;
+    box-sizing: border-box;
+    min-width: 10rem;
+    padding: var(--fs-padding);
+    border: 1px solid var(--fs-border);
+    border-radius: var(--fs-radius);
+    background: var(--fs-bg);
+    color: var(--fs-fg);
+    cursor: pointer;
+}
+
+/* The selected labels, on one line. */
+:where(false-select > span) {
+    display: block;
+    min-height: 1.25em;
+    padding-right: 1.25em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* The arrow. */
+:where(false-select)::after {
+    content: "\25be";
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+:where(false-select:focus) {
+    outline-width: 2px;
+    outline-style: solid;
+    outline-color: var(--fs-focus);
+    outline-offset: 1px;
+}
+
+:where(false-select[aria-disabled="true"]) {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* The dropdown: closed unless it has the `open` attribute. */
+:where(false-select-dropdown) {
+    position: absolute;
+    z-index: 10;
+    top: 100%;
+    left: 0;
+    box-sizing: border-box;
+    min-width: 100%;
+    margin-top: 0.125rem;
+    border: 1px solid var(--fs-border);
+    border-radius: var(--fs-radius);
+    background: var(--fs-popover-bg);
+    color: var(--fs-popover-fg);
+    cursor: default;
+
+    opacity: 0;
+    transition: opacity 0.1s;
+}
+:where(false-select-dropdown[expanded]) {
+    opacity: 1;
+}
+
+:where(false-select-dropdown ul) {
+    max-height: var(--fs-popover-max-height);
+    margin: 0;
+    padding: 0.25rem 0;
+    overflow-y: auto;
+    list-style: none;
+}
+
+:where(false-select-dropdown label) {
+    display: flex;
+    align-items: center;
+    gap: var(--fs-gap);
+    padding: var(--fs-padding);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+:where(false-select-dropdown label:hover),
+:where(false-select-dropdown label:focus-within) {
+    background: var(--fs-highlight-bg);
+    color: var(--fs-highlight-fg);
+}
+
+:where(false-select-dropdown input:disabled + span) {
+    opacity: 0.6;
+}

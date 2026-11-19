@@ -1,14 +1,11 @@
-import { ValidationError } from "../../../../../errors/common-errors.mjs";
+/* eslint-disable baseline-js/use-baseline */
 import { Backdrop } from "../../components/backdrop.js";
-import { expandableCloseTransition, expandableOnTransitionEnd, expandableOpenTransition } from "./expandable.mixin.js";
 import { getFocusableExtremities } from "../../../utilities/get-focusable-extremities.js";
 import type { Popover } from "./popover.mixin.js";
 import { _getPrivateProp, _initPrivateProp, _setPrivateProp, SetOnceWeakMap } from "../../../../../tools/encapsulation.mjs";
-
-// EXTENDED CONSTRUCTOR ================================================================
-type Constructor<T extends object> = new (...args: any[]) => T;
-
-// OBFUSCATED PROPERTIES ===============================================================
+import { type ExpandableChangeEvent, expandableChangeEvent } from "./expandable-change-event.js";
+import { createMixin } from "../../../../../tools/create-mixin.mjs";
+import type { Constructor } from "../../../../../tools/create-mixin.mjs";
 
 // MIXIN PUBLIC INTERFACE ==============================================================
 export interface Modal extends Popover { }
@@ -27,7 +24,7 @@ const _firstFocusable = new WeakMap<Modal, HTMLElement>();
 /** Last focusable element within the modal. */
 const _lastFocusable = new WeakMap<Modal, HTMLElement>();
 /** Controls the event listener for the focus trap. */
-const _controller = new SetOnceWeakMap<Modal, AbortController>();
+const _controller = new WeakMap<Modal, AbortController | null>();
 
 /** Updates focusable elements contained within the modal */
 function _updateFocusables(self: Modal): void {
@@ -73,7 +70,7 @@ function _focusTrapEvent(this: Modal, e: KeyboardEvent): void {
  * - Sets Focus Trap within the modal
  */
 function _activateFocusTrap(self: Modal) {
-    const signal = _getPrivateProp(self, _controller).signal;
+    const signal = _setPrivateProp(self, _controller, new AbortController()).signal;
     _beginObserveFocusables(self);
     document.documentElement.style.overflow = 'hidden';
     _getPrivateProp(self, _firstFocusable).focus();
@@ -87,7 +84,8 @@ function _activateFocusTrap(self: Modal) {
 function _removeFocusTrap(self: Modal) {
     _stopObserveFocusables(self);
     document.documentElement.style.removeProperty('overflow');
-    _getPrivateProp(self, _controller).abort();
+    _getPrivateProp(self, _controller)?.abort();
+    _setPrivateProp(self, _controller, null);
 }
 
 // NATIVE ==========================================
@@ -102,7 +100,6 @@ function _removeFocusTrap(self: Modal) {
  * and triggers a transition
 */
 function _reflectOpenDialog(self: Modal) {
-    if (self.isLocked) return;
     _getPrivateProp(self, _nativeDialog).open
         ? self.show()
         : self.close();
@@ -127,15 +124,17 @@ const BrowserSupportsDialog = !(document.createElement('dialog') instanceof HTML
  * 
  * {@link Modal}
  */
-export function Modal<
+export const Modal = createMixin<
+    Popover, Modal
+>('Modal', (brand) => <
     TBase extends Constructor<Popover>
->(Base: TBase) {
-    if (!BrowserSupportsDialog)
+>(Base: TBase, forceCustom?: boolean) => {
+    if (forceCustom || !BrowserSupportsDialog)
         return class FocusTrap extends Base implements Modal {
 
             constructor(...args: any[]) {
                 super(...args);
-                _brand(this);
+                brand.add(this);
 
                 const placeholder = document.createElement('div');
                 _initPrivateProp(this, _backdrop, new Backdrop('placeholder'));
@@ -143,9 +142,6 @@ export function Modal<
                 _initPrivateProp(this, _lastFocusable, placeholder);
                 _initPrivateProp(this, _controller, new AbortController());
 
-                this.setAttribute('role', 'dialog');
-                this.setAttribute('aria-haspopup', 'dialog');
-                this.setAttribute('aria-modal', 'true');
                 // Observer for focusables mutations
                 _initPrivateProp(this, _observer, new MutationObserver(() => _updateFocusables(this)));
             }
@@ -159,17 +155,20 @@ export function Modal<
              */
             override connectedCallback(): void {
                 super.connectedCallback();
+                this.setAttribute('role', 'dialog');
+                this.setAttribute('aria-haspopup', 'dialog');
+                this.setAttribute('aria-modal', 'true');
                 _updateFocusables(this);
             }
 
             // OPEN & CLOSE EXPANSION =======================================================
-            override[expandableOpenTransition](): void {
-                super[expandableOpenTransition]();
+            override _onExpandableOpen(): void {
+                super._onExpandableOpen?.();
                 _getPrivateProp(this, _backdrop).show();
                 _activateFocusTrap(this);
             }
-            override[expandableCloseTransition](): void {
-                super[expandableCloseTransition]();
+            override _onExpandableClose(): void {
+                super._onExpandableClose?.();
                 _getPrivateProp(this, _backdrop).close();
                 _removeFocusTrap(this);
             }
@@ -181,8 +180,8 @@ export function Modal<
              * - locks the document's scrolling
              * @inheritdoc
              */
-            override show(...callbacks: (() => void)[]) {
-                super.show(...callbacks);
+            override show() {
+                return super.show();
             }
             /** 
              * - closes the modal and backdrop
@@ -191,28 +190,35 @@ export function Modal<
              * - unlocks the document's scrolling
              * @inheritdoc
              */
-            override close(...callbacks: (() => void)[]) {
-                super.close(...callbacks);
+            override close() {
+                return super.close();
             }
         };
     else {
+        const NATIVE_DIALOG_STYLE = [
+            'background-color: transparent',
+            'border: 0', 'padding: 0', 'margin: 0',
+            'max-width: none', 'max-height: none',
+            'width: auto', 'height: auto'
+        ].join('; ') + ';';
         return class NativeDialog extends Base implements Modal {
 
             constructor(...args: any[]) {
                 super(...args);
-                _brand(this);
+                brand.add(this);
 
                 const NATIVE_DIALOG = document.createElement('dialog');
                 // make the dialog completely transparent
-                NATIVE_DIALOG.setAttribute('style', [
-                    'background-color: transparent',
-                    'border: 0', 'padding: 0',
-                    'margin: 0'
-                ].join(';'));
+                NATIVE_DIALOG.setAttribute('style', NATIVE_DIALOG_STYLE);
                 // let the popover class handle out of bounds and Esc closes
                 NATIVE_DIALOG.closedBy = 'none';
                 _initPrivateProp(this, _nativeDialog, NATIVE_DIALOG);
                 _initPrivateProp(this, _observer, new MutationObserver(() => _reflectOpenDialog(this)));
+
+                this.addEventListener(expandableChangeEvent, (e) => {
+                    if (e.stage === 'start' && !e.open)
+                        _getPrivateProp(this, _nativeDialog).showModal();
+                });
             }
             /**
              * Wraps the element in a native dialog element to handle
@@ -237,45 +243,10 @@ export function Modal<
             disconnectedCallback(): void {
                 _getPrivateProp(this, _observer).disconnect();
             }
-            override[expandableOpenTransition](): void {
-                _getPrivateProp(this, _nativeDialog).showModal();
-                super[expandableOpenTransition]();
-            }
-            override[expandableOnTransitionEnd](): void {
-                super[expandableOnTransitionEnd]();
-                if (!this.isOpen) _getPrivateProp(this, _nativeDialog).close();
+            override _onExpandableClose(): void {
+                super._onExpandableClose?.();
+                if (!this.open) _getPrivateProp(this, _nativeDialog).close();
             }
         }
     }
-}
-
-// EXPORTED NAMESPACE ==================================================================
-export namespace Modal {
-    /**
-     * Validates an element as a `Modal`
-     * 
-     * @param that - Element that needs to be validated
-     * @returns the validated element
-     * 
-     * @throws {ValidationError} If the element passed as argument 
-     * has not been branded as a `Modal`
-     */
-    export function getValidated(that: Popover): Modal {
-        if (branded.has(that)) return that as Modal;
-        else throw new ValidationError(
-            `${that.constructor.name} does not extend ${Modal.name}`
-        );
-    }
-}
-
-// #INTERNAL IDENTIFICATION =====================================================
-/** Holds all branded instances of `Modal`. */
-const branded = new WeakSet();
-function _assertBranded(instance: Modal): true {
-    if (branded.has(instance)) return true;
-    throw new TypeError("Cannot access #member");
-}
-/** Brands an element as an instance of `Modal`. */
-function _brand(instance: Modal) {
-    branded.add(instance);
-}
+});
